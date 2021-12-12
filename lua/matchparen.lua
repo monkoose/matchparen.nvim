@@ -1,22 +1,28 @@
 local defaults = require('matchparen.defaults')
-local ts_utils = require('nvim-treesitter.ts_utils')
-local ts_hl = vim.treesitter.highlighter
 
 local a = vim.api
 local f = vim.fn
 local max = math.max
-local t_contains = vim.tbl_contains
 
 -- Global variables
-local cur_extmark_id = 0
-local match_extmark_id = 0
-local matchpairs = {}
-local ns
 local cached_matchpairs_opt
 
 local M = {}
 
-local function enable_autocmds()
+-- Setup
+function M.setup(options)
+  M.config = vim.tbl_deep_extend('force', defaults, options or {})
+
+  M.namespace = a.nvim_create_namespace(M.config.augroup_name)
+  M.extmarks = { current = 0, match = 0 }
+  M.matchpairs = {}
+
+  if M.config.on_startup then
+    M.enable_autocmds()
+  end
+end
+
+function M.enable_autocmds()
   if f.exists('#' .. M.config.augroup_name) == 0 then
     vim.cmd('augroup ' .. M.config.augroup_name)
     vim.cmd [[
@@ -31,18 +37,7 @@ local function enable_autocmds()
   end
 end
 
--- Setup
-function M.setup(options)
-  M.config = vim.tbl_deep_extend('force', defaults, options or {})
-
-  ns = a.nvim_create_namespace(M.config.augroup_name)
-
-  if M.config.on_startup then
-    enable_autocmds()
-  end
-end
-
-local function remove_autocmds()
+function M.remove_autocmds()
   if f.exists('#' .. M.config.augroup_name) ~= 0 then
     vim.cmd('autocmd! ' .. M.config.augroup_name)
     vim.cmd('augroup! ' .. M.config.augroup_name)
@@ -78,88 +73,11 @@ function M.create_matchpairs()
 
   cached_matchpairs_opt = vim.o.matchpairs
 
-  matchpairs = {}
+  M.matchpairs = {}
   for o, c in pairs(splitted_matchpairs()) do
-    matchpairs[o] = matchpairs_value(o, c, false)
-    matchpairs[c] = matchpairs_value(o, c, true)
+    M.matchpairs[o] = matchpairs_value(o, c, false)
+    M.matchpairs[c] = matchpairs_value(o, c, true)
   end
-end
-
--- most part taken from treesitter-playground
-local function get_ts_captures()
-  local buf = a.nvim_get_current_buf()
-  local row, col = unpack(a.nvim_win_get_cursor(0))
-  row = row - 1
-
-  local self = ts_hl.active[buf]
-
-  if not self then
-    return {}
-  end
-
-  local matches = {}
-
-  self.tree:for_each_tree(function(tstree, tree)
-    if not tstree then return end
-
-    local root = tstree:root()
-    local root_start_row, _, root_end_row, _ = root:range()
-    -- Only worry about trees within the line range
-    if root_start_row > row or root_end_row < row then return end
-
-    local query = self:get_query(tree:lang())
-    -- Some injected languages may not have highlight queries.
-    if not query:query() then return end
-
-    local iter = query:query():iter_captures(root, self.bufnr, row, row + 1)
-
-    for id, node in iter do
-
-      if ts_utils.is_in_node_range(node, row, col) then
-        table.insert(matches, query._query.captures[id])
-      end
-    end
-  end, true)
-
-  return matches
-end
-
-local function in_ts_skip_block()
-  for _, capture in ipairs(get_ts_captures()) do
-    if t_contains(M.config.ts_skip_captures, capture) then
-      return true
-    end
-  end
-
-  return false
-end
-
-local function in_syn_skip_block()
-  local line, col = unpack(a.nvim_win_get_cursor(0))
-
-  if f.foldclosed(line) ~= -1 then
-    return false
-  end
-
-  for _, id in ipairs(f.synstack(line, col + 1)) do
-    local synname = string.lower(f.synIDattr(id, 'name'))
-
-    for _, pattern in ipairs(M.config.syn_skip_names) do
-      if string.find(synname, pattern) then
-        return true
-      end
-    end
-  end
-
-  return false
-end
-
-function M.skip_region()
-  if vim.opt.syntax:get() ~= '' and in_syn_skip_block() then
-    return true
-  end
-
-  return in_ts_skip_block()
 end
 
 local function is_insert_mode()
@@ -167,9 +85,19 @@ local function is_insert_mode()
   return mode == 'i' or mode == 'R'
 end
 
+local function delete_extmark(id)
+  a.nvim_buf_del_extmark(0, M.namespace, id)
+end
+
 function M.remove_highlight()
-  a.nvim_buf_del_extmark(0, ns, cur_extmark_id)
-  a.nvim_buf_del_extmark(0, ns, match_extmark_id)
+  delete_extmark(M.extmarks.current)
+  delete_extmark(M.extmarks.match)
+end
+
+local function create_extmark(line, col)
+  return a.nvim_buf_set_extmark(0, M.namespace,
+                                line, col,
+                                { end_col = col + 1, hl_group = M.config.hl_group })
 end
 
 function M.update_highlight()
@@ -190,21 +118,21 @@ function M.update_highlight()
 
   if cur_col > 0 and in_insert then
     local before_char = text:sub(cur_col, cur_col)
-    if matchpairs[before_char] then
+    if M.matchpairs[before_char] then
       char = before_char
       before = 1
     end
   end
 
-  if not matchpairs[char] then return end
+  if not M.matchpairs[char] then return end
 
   -- TODO: currently just skip comments and strings
   -- should make it works inside this blocks
-  if M.skip_region() then return end
+  -- if skip() then return end
 
-  local starts = matchpairs[char].opening
-  local ends = matchpairs[char].closing
-  local backward = matchpairs[char].backward
+  local starts = M.matchpairs[char].opening
+  local ends = M.matchpairs[char].closing
+  local backward = M.matchpairs[char].backward
   local flags = backward and 'bnW' or 'nW'
   local win_height = a.nvim_win_get_height(0)
   local stopline = backward and max(1, cur_lnum - win_height) or (cur_lnum + win_height)
@@ -227,28 +155,19 @@ function M.update_highlight()
   end
 
   if match_lnum > 0 then
-    local col = cur_col - before
-
-    cur_extmark_id = a.nvim_buf_set_extmark(
-      0, ns, cur_lnum - 1, col,
-      { end_col = col + 1, hl_group = M.config.hl_group }
-    )
-
-    match_extmark_id = a.nvim_buf_set_extmark(
-      0, ns, match_lnum - 1, match_col - 1,
-      { end_col = match_col, hl_group = M.config.hl_group }
-    )
+    M.extmarks.current = create_extmark(cur_lnum - 1, cur_col - before)
+    M.extmarks.match = create_extmark(match_lnum - 1, match_col - 1)
   end
 end
 
 function M.enable()
-  enable_autocmds()
+  M.enable_autocmds()
   M.create_matchpairs()
   M.update_highlight()
 end
 
 function M.disable()
-  remove_autocmds()
+  M.remove_autocmds()
   M.remove_highlight()
 end
 

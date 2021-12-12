@@ -1,3 +1,3 @@
 function! matchparen#skip() abort
-  return luaeval("require'matchparen'.skip_region()")
+  return luaeval("require'matchparen.block'.skip()")
 endfunction
