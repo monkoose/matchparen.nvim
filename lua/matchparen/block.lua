@@ -1,11 +1,34 @@
 local conf = require('matchparen').config
-local ts_utils = require('nvim-treesitter.ts_utils')
 local ts_hl = vim.treesitter.highlighter
 
 local a = vim.api
 local f = vim.fn
 
 local M = {}
+
+-- copied from nvim-tresitter plugin
+-- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
+
+--- Determines whether (line, col) position is in node range
+-- @param node Node defining the range
+-- @param line A line (0-based)
+-- @param col A column (0-based)
+local function is_in_ts_node_range(node, line, col)
+  local start_line, start_col, end_line, end_col = node:range()
+  if line >= start_line and line <= end_line then
+    if line == start_line and line == end_line then
+      return col >= start_col and col < end_col
+    elseif line == start_line then
+      return col >= start_col
+    elseif line == end_line then
+      return col < end_col
+    else
+      return true
+    end
+  else
+    return false
+  end
+end
 
 -- implementation of this function taken from
 -- https://github.com/nvim-treesitter/playground/blob/master/lua/nvim-treesitter-playground/hl-info.lua
@@ -39,7 +62,7 @@ local function get_ts_captures()
         local iter = query:query():iter_captures(root, self.bufnr, line, line + 1)
 
         for id, node in iter do
-            if ts_utils.is_in_node_range(node, line, col) then
+            if is_in_ts_node_range(node, line, col) then
                 table.insert(captures, query._query.captures[id])
             end
         end
