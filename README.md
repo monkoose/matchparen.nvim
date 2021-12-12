@@ -24,6 +24,8 @@ For [packer.nvim](https://github.com/wbthomason/packer.nvim)
 use 'monkoose/matchparen.nvim'
 ```
 
+Requires [nvim-treesitter](https://github.com/nvim-treesitter/nvim-treesitter) plugin as dependency.
+
 ### Usage
 
 You need to disable default matchparen plugin with `let g:loaded_matchparen = 1` or `vim.g.loaded_matchparen = 1`
