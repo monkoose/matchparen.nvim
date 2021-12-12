@@ -154,7 +154,7 @@ local function in_syn_skip_block()
   return false
 end
 
-function _G.skip_region()
+function M.skip_region()
   if vim.opt.syntax:get() ~= '' and in_syn_skip_block() then
     return true
   end
@@ -200,7 +200,7 @@ function M.update_highlight()
 
   -- TODO: currently just skip comments and strings
   -- should make it works inside this blocks
-  if skip_region() then return end
+  if M.skip_region() then return end
 
   local starts = matchpairs[char].opening
   local ends = matchpairs[char].closing
