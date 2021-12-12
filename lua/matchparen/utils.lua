@@ -6,6 +6,7 @@ local f = vim.fn
 
 local M = {}
 
+-- @return (table)
 local function splitted_matchpairs()
     local t = {}
 
@@ -19,6 +20,7 @@ local function splitted_matchpairs()
 end
 
 -- generates value for `matchpairs` table
+-- @return (table)
 local function matchpairs_value(opening, closing, backward)
     -- `[` and `]` should be escaped to process by searchpairpos()
     local escape_symbols = ']['
@@ -30,6 +32,7 @@ local function matchpairs_value(opening, closing, backward)
     }
 end
 
+-- Updates `matchpairs` table only if it was changed
 function M.create_matchpairs()
     if conf.cached_matchpairs_opt == vim.o.matchpairs then return end
 
@@ -42,12 +45,14 @@ function M.create_matchpairs()
     end
 end
 
+-- Enables plugin
 function M.enable()
     mp.create_autocmds()
     M.create_matchpairs()
     hl.update()
 end
 
+-- Disables plugin
 function M.disable()
     mp.remove_autocmds()
     hl.remove()

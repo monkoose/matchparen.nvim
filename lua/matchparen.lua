@@ -3,6 +3,7 @@ local defaults = require('matchparen.defaults')
 local a = vim.api
 local f = vim.fn
 
+-- commands
 local function create_commands()
     vim.cmd [[
         silent! command MatchParenEnable lua require'matchparen.utils'.enable()
@@ -27,6 +28,7 @@ function M.setup(options)
     end
 end
 
+-- autocmds
 function M.create_autocmds()
     if f.exists('#' .. M.config.augroup_name) == 0 then
         vim.cmd('augroup ' .. M.config.augroup_name)
