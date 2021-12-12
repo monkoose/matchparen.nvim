@@ -68,6 +68,6 @@ require('matchparen').setup({
 })
 ```
 
-Some insiration for this plugin was taken from neovim matchparen plugin itself, this [PR](https://github.com/vim/vim/pull/7985) from vim repository by [lacygoill](https://github.com/lacygoill)
+Some insiration for this plugin was taken from neovim matchparen plugin itself and this [PR](https://github.com/vim/vim/pull/7985) from vim repository by [lacygoill](https://github.com/lacygoill)
 
 Some code for getting TreeSitter capture names was taken from [playground](https://github.com/nvim-treesitter/playground) plugin
