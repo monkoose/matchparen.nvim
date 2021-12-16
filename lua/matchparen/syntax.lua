@@ -57,7 +57,11 @@ function M.match(matchpair, line, insert)
         ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, skip, stopline, timeout)
     end
 
-    return ok, match_pos[1] - 1, match_pos[2] - 1
+    if ok then
+        return ok, match_pos[1] - 1, match_pos[2] - 1
+    else
+        return ok, -1, -1
+    end
 end
 
 return M

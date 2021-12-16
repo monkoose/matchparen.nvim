@@ -98,7 +98,7 @@ function M.update()
             local win_height = a.nvim_win_get_height(0)
             local stopline = backward and max(1, cursor_line - win_height) or (cursor_line + win_height)
             local match_pos
-            local start_line, start_col, end_line, end_col
+            local start_line, start_col, end_line, end_col = 0, 0, 0, 0
 
             if tree.is_type_of(node, 'string') then
                 start_line, start_col, end_line, end_col = node:range()
@@ -107,11 +107,13 @@ function M.update()
             end
 
             ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, '', stopline, timeout)
-            match_line = match_pos[1] - 1
-            match_col = match_pos[2] - 1
-            if not (match_line <= end_line and match_col <= end_col
-                    or match_line >= start_line and match_col >= start_col) then
-                ok = false
+            if ok then
+                match_line = match_pos[1] - 1
+                match_col = match_pos[2] - 1
+                if not (match_line <= end_line and match_col <= end_col
+                        or match_line >= start_line and match_col >= start_col) then
+                    ok = false
+                end
             end
         end
     else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
