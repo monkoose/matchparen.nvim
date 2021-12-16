@@ -1,5 +1,6 @@
 local conf = require('matchparen').config
-local skip = require('matchparen.block').skip
+local syntax = require('matchparen.syntax')
+local tree = require('matchparen.treesitter')
 
 local a = vim.api
 local f = vim.fn
@@ -50,7 +51,7 @@ function M.update()
 
     local text = a.nvim_get_current_line()
     -- nvim_win_get_cursor returns column started from 0, so we need to
-    -- increment it for string.sub for correct result
+    -- increment it for string.sub to get correct result
     local inc_col = cursor_col + 1
     local char = text:sub(inc_col, inc_col)
     local in_insert = is_in_insert_mode()
@@ -71,43 +72,63 @@ function M.update()
 
     if not conf.matchpairs[char] then return end
 
-    -- TODO: currently just skip comments and strings
-    -- should make it works inside this blocks
-    if skip() then return end
-
-    local starts = conf.matchpairs[char].opening
-    local ends = conf.matchpairs[char].closing
-    local backward = conf.matchpairs[char].backward
-    local flags = backward and 'bnW' or 'nW'
-    local timeout = in_insert and conf.timeout_insert or conf.timeout
-
-    -- calculate how many lines `searchpairpos` should search before stop
-    -- so we highlight characters even offscreen, so such characters scrolled into view
-    -- would be highlited
-    local win_height = a.nvim_win_get_height(0)
-    local stopline = backward and max(1, cursor_line - win_height) or (cursor_line + win_height)
-
     -- shift cursor to the left
     if shift then
-        a.nvim_win_set_cursor(0, { cursor_line, cursor_col - 1 })
-    end
-
-    -- `searchpairpos` can cause errors when evaluatin `skip` expression so it should be handled
-    -- `searchpairpos` returns [0, 0] if there is no match
-    local ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, 'matchparen#skip()', stopline, timeout)
-    if not ok then return end
-
-    -- restore cursor if needed
-    if shift then
+        cursor_col = cursor_col - 1
         a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
-    -- `searchpairpos` returns correct values started from 1 (1-based), so we should
-    -- correct this. nvim_win_get_cursor return 1-based line, but 0-based for column,
-    -- so we don't need to correct it, but we need to decrement it if `shift` is true
-    local match_line, match_col = unpack(match_pos)
+    local ok
+    local root
+    local match_line
+    local match_col
+    ok, root = tree.root()
+
+    if ok then  -- buffer has ts parser, so use treesitter to match pair
+        local node = tree.node_at(root, cursor_line - 1, cursor_col)
+        if tree.is_type_of(node, char) then
+            match_line, match_col = tree.get_match_pos(node, conf.matchpairs_ts[char])
+        else
+            local mp = conf.matchpairs[char]
+            local starts = mp.opening
+            local ends = mp.closing
+            local backward = mp.backward
+            local flags = backward and 'bnW' or 'nW'
+            local timeout = in_insert and conf.timeout_insert or conf.timeout
+            local win_height = a.nvim_win_get_height(0)
+            local stopline = backward and max(1, cursor_line - win_height) or (cursor_line + win_height)
+            local match_pos
+            local start_line, start_col, end_line, end_col
+
+            if tree.is_type_of(node, 'string') then
+                start_line, start_col, end_line, end_col = node:range()
+            elseif tree.is_type_of(node, 'comment') then
+                start_line, start_col, end_line, end_col = tree.comments_range(node, mp.backward)
+            end
+
+            ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, '', stopline, timeout)
+            match_line = match_pos[1] - 1
+            match_col = match_pos[2] - 1
+            if not (match_line <= end_line and match_col <= end_col
+                    or match_line >= start_line and match_col >= start_col) then
+                ok = false
+            end
+        end
+    else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
+        ok, match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
+    end
+
+    -- restore cursor if needed
+    if shift then
+        cursor_col = cursor_col + 1
+        a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
+    end
+
+    if not ok or not match_line or match_line < 0 then return end
+
+    -- If shift was true `cursor_col` should be decremented to highlight correct char
     cursor_col = shift and cursor_col - 1 or cursor_col
-    apply_highlight(cursor_line - 1, cursor_col, match_line -1, match_col - 1)
+    apply_highlight(cursor_line - 1, cursor_col, match_line, match_col)
 end
 
 return M

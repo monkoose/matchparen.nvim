@@ -39,9 +39,12 @@ function M.create_matchpairs()
     conf.cached_matchpairs_opt = vim.o.matchpairs
 
     conf.matchpairs = {}
+    conf.matchpairs_ts = {}
     for o, c in pairs(splitted_matchpairs()) do
         conf.matchpairs[o] = matchpairs_value(o, c, false)
         conf.matchpairs[c] = matchpairs_value(o, c, true)
+        conf.matchpairs_ts[o] = { opening = o, closing = c, backward = false }
+        conf.matchpairs_ts[c] = { opening = o, closing = c, backward = true }
     end
 end
 

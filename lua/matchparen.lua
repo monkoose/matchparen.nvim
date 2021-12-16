@@ -19,7 +19,6 @@ function M.setup(options)
 
     M.config.namespace = a.nvim_create_namespace(M.config.augroup_name)
     M.config.extmarks = { current = 0, match = 0 }
-    M.config.matchpairs = {}
 
     create_commands()
 
