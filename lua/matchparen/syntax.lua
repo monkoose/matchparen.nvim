@@ -53,11 +53,11 @@ function M.match(matchpair, line, insert)
         ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, '!matchparen#skip()', stopline, timeout)
     else
         -- `searchpairpos` can cause errors when evaluating `skip` expression so it should be handled
-        -- `searchpairpos` returns [0, 0] if there is no match
         ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, skip, stopline, timeout)
     end
 
-    if not ok then return end
+    -- `searchpairpos` returns [0, 0] if there is no match, so check for it
+    if not ok or match_pos[1] == 0 then return end
 
     return match_pos[1] - 1, match_pos[2] - 1
 end
