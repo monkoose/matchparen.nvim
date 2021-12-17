@@ -3,14 +3,15 @@
 
 It fixes some bugs of the default plugin like:
 - wrong highlights of matched characters in comments and strings in files with TreeSitter syntax highlighting
-(for now it just disables this regions)
 - highlighting is properly disabled for such plugins like [hop.nvim](https://github.com/phaazon/hop.nvim)
 - doesn't recolor characters of floating windows
 - and others
 
-In my synthetic tests it is faster by 6-10 times when the cursor is not on a matching character and
-1-2 times faster on a matching character (because under the hood this plugin is still using
-`searchpairpos()` and `synstack()` functions)
+It is also much faster (~10 times in my synthetic tests) in treesitter parsed buffers and without any
+spikes, so highlighting of matched parens should not exceed 2-3ms and in most cases it is less then 0.2ms on
+my laptop. In buffers that are not parsed by treesitter it is still faster when cursor is not at matching paren
+at the same ~10 times, but on matched it is still take almost the same time as default plugin and in some situations
+with high spikes of 100ms+ to highlighting matched parens (once again the same as default), mostly because of slow `synstack()` function.
 
 ### Installation
 
@@ -26,9 +27,16 @@ use 'monkoose/matchparen.nvim'
 
 ### Usage
 
-You need to disable default matchparen plugin with `let g:loaded_matchparen = 1` or `vim.g.loaded_matchparen = 1`
+You need to disable default matchparen plugin 
+```vim
+let g:loaded_matchparen = 1
+```
+or
+```lua
+vim.g.loaded_matchparen = 1
+```
 
-Defaults just work fine so just add this line somewhere in your config
+Initialize it with this line somewhere in your config
 ```lua
 require('matchparen').setup()
 ```
@@ -50,7 +58,7 @@ require('matchparen').setup({
     augroup_name = 'matchparen',  -- almost no reason to touch this if you don't already have augroup with this name
 
 
-    -- list of neovim default syntax names to skip highlighting
+    -- list of neovim default syntax names to match parens only in this blocks
     syn_skip_names = {
         'string',
         'comment',
@@ -60,7 +68,7 @@ require('matchparen').setup({
         'symbol',
     },
 
-    -- list of TreeSitter capture names to skip highlighting
+    -- list of TreeSitter capture names to match parens only in this blocks
     ts_skip_captures = {
         'string',
         'comment'
@@ -68,6 +76,4 @@ require('matchparen').setup({
 })
 ```
 
-Some insiration for this plugin was taken from neovim matchparen plugin itself and this [PR](https://github.com/vim/vim/pull/7985) from vim repository by [lacygoill](https://github.com/lacygoill)
-
-Some code for getting TreeSitter capture names was taken from [playground](https://github.com/nvim-treesitter/playground) plugin
+Some inspiration for built-in syntax was taken from neovim matchparen plugin itself and this [PR](https://github.com/vim/vim/pull/7985) from vim repository by [lacygoill](https://github.com/lacygoill)

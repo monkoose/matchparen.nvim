@@ -4,7 +4,6 @@ local tree = require('matchparen.treesitter')
 
 local a = vim.api
 local f = vim.fn
-local max = math.max
 
 local M = {}
 
@@ -78,46 +77,15 @@ function M.update()
         a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
-    local ok
-    local root
     local match_line
     local match_col
-    ok, root = tree.root()
+    local ok, root = tree.root()
 
     if ok then  -- buffer has ts parser, so use treesitter to match pair
         local node = tree.node_at(root, cursor_line - 1, cursor_col)
-        if tree.is_type_of(node, char) then
-            match_line, match_col = tree.get_match_pos(node, conf.matchpairs_ts[char])
-        else
-            local mp = conf.matchpairs[char]
-            local starts = mp.opening
-            local ends = mp.closing
-            local backward = mp.backward
-            local flags = backward and 'bnW' or 'nW'
-            local timeout = in_insert and conf.timeout_insert or conf.timeout
-            local win_height = a.nvim_win_get_height(0)
-            local stopline = backward and max(1, cursor_line - win_height) or (cursor_line + win_height)
-            local match_pos
-            local start_line, start_col, end_line, end_col = 0, 0, 0, 0
-
-            if tree.is_type_of(node, 'string') then
-                start_line, start_col, end_line, end_col = node:range()
-            elseif tree.is_type_of(node, 'comment') then
-                start_line, start_col, end_line, end_col = tree.comments_range(node, mp.backward)
-            end
-
-            ok, match_pos = pcall(f.searchpairpos, starts, '', ends, flags, '', stopline, timeout)
-            if ok then
-                match_line = match_pos[1] - 1
-                match_col = match_pos[2] - 1
-                if not (match_line <= end_line and match_col <= end_col
-                        or match_line >= start_line and match_col >= start_col) then
-                    ok = false
-                end
-            end
-        end
+        match_line, match_col = tree.match(char, node, cursor_line, in_insert)
     else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
-        ok, match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
+        match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
     end
 
     -- restore cursor if needed
@@ -126,7 +94,7 @@ function M.update()
         a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
-    if not ok or not match_line or match_line < 0 then return end
+    if not match_line then return end
 
     -- If shift was true `cursor_col` should be decremented to highlight correct char
     cursor_col = shift and cursor_col - 1 or cursor_col
