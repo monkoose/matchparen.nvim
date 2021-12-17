@@ -1,5 +1,9 @@
 ## Matchparen.nvim
-### alternative to plugin that shipped with neovim
+### alternative to default neovim matchparen plugin
+
+**BE AWARE:** even it is already usable, plugin is in under development, so breaking changes may happen.
+And you could expect wrong highlighting in some situations. If you have found one, don't be lazy and just uninstall it,
+instead let me know in the issues.
 
 It fixes some bugs of the default plugin like:
 - wrong highlights of matched characters in comments and strings in files with TreeSitter syntax highlighting
