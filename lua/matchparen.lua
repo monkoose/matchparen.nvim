@@ -37,7 +37,7 @@ function M.create_autocmds()
             autocmd CursorMoved,CursorMovedI * lua require'matchparen.highlight'.update()
             autocmd TextChanged,TextChangedI,WinEnter * lua require'matchparen.highlight'.update()
             autocmd WinLeave,BufLeave * lua require'matchparen.highlight'.remove()
-            autocmd OptionSet matchpairs lua require'matchperen.utils'.create_matchpairs()
+            autocmd OptionSet matchpairs lua require'matchparen.utils'.create_matchpairs()
         augroup END
         ]]
     end
