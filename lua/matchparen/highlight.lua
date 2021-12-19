@@ -2,23 +2,20 @@ local conf = require('matchparen').config
 local syntax = require('matchparen.syntax')
 local tree = require('matchparen.treesitter')
 
-local a = vim.api
-local f = vim.fn
-
 local M = {}
 
 -- @return (bool) if in insert or Replace modes
 local function is_in_insert_mode()
-    local mode = a.nvim_get_mode().mode
+    local mode = vim.api.nvim_get_mode().mode
     return mode == 'i' or mode == 'R'
 end
 
 local function delete_extmark(id)
-    a.nvim_buf_del_extmark(0, conf.namespace, id)
+    vim.api.nvim_buf_del_extmark(0, conf.namespace, id)
 end
 
 local function create_extmark(line, col)
-    return a.nvim_buf_set_extmark(
+    return vim.api.nvim_buf_set_extmark(
         0, conf.namespace, line, col,
         { end_col = col + 1, hl_group = conf.hl_group }
     )
@@ -41,14 +38,14 @@ end
 function M.update()
     M.remove()
 
-    local cursor_line, cursor_col = unpack(a.nvim_win_get_cursor(0))
+    local cursor_line, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
 
     -- Should it also check for pumvisible() as original matchparen does?
     -- Because i do not notice any difference and popupmenu doesn't close
     -- Do not process current line if it is in closed fold
-    if f.foldclosed(cursor_line) ~= -1 then return end
+    if vim.fn.foldclosed(cursor_line) ~= -1 then return end
 
-    local text = a.nvim_get_current_line()
+    local text = vim.api.nvim_get_current_line()
     -- nvim_win_get_cursor returns column started from 0, so we need to
     -- increment it for string.sub to get correct result
     local inc_col = cursor_col + 1
@@ -74,7 +71,7 @@ function M.update()
     -- shift cursor to the left
     if shift then
         cursor_col = cursor_col - 1
-        a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
+        vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
     local match_line
@@ -91,7 +88,7 @@ function M.update()
     -- restore cursor if needed
     if shift then
         cursor_col = cursor_col + 1
-        a.nvim_win_set_cursor(0, { cursor_line, cursor_col })
+        vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
     if not match_line then return end

@@ -2,8 +2,6 @@ local conf = require('matchparen').config
 local hl = require('matchparen.highlight')
 local mp = require('matchparen')
 
-local f = vim.fn
-
 local M = {}
 
 -- @return (table)
@@ -26,8 +24,8 @@ local function matchpairs_value(opening, closing, backward)
     local escape_symbols = ']['
 
     return {
-        opening = f.escape(opening, escape_symbols),
-        closing = f.escape(closing, escape_symbols),
+        opening = vim.fn.escape(opening, escape_symbols),
+        closing = vim.fn.escape(closing, escape_symbols),
         backward = backward
     }
 end

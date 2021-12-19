@@ -1,12 +1,6 @@
 local conf = require('matchparen').config
 
-local ts = vim.treesitter
-local a = vim.api
-local f = vim.fn
-local max = math.max
-local find = string.find
-
-local comment = 'comment'
+local COMMENT = 'comment'
 
 local M = {}
 
@@ -35,7 +29,7 @@ local function is_in_node_range(node, line, col)
 end
 
 function M.root()
-    local ok, parser = pcall(ts.get_parser)
+    local ok, parser = pcall(vim.treesitter.get_parser)
     if ok then
         return true, parser:parse()[1]:root()
     else
@@ -48,7 +42,8 @@ function M.node_at(root, line, col)
 end
 
 local function str_contains(str, pattern)
-    if find(str, pattern, 1, true) then
+    if str:find(pattern, 1, true) then
+        print('here')
         return true
     end
 
@@ -104,11 +99,11 @@ function M.match(char, node, line, insert)
         local mp = conf.matchpairs[char]
         local flags = mp.backward and 'bnW' or 'nW'
         local timeout = insert and conf.timeout_insert or conf.timeout
-        local win_height = a.nvim_win_get_height(0)
-        local stopline = mp.backward and max(1, line - win_height) or (line + win_height)
+        local win_height = vim.api.nvim_win_get_height(0)
+        local stopline = mp.backward and math.max(1, line - win_height) or (line + win_height)
         local match_pos
 
-        ok, match_pos = pcall(f.searchpairpos, mp.opening, '', mp.closing, flags, '', stopline, timeout)
+        ok, match_pos = pcall(vim.fn.searchpairpos, mp.opening, '', mp.closing, flags, '', stopline, timeout)
 
         if ok then
             match_line = match_pos[1] - 1
@@ -120,10 +115,10 @@ function M.match(char, node, line, insert)
                     return match_line, match_col
                 end
 
-                if type == comment then
+                if type == COMMENT then
                     full_node = full_node[move_to_sibling](full_node)
 
-                    if not (full_node and str_contains(full_node:type(), comment)) then return end
+                    if not (full_node and str_contains(full_node:type(), COMMENT)) then return end
                 else
                     return
                 end
