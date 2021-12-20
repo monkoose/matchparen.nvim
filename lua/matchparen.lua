@@ -1,8 +1,5 @@
 local defaults = require('matchparen.defaults')
 
-local a = vim.api
-local f = vim.fn
-
 -- commands
 local function create_commands()
     vim.cmd [[
@@ -17,7 +14,7 @@ local M = {}
 function M.setup(options)
     M.config = vim.tbl_deep_extend('force', defaults, options or {})
 
-    M.config.namespace = a.nvim_create_namespace(M.config.augroup_name)
+    M.config.namespace = vim.api.nvim_create_namespace(M.config.augroup_name)
     M.config.extmarks = { current = 0, match = 0 }
 
     create_commands()
@@ -29,7 +26,7 @@ end
 
 -- autocmds
 function M.create_autocmds()
-    if f.exists('#' .. M.config.augroup_name) == 0 then
+    if vim.fn.exists('#' .. M.config.augroup_name) == 0 then
         vim.cmd('augroup ' .. M.config.augroup_name)
         vim.cmd [[
             autocmd!
@@ -44,7 +41,7 @@ function M.create_autocmds()
 end
 
 function M.remove_autocmds()
-    if f.exists('#' .. M.config.augroup_name) ~= 0 then
+    if vim.fn.exists('#' .. M.config.augroup_name) ~= 0 then
         vim.cmd('autocmd! ' .. M.config.augroup_name)
         vim.cmd('augroup! ' .. M.config.augroup_name)
     end
