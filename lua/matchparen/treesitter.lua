@@ -42,12 +42,7 @@ function M.node_at(root, line, col)
 end
 
 local function str_contains(str, pattern)
-    if str:find(pattern, 1, true) then
-        print('here')
-        return true
-    end
-
-    return false
+    return str:find(pattern, 1, true) ~= nil
 end
 
 local function is_in_tree_of_type(node, types)
