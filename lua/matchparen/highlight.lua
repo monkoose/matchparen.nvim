@@ -80,7 +80,7 @@ function M.update()
 
     if ok then  -- buffer has ts parser, so use treesitter to match pair
         local node = tree.node_at(root, cursor_line - 1, cursor_col)
-        match_line, match_col = tree.match(char, node, cursor_line, in_insert)
+        match_line, match_col = tree.match(char, node, cursor_line, cursor_col, in_insert)
     else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
         match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
     end
