@@ -12,29 +12,28 @@ local M = {}
 -- @param line A line (0-based)
 -- @param col A column (0-based)
 local function is_in_node_range(node, line, col)
-  local start_line, start_col, end_line, end_col = node:range()
-  if line >= start_line and line <= end_line then
-    if line == start_line and line == end_line then
-      return col >= start_col and col < end_col
-    elseif line == start_line then
-      return col >= start_col
-    elseif line == end_line then
-      return col < end_col
+    local start_line, start_col, end_line, end_col = node:range()
+    if line >= start_line and line <= end_line then
+        if line == start_line and line == end_line then
+            return col >= start_col and col < end_col
+        elseif line == start_line then
+            return col >= start_col
+        elseif line == end_line then
+            return col < end_col
+        else
+            return true
+        end
     else
-      return true
+        return false
     end
-  else
-    return false
-  end
 end
 
-function M.root()
+function M.get_parser()
     local ok, parser = pcall(vim.treesitter.get_parser)
-    if ok then
-        return true, parser:parse()[1]:root()
-    else
-        return false, nil
-    end
+
+    if not ok then return end
+
+    return parser
 end
 
 function M.node_at(root, line, col)
@@ -58,40 +57,71 @@ local function is_in_tree_of_type(node, types)
     return false
 end
 
-local function get_match_pos(node, matchpair)
-    local match
-    local move_to_sibling
-    if matchpair.backward then
-        match = matchpair.opening
-        move_to_sibling = 'prev_sibling'
-    else
-        match = matchpair.closing
-        move_to_sibling = 'next_sibling'
+local function get_left_bracket_pos(node, match)
+    local parent = node:parent()
+    local starts_with = vim.startswith
+    local ends_with = vim.endswith
+    local node_sl, node_sc = node:range()
+    local match_line, match_col
+
+    local in_range = function(el, ec)
+        return el < node_sl or (el == node_sl and ec <= node_sc)
     end
 
-    while true do
-        node = node[move_to_sibling](node)
+    for child in parent:iter_children() do
+        local child_sl, child_sc, child_el, child_ec = child:range()
+        local child_type = child:type()
 
-        if not node then return end
-
-        if node:type() == match then
-            local match_line, match_col, _, c = node:range()
-
-            if c - match_col == 0 then return end
-
+        if in_range(child_el, child_ec) then
+            if starts_with(child_type, match) then
+                if child_ec - child_sc == 0 then return end
+                match_line = child_sl
+                match_col = child_sc
+            elseif ends_with(child_type, match) then
+                if child_ec - child_sc == 0 then return end
+                match_line = child_el
+                match_col = child_ec - 1
+            end
+        else
             return match_line, match_col
         end
     end
 end
 
-function M.match(char, node, line, insert)
+local function get_right_bracket_pos(node, match)
+    local parent = node:parent()
+    local starts_with = vim.startswith
+    local ends_with = vim.endswith
+    local _, _, node_el, node_ec = node:range()
+
+    local in_range = function(sl, sc)
+        return sl > node_el or (sl == node_el and sc >= node_ec)
+    end
+
+    for child in parent:iter_children() do
+        local child_sl, child_sc, child_el, child_ec = child:range()
+        local child_type = child:type()
+
+        if in_range(child_sl, child_sc) then
+            if starts_with(child_type, match) then
+                if child_ec - child_sc == 0 then return end
+                return child_sl, child_sc
+            elseif ends_with(child_type, match) then
+                if child_ec - child_sc == 0 then return end
+                return child_el, child_ec - 1
+            end
+        end
+    end
+end
+
+function M.match(bracket, node, line, col, insert)
     local match_line
     local match_col
 
-    local ok, full_node, type = is_in_tree_of_type(node, conf.ts_skip_captures)
+    local ok, full_node, type = is_in_tree_of_type(node, conf.ts_skip_groups)
 
     if ok then
-        local mp = conf.matchpairs[char]
+        local mp = conf.matchpairs[bracket]
         local flags = mp.backward and 'bnW' or 'nW'
         local timeout = insert and conf.timeout_insert or conf.timeout
         local win_height = vim.api.nvim_win_get_height(0)
@@ -121,8 +151,29 @@ function M.match(char, node, line, insert)
         end
     end
 
-    if node:type() == char then
-        return get_match_pos(node, conf.matchpairs_ts[char])
+    local node_type = node:type()
+    local double_bracket = bracket .. bracket
+    local mp_ts = conf.matchpairs_ts[bracket]
+    local get_bracket_pos
+    local match = mp_ts.backward and mp_ts.opening or mp_ts.closing
+    if mp_ts.backward then
+        match = mp_ts.opening
+        get_bracket_pos = get_left_bracket_pos
+    else
+        match = mp_ts.closing
+        get_bracket_pos = get_right_bracket_pos
+    end
+
+    if node_type == double_bracket then
+        local _, node_sc = node:range()
+        match_line, match_col = get_bracket_pos(node, match .. match)
+        local first = col == node_sc
+        if first then
+            match_col = match_col + 1
+        end
+        return match_line, match_col
+    elseif vim.startswith(node_type, bracket) or vim.endswith(node_type, bracket) then
+        return get_bracket_pos(node, match)
     end
 
 end

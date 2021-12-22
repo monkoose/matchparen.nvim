@@ -10,7 +10,7 @@ return {
     -- Here is the comment from Bram about this syntax names
     -- "We match 'escape' for special items, such as lispEscapeSpecial, and
     --  match "symbol" for lispBarSymbol."
-    syn_skip_names = {
+    syntax_skip_groups = {
         'string',
         'comment',
         'character',
@@ -19,9 +19,10 @@ return {
         'symbol',
     },
 
-    -- TreeSitter capture names to limit search only in this blocks
-    ts_skip_captures = {
+    -- TreeSitter names to limit search only in this blocks
+    ts_skip_groups = {
         'string',
-        'comment'
+        'comment',
+        'quoted_attribute',
     }
 }
