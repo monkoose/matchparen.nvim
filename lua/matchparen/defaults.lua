@@ -22,6 +22,7 @@ return {
     -- TreeSitter capture names to limit search only in this blocks
     ts_skip_captures = {
         'string',
-        'comment'
+        'comment',
+        'quoted_attribute',
     }
 }

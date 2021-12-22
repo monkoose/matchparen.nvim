@@ -75,7 +75,8 @@ require('matchparen').setup({
     -- list of TreeSitter capture names to match parens only in this blocks
     ts_skip_captures = {
         'string',
-        'comment'
+        'comment',
+        'quoted_attribute',
     }
 })
 ```
