@@ -1,6 +1,6 @@
 local conf = require('matchparen').config
 local syntax = require('matchparen.syntax')
-local tree = require('matchparen.treesitter')
+local ts = require('matchparen.treesitter')
 
 local M = {}
 
@@ -76,11 +76,15 @@ function M.update()
 
     local match_line
     local match_col
-    local ok, root = tree.root()
+    local parser = ts.get_parser()
 
-    if ok then  -- buffer has ts parser, so use treesitter to match pair
-        local node = tree.node_at(root, cursor_line - 1, cursor_col)
-        match_line, match_col = tree.match(char, node, cursor_line, cursor_col, in_insert)
+    if parser then  -- buffer has ts parser, so use treesitter to match pair
+        parser:for_each_tree(function(tree)
+            if not match_line then
+                local node_at_cursor = ts.node_at(tree:root(), cursor_line - 1, cursor_col)
+                match_line, match_col = ts.match(char, node_at_cursor, cursor_line, cursor_col, in_insert)
+            end
+        end)
     else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
         match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
     end

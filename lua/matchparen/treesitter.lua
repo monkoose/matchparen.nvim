@@ -28,13 +28,12 @@ local function is_in_node_range(node, line, col)
     end
 end
 
-function M.root()
+function M.get_parser()
     local ok, parser = pcall(vim.treesitter.get_parser)
-    if ok then
-        return true, parser:parse()[1]:root()
-    else
-        return false, nil
-    end
+
+    if not ok then return end
+
+    return parser
 end
 
 function M.node_at(root, line, col)
@@ -63,10 +62,9 @@ local function get_left_bracket_pos(node, match)
     local starts_with = vim.startswith
     local ends_with = vim.endswith
     local node_sl, node_sc = node:range()
-    local in_range
     local match_line, match_col
 
-    in_range = function(el, ec)
+    local in_range = function(el, ec)
         return el < node_sl or (el == node_sl and ec <= node_sc)
     end
 
@@ -94,10 +92,9 @@ local function get_right_bracket_pos(node, match)
     local parent = node:parent()
     local starts_with = vim.startswith
     local ends_with = vim.endswith
-    local in_range
     local _, _, node_el, node_ec = node:range()
 
-    in_range = function(sl, sc)
+    local in_range = function(sl, sc)
         return sl > node_el or (sl == node_el and sc >= node_ec)
     end
 
