@@ -118,7 +118,7 @@ function M.match(bracket, node, line, col, insert)
     local match_line
     local match_col
 
-    local ok, full_node, type = is_in_tree_of_type(node, conf.ts_skip_captures)
+    local ok, full_node, type = is_in_tree_of_type(node, conf.ts_skip_groups)
 
     if ok then
         local mp = conf.matchpairs[bracket]

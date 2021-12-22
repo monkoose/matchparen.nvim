@@ -20,7 +20,7 @@ function M.skip()
     for _, id in ipairs(vim.fn.synstack(line, col + 1)) do
         local synname = string.lower(vim.fn.synIDattr(id, 'name'))
 
-        for _, pattern in ipairs(conf.syn_skip_names) do
+        for _, pattern in ipairs(conf.syntax_skip_groups) do
             if string.find(synname, pattern) then
                 return true
             end
