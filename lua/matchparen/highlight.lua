@@ -10,15 +10,15 @@ local function is_in_insert_mode()
     return mode == 'i' or mode == 'R'
 end
 
-local function delete_extmark(id)
-    vim.api.nvim_buf_del_extmark(0, conf.namespace, id)
-end
-
 local function create_extmark(line, col)
     return vim.api.nvim_buf_set_extmark(
         0, conf.namespace, line, col,
         { end_col = col + 1, hl_group = conf.hl_group }
     )
+end
+
+local function delete_extmark(id)
+    vim.api.nvim_buf_del_extmark(0, conf.namespace, id)
 end
 
 -- Removes highlighting from matched characters
@@ -35,45 +35,13 @@ local function apply_highlight(x_line, x_col, y_line, y_col)
     end
 end
 
-function M.update()
-    M.remove()
-
-    local cursor_line, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
-
-    -- Should it also check for pumvisible() as original matchparen does?
-    -- Because i do not notice any difference and popupmenu doesn't close
-    -- Do not process current line if it is in closed fold
-    if vim.fn.foldclosed(cursor_line) ~= -1 then return end
-
-    local text = vim.api.nvim_get_current_line()
-    -- nvim_win_get_cursor returns column started from 0, so we need to
-    -- increment it for string.sub to get correct result
-    local inc_col = cursor_col + 1
-    local char = text:sub(inc_col, inc_col)
-    local in_insert = is_in_insert_mode()
-    -- `shift` variable used for insert mode to check if we should shift
-    -- the cursor position to the left by one column, neovim matchparen calculates char
-    -- size, but i'm not sure why, does someone use multicolumn characters for
-    -- `matchpairs` option?
-    -- TODO: make more investigation about this and if so fix this
-    local shift = false
-
-    if cursor_col > 0 and in_insert then
-        local before_char = text:sub(cursor_col, cursor_col)
-        if conf.matchpairs[before_char] then
-            char = before_char
-            shift = true
-        end
-    end
-
-    if not conf.matchpairs[char] then return end
-
-    -- shift cursor to the left
-    if shift then
-        cursor_col = cursor_col - 1
-        vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
-    end
-
+-- Returns matched bracket position
+-- @param bracket (string) which bracket to match
+-- @param line (number) line number of `bracket`
+-- @param col (number) column number of `bracket`
+-- @param insert (bool) true if in insert mode
+-- @return number, number or nil
+local function get_match_pos(bracket, line, col, insert)
     local match_line
     local match_col
     local parser = ts.get_parser()
@@ -81,15 +49,64 @@ function M.update()
     if parser then  -- buffer has ts parser, so use treesitter to match pair
         parser:for_each_tree(function(tree)
             if not match_line then
-                local node_at_cursor = ts.node_at(tree:root(), cursor_line - 1, cursor_col)
-                match_line, match_col = ts.match(char, node_at_cursor, cursor_line, cursor_col, in_insert)
+                local node_at_cursor = ts.node_at(tree:root(), line - 1, col)
+                local full_node = ts.get_node_of_type(node_at_cursor, conf.ts_skip_groups)
+                if full_node then
+                    match_line, match_col = ts.get_skip_match_pos(conf.matchpairs[bracket],
+                                                                  full_node, line, insert)
+                else
+                    match_line, match_col = ts.get_match_pos(conf.matchpairs_ts[bracket],
+                                                             bracket, node_at_cursor, col)
+                end
             end
         end)
     else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
-        match_line, match_col = syntax.match(conf.matchpairs[char], cursor_line, in_insert)
+        match_line, match_col = syntax.get_match_pos(conf.matchpairs[bracket], line, insert)
+    end
+    return match_line, match_col
+end
+
+-- Updates the highlight of brackets by first removing previous highlight
+-- and then if there is matching brackets at the new cursor position highlight them
+function M.update()
+    M.remove()
+
+    local cursor_line, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
+    -- Do not process current line if it is in closed fold
+    if vim.fn.foldclosed(cursor_line) ~= -1 then return end
+    -- Should it also check for `pumvisible()` as original matchparen does?
+    -- Because I do not notice any difference and popupmenu doesn't close
+
+    local text = vim.api.nvim_get_current_line()
+    -- nvim_win_get_cursor returns column started from 0, so we need to
+    -- increment it for `string.sub()` to get correct result
+    local inc_col = cursor_col + 1
+    local bracket = text:sub(inc_col, inc_col)
+    local in_insert = is_in_insert_mode()
+    -- `shift` variable used for insert mode to check if we should shift
+    -- the cursor position to the left by one column, neovim matchparen calculates bracket
+    -- size, but i'm not sure why, does someone use multicolumn characters for `matchpairs` option?
+    local shift = false
+
+    if cursor_col > 0 and in_insert then
+        local before_char = text:sub(cursor_col, cursor_col)
+        if conf.matchpairs[before_char] then
+            bracket = before_char
+            shift = true
+        end
     end
 
-    -- restore cursor if needed
+    if not conf.matchpairs[bracket] then return end
+
+    -- shift cursor to the left
+    if shift then
+        cursor_col = cursor_col - 1
+        vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
+    end
+
+    local match_line, match_col = get_match_pos(bracket, cursor_line, cursor_col, in_insert)
+
+    -- restore cursor if previously shifted
     if shift then
         cursor_col = cursor_col + 1
         vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
@@ -97,7 +114,7 @@ function M.update()
 
     if not match_line then return end
 
-    -- If shift was true `cursor_col` should be decremented to highlight correct char
+    -- If shift was true `cursor_col` should be decremented to highlight correct bracket
     cursor_col = shift and cursor_col - 1 or cursor_col
     apply_highlight(cursor_line - 1, cursor_col, match_line, match_col)
 end

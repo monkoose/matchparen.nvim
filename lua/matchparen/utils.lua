@@ -7,42 +7,40 @@ local M = {}
 -- @return (table)
 local function splitted_matchpairs()
     local t = {}
-
     for _, pair in ipairs(vim.opt.matchpairs:get()) do
         -- matchpairs option devide each pair with `:`, so we split by it
-        local opening, closing = pair:match('(.+):(.+)')
-        t[opening] = closing
+        local left, right = pair:match('(.+):(.+)')
+        t[left] = right
     end
-
     return t
 end
 
 -- generates value for `matchpairs` table
 -- @return (table)
-local function matchpairs_value(opening, closing, backward)
-    -- `[` and `]` should be escaped to process by searchpairpos()
+local function matchpairs_value(left, right, backward)
+    -- `[` and `]` should be escaped to process by vim regex in `searchpairpos()`
     local escape_symbols = ']['
 
     return {
-        opening = vim.fn.escape(opening, escape_symbols),
-        closing = vim.fn.escape(closing, escape_symbols),
+        left = vim.fn.escape(left, escape_symbols),
+        right = vim.fn.escape(right, escape_symbols),
         backward = backward
     }
 end
 
--- Updates `matchpairs` table only if it was changed
+-- Updates `matchpairs` table only if it was changed can be changed by buffer local option
 function M.create_matchpairs()
     if conf.cached_matchpairs_opt == vim.o.matchpairs then return end
 
-    conf.cached_matchpairs_opt = vim.o.matchpairs
-
     conf.matchpairs = {}
     conf.matchpairs_ts = {}
-    for o, c in pairs(splitted_matchpairs()) do
-        conf.matchpairs[o] = matchpairs_value(o, c, false)
-        conf.matchpairs[c] = matchpairs_value(o, c, true)
-        conf.matchpairs_ts[o] = { opening = o, closing = c, backward = false }
-        conf.matchpairs_ts[c] = { opening = o, closing = c, backward = true }
+    conf.cached_matchpairs_opt = vim.o.matchpairs
+    for l, r in pairs(splitted_matchpairs()) do
+        conf.matchpairs[l] = matchpairs_value(l, r, false)
+        conf.matchpairs[r] = matchpairs_value(l, r, true)
+        -- for now matchpairs_ts is required because lua doesn't accept escaped `][`
+        conf.matchpairs_ts[l] = { left = l, right = r, backward = false }
+        conf.matchpairs_ts[r] = { left = l, right = r, backward = true }
     end
 end
 
