@@ -1,0 +1,97 @@
+*matchparen.nvim*    matchparen plugin with treesitter support
+
+Author: monkoose <https://github.com/monkoose>
+License: MIT license
+
+==============================================================================
+CONTENTS
+
+    Introduction                   |matchparen.nvim-introduction|
+    Usage                          |matchparen.nvim-usage|
+    Configuration                  |matchparen.nvim-configuration|
+    Credits                        |matchparen.nvim-credits|
+
+==============================================================================
+INTRODUCTION                                    *matchparen.nvim-introduction*
+
+|matchparen.nvim| is alternative to |matchparen| plugin shipped with neovim.
+It is faster, fixes some annoying bugs and properly limit highlighting of
+brackets inside comments and strings in treesitter parsed buffers.
+
+==============================================================================
+USAGE                                                  *matchparen.nvim-usage*
+
+Disable default |matchparen| plugin inside init.vim
+>
+    let g:loaded_matchparen = 1
+
+or inside init.lua
+>
+    vim.g.loaded_matchparen = 1
+<
+                                         *:MatchParenEnable* *:MatchParenDisable*
+To enable highlighting if it was previously disabled or `on_startup = false` >
+    :MatchParenEnable
+
+To temporary disable plugin >
+    :MatchParenDisable
+
+==============================================================================
+CONFIGURATION                                  *matchparen.nvim-configuration*
+
+To configure the plugin you need to setup it inside init.vim >
+    lua <<EOF
+        require('matchparen').setup()
+    EOF
+
+or inside init.lua >
+    require('matchparen').setup()
+
+`setup()` function accepts table with following keys
+    on_startup~
+        Boolean. If `true` the plugin will highlight brackets on neovim start.
+    timeout~
+        Number in milliseconds. If processing to highlight brackets takes that
+        match or more time, than skip highlighting. It is used only inside
+        buffers with built-in syntax highlighting, for buffers that parsed
+        with treesitter it has no effect.
+    timeout_insert~
+        Number in milliseconds. Same as above, but in insert mode.
+    hl_group~
+        String. Highlight group.
+    augroup_name~
+        String. Name for augroup that created by the plugin. In most
+        situations you don't need to change it, only if for some reason you
+        already have augroup with the same name, to prevent it deleted by the
+        plugin.
+    syntax_skip_groups~
+        Table of strings. Syntax groups where to limit brackets highlighting
+        in this region if the cursor is inside it or skip such groups if the
+        cursor is outside.
+    ts_skip_groups~
+        Table of strings. Same as above but for treesitter types of nodes.
+
+Defaults are >
+    require('matchparen').setup({
+        on_startup = true,
+        timeout = 150,
+        timeout_insert = 50,
+        hl_group = 'MatchParen',
+        augroup_name = 'matchparen',
+        syntax_skip_groups = {
+            'string',
+            'comment',
+            'character',
+            'singlequoute',
+            'escape',
+            'symbol',
+        },
+        ts_skip_groups = {
+            'string',
+            'comment',
+            'quoted_attribute',
+        }
+    })
+
+==============================================================================
+vim:tw=78:ft=help:norl:fen:
