@@ -3,3 +3,7 @@
 function! matchparen#skip() abort
     return luaeval("require'matchparen.syntax'.in_syntax_skip_groups()")
 endfunction
+
+function! matchparen#ts_skip() abort
+    return luaeval("require'matchparen.treesitter'.in_ts_skip_groups()")
+endfunction

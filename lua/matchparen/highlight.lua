@@ -48,15 +48,17 @@ local function get_match_pos(bracket, line, col, insert)
 
     if parser then  -- buffer has ts parser, so use treesitter to match pair
         parser:for_each_tree(function(tree)
+            local root = tree:root()
+            conf.ts_root = root
             if not match_line then
-                local node_at_cursor = ts.node_at(tree:root(), line - 1, col)
+                local node_at_cursor = ts.node_at(root, line - 1, col)
                 local full_node = ts.get_node_of_type(node_at_cursor, conf.ts_skip_groups)
                 if full_node then
                     match_line, match_col = ts.get_skip_match_pos(conf.matchpairs[bracket],
                                                                   full_node, line, insert)
                 else
-                    match_line, match_col = ts.get_match_pos(conf.matchpairs_ts[bracket],
-                                                             bracket, node_at_cursor, col)
+                    match_line, match_col = ts.get_match_pos(conf.matchpairs[bracket],
+                                                             line, insert)
                 end
             end
         end)
