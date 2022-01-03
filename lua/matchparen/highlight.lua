@@ -35,6 +35,12 @@ local function apply_highlight(x_line, x_col, y_line, y_col)
     end
 end
 
+-- Returns true if current buffer has treesitter highlight enabled
+local function has_ts_highlight()
+    local bufnr = vim.api.nvim_get_current_buf()
+    return vim.treesitter.highlighter.active[bufnr] ~= nil
+end
+
 -- Returns matched bracket position
 -- @param bracket (string) which bracket to match
 -- @param line (number) line number of `bracket`
@@ -44,9 +50,9 @@ end
 local function get_match_pos(bracket, line, col, insert)
     local match_line
     local match_col
-    conf.parser = ts.get_parser()
 
-    if conf.parser then  -- buffer has ts parser, so use treesitter to match pair
+    if has_ts_highlight() then
+        conf.parser = ts.get_parser()
         local skip, skip_node = ts.skip(conf.parser, conf.ts_skip_groups, line - 1, col)
         if skip then
             match_line, match_col = ts.get_skip_match_pos(conf.matchpairs[bracket],
@@ -55,7 +61,7 @@ local function get_match_pos(bracket, line, col, insert)
             match_line, match_col = ts.get_match_pos(conf.matchpairs[bracket],
                                                         line, insert)
         end
-    else  -- no ts parser, try built-in syntax to skip highlighting in strings and comments
+    else  -- try built-in syntax to skip highlighting in strings and comments
         match_line, match_col = syntax.get_match_pos(conf.matchpairs[bracket], line, insert)
     end
     return match_line, match_col
