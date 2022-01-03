@@ -65,6 +65,27 @@ function M.get_node_of_type(node, types)
     end
 end
 
+-- Returns true if any tree of ts parser has any of match in `skip_groups` at line and col position
+-- @param parser (ts parser)
+-- @param skip_groups (list of strings)
+-- @param line (number)
+-- @param col (number)
+-- @return (bool, treesitter node or nil)
+function M.skip(parser, skip_groups, line, col)
+    local skip = false
+    local skip_node
+    parser:for_each_tree(function(tree)
+        if not skip then
+            local node_at_cursor = M.node_at(tree:root(), line, col)
+            skip_node = M.get_node_of_type(node_at_cursor, skip_groups)
+            if skip_node then
+                skip = true
+            end
+        end
+    end)
+    return skip, skip_node
+end
+
 -- Returns 0-based line and column of matched bracket if any or nil
 -- @param matchpair
 -- @param node (treesitter node)
@@ -100,6 +121,9 @@ function M.get_skip_match_pos(matchpair, node, line, insert)
     end
 end
 
+-- Returns true if the cursor is inside ts type
+-- that match any value in `ts_skip_groups` option list
+-- @return (bool)
 function M.in_ts_skip_groups()
     local line, col = unpack(vim.api.nvim_win_get_cursor(0))
 
@@ -107,10 +131,8 @@ function M.in_ts_skip_groups()
         return false
     end
 
-    local node = M.node_at(conf.ts_root, line - 1, col)
-    local full_node = M.get_node_of_type(node, conf.ts_skip_groups)
-
-    return full_node and true or false
+    local skip = M.skip(conf.parser, conf.ts_skip_groups, line - 1, col)
+    return skip
 end
 
 -- Returns 0-based line and column of matched bracket if any or nil
