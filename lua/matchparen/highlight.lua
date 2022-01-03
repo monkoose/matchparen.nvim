@@ -63,7 +63,7 @@ end
 
 -- Updates the highlight of brackets by first removing previous highlight
 -- and then if there is matching brackets at the new cursor position highlight them
-function M.update()
+function M.update(in_insert)
     M.remove()
     vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
 
@@ -78,7 +78,7 @@ function M.update()
     -- increment it for `string.sub()` to get correct result
     local inc_col = cursor_col + 1
     local bracket = text:sub(inc_col, inc_col)
-    local in_insert = is_in_insert_mode()
+    in_insert = is_in_insert_mode() or in_insert
     -- `shift` variable used for insert mode to check if we should shift
     -- the cursor position to the left by one column, neovim matchparen calculates bracket
     -- size, but i'm not sure why, does someone use multicolumn characters for `matchpairs` option?

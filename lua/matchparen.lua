@@ -34,6 +34,7 @@ function M.create_autocmds()
             autocmd!
             autocmd WinEnter,BufWinEnter,FileType,VimEnter * lua require'matchparen.utils'.create_matchpairs()
             autocmd CursorMoved,CursorMovedI,WinEnter * lua require'matchparen.highlight'.update()
+            autocmd InsertEnter * lua require'matchparen.highlight'.update(true)
             autocmd TextChanged,TextChangedI * lua require'matchparen.highlight'.update_on_tick()
             autocmd WinLeave,BufLeave * lua require'matchparen.highlight'.remove()
             autocmd OptionSet matchpairs lua require'matchparen.utils'.create_matchpairs()
