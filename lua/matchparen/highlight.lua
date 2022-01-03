@@ -65,6 +65,7 @@ end
 -- and then if there is matching brackets at the new cursor position highlight them
 function M.update()
     M.remove()
+    vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
 
     local cursor_line, cursor_col = unpack(vim.api.nvim_win_get_cursor(0))
     -- Do not process current line if it is in closed fold
@@ -112,6 +113,12 @@ function M.update()
     -- If shift was true `cursor_col` should be decremented to highlight correct bracket
     cursor_col = shift and cursor_col - 1 or cursor_col
     apply_highlight(cursor_line - 1, cursor_col, match_line, match_col)
+end
+
+function M.update_on_tick()
+    if vim.g.matchparen_tick ~= vim.api.nvim_buf_get_changedtick(0) then
+        M.update()
+    end
 end
 
 return M

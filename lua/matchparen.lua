@@ -33,8 +33,8 @@ function M.create_autocmds()
         vim.cmd [[
             autocmd!
             autocmd WinEnter,BufWinEnter,FileType,VimEnter * lua require'matchparen.utils'.create_matchpairs()
-            autocmd CursorMoved,CursorMovedI * lua require'matchparen.highlight'.update()
-            autocmd TextChanged,TextChangedI,WinEnter * lua require'matchparen.highlight'.update()
+            autocmd CursorMoved,CursorMovedI,WinEnter * lua require'matchparen.highlight'.update()
+            autocmd TextChanged,TextChangedI * lua require'matchparen.highlight'.update_on_tick()
             autocmd WinLeave,BufLeave * lua require'matchparen.highlight'.remove()
             autocmd OptionSet matchpairs lua require'matchparen.utils'.create_matchpairs()
         augroup END
