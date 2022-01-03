@@ -52,9 +52,7 @@ or inside init.lua >
         Boolean. If `true` the plugin will highlight brackets on neovim start.
     timeout~
         Number in milliseconds. If processing to highlight brackets takes that
-        match or more time, than skip highlighting. It is used only inside
-        buffers with built-in syntax highlighting, for buffers that parsed
-        with treesitter it has no effect.
+        match or more time, than skip highlighting.
     timeout_insert~
         Number in milliseconds. Same as above, but in insert mode.
     hl_group~

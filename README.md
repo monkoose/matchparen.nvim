@@ -1,9 +1,11 @@
 ## Matchparen.nvim
 ### alternative to default neovim matchparen plugin
 
-**BE AWARE:** even if it is already usable the plugin is under development, so breaking changes may happen.
-And you could expect wrong highlighting in some situations. If you have found one, don't be lazy and just uninstall it,
-instead let me know in the issues.
+**BE AWARE:** highlighting should work as expected, but jumping to highlighted
+bracket with `%` or text objects as `i(`, `a[` etc not implemented yet, so it
+could work improperly when there are some unmatched brackets in strings or
+comments inside highlighted brackets. With default plugin you will have the
+same behavior.
 
 It fixes some bugs of the default plugin like:
 - wrong highlights of matched characters in comments and strings in files with TreeSitter syntax highlighting
@@ -11,11 +13,7 @@ It fixes some bugs of the default plugin like:
 - doesn't recolor characters of floating windows
 - and others
 
-It is also much faster (~10 times in my synthetic tests) in treesitter parsed buffers and without any
-spikes, so highlighting of matched brackets should not exceed 2-3ms and in most cases it is less then 0.2ms on
-my laptop. In buffers that are not parsed by treesitter it is still faster when cursor is not at matching bracket
-at the same ~10 times, but on matched it is still take almost the same time as default plugin and in some situations
-with high spikes of 100ms+ to highlighting matched brackets (once again the same as default), mostly because of slow `synstack()` function.
+It is also much faster (5-10 times in my synthetic tests).
 
 ### Installation
 
