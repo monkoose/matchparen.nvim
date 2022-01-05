@@ -1,56 +1,33 @@
 local conf = require('matchparen').config
-local hl = require('matchparen.highlight')
-local mp = require('matchparen')
 
 local M = {}
 
--- @return (table)
-local function splitted_matchpairs()
-    local t = {}
-    for _, pair in ipairs(vim.opt.matchpairs:get()) do
-        -- matchpairs option devide each pair with `:`, so we split by it
-        local left, right = pair:match('(.+):(.+)')
-        t[left] = right
+-- Returns matched position of vim.fn.searchpairpos call
+-- @param matchpair
+-- @param skip_ref string vim function reference
+-- @param line number 1-based line number
+-- @param insert boolean is in insert mode
+-- @return (number, number) or nil
+function M.search_pair_pos(matchpair, skip_ref, line, insert)
+    local flags = matchpair.backward and 'bnW' or 'nW'
+    local timeout = insert and conf.timeout_insert or conf.timeout
+    local win_height = vim.api.nvim_win_get_height(0)
+    -- highlight characters offscreen, so such characters scrolled into view would be highlited
+    local stopline = matchpair.backward and math.max(1, line - win_height) or (line + win_height)
+    -- `searchpairpos()` can cause errors when evaluating `skip_ref` expression
+    -- so it should be handled
+    local ok, match_pos = pcall(vim.fn.searchpairpos,
+                                matchpair.left,
+                                '',
+                                matchpair.right,
+                                flags,
+                                skip_ref,
+                                stopline,
+                                timeout)
+    if ok and match_pos[1] > 0 then
+        -- `searchpairpos()` returns 1-based results, but we work with 0-based
+        return match_pos[1] - 1, match_pos[2] - 1
     end
-    return t
-end
-
--- generates value for `matchpairs` table
--- @return (table)
-local function matchpairs_value(left, right, backward)
-    -- `[` and `]` should be escaped to process by vim regex in `searchpairpos()`
-    local escape_symbols = ']['
-
-    return {
-        left = vim.fn.escape(left, escape_symbols),
-        right = vim.fn.escape(right, escape_symbols),
-        backward = backward
-    }
-end
-
--- Updates `matchpairs` table only if it was changed can be changed by buffer local option
-function M.create_matchpairs()
-    if conf.cached_matchpairs_opt == vim.o.matchpairs then return end
-
-    conf.matchpairs = {}
-    conf.cached_matchpairs_opt = vim.o.matchpairs
-    for l, r in pairs(splitted_matchpairs()) do
-        conf.matchpairs[l] = matchpairs_value(l, r, false)
-        conf.matchpairs[r] = matchpairs_value(l, r, true)
-    end
-end
-
--- Enables plugin
-function M.enable()
-    mp.create_autocmds()
-    M.create_matchpairs()
-    hl.update()
-end
-
--- Disables plugin
-function M.disable()
-    mp.remove_autocmds()
-    hl.remove()
 end
 
 return M

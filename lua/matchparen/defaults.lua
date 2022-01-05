@@ -23,6 +23,5 @@ return {
     ts_skip_groups = {
         'string',
         'comment',
-        'quoted_attribute',
     }
 }

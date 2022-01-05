@@ -67,7 +67,8 @@ or inside init.lua >
         in this region if the cursor is inside it or skip such groups if the
         cursor is outside.
     ts_skip_groups~
-        Table of strings. Same as above but for treesitter types of nodes.
+        Table of strings. Same as above but for treesitter highlighting query
+        captures.
 
 Defaults are >
     require('matchparen').setup({
@@ -87,7 +88,6 @@ Defaults are >
         ts_skip_groups = {
             'string',
             'comment',
-            'quoted_attribute',
         }
     })
 

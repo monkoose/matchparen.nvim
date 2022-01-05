@@ -57,7 +57,7 @@ require('matchparen').setup({
     timeout = 150, -- timeout in ms to drop searching for matched character in normal mode
     timeout_insert = 50, -- same but in insert mode
     hl_group = 'MatchParen', -- highlight group for matched characters
-    augroup_name = 'matchparen',  -- almost no reason to touch this if you don't already have augroup with this name
+    augroup_name = 'matchparen',  -- almost no reason to touch this unless
 
 
     -- list of neovim default syntax names to match brackets only in this blocks
@@ -70,11 +70,10 @@ require('matchparen').setup({
         'symbol',
     },
 
-    -- list of TreeSitter names to match brackets only in this blocks
+    -- list of TreeSitter query captures to match brackets only in this blocks
     ts_skip_groups = {
         'string',
         'comment',
-        'quoted_attribute',
     }
 })
 ```

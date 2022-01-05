@@ -9,8 +9,8 @@ end
 -- commands
 local function create_commands()
     vim.cmd [[
-        silent! command MatchParenEnable lua require'matchparen.utils'.enable()
-        silent! command MatchParenDisable lua require'matchparen.utils'.disable()
+        silent! command MatchParenEnable lua require'matchparen.matchpairs'.enable()
+        silent! command MatchParenDisable lua require'matchparen.matchpairs'.disable()
     ]]
 end
 
@@ -32,12 +32,12 @@ function M.create_autocmds()
         vim.cmd('augroup ' .. M.config.augroup_name)
         vim.cmd [[
             autocmd!
-            autocmd WinEnter,BufWinEnter,FileType,VimEnter * lua require'matchparen.utils'.create_matchpairs()
+            autocmd WinEnter,BufWinEnter,FileType,VimEnter * lua require'matchparen.matchpairs'.create()
             autocmd CursorMoved,CursorMovedI,WinEnter * lua require'matchparen.highlight'.update()
             autocmd InsertEnter * lua require'matchparen.highlight'.update(true)
             autocmd TextChanged,TextChangedI * lua require'matchparen.highlight'.update_on_tick()
             autocmd WinLeave,BufLeave * lua require'matchparen.highlight'.remove()
-            autocmd OptionSet matchpairs lua require'matchparen.utils'.create_matchpairs()
+            autocmd OptionSet matchpairs lua require'matchparen.matchpairs'.create()
         augroup END
         ]]
     end

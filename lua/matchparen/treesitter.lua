@@ -1,12 +1,10 @@
 local conf = require('matchparen').config
-
-local COMMENT = 'comment'
+local utils = require('matchparen.utils')
 
 local M = {}
 
 -- copied from nvim-tresitter plugin
 -- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
-
 --- Determines whether (line, col) position is in node range
 -- @param node Node defining the range
 -- @param line A line (0-based)
@@ -29,127 +27,105 @@ local function is_in_node_range(node, line, col)
     end
 end
 
--- Returns treesitter parser for current buffer or nil
-function M.get_parser()
-    local ok, parser = pcall(vim.treesitter.get_parser)
+-- Returns treesitter node at `line` and `col` position if it is in `captures` list
+-- @return treesitter node or nil
+local function get_skip_node(highlighter, captures, line, col)
+    local skip_node
+    highlighter.tree:for_each_tree(function(tstree, tree)
+        if skip_node then return end
+        if not tstree then return end
 
-    if not ok then return end
-    return parser
+        local root = tstree:root()
+        local root_start_line, _, root_end_line, _ = root:range()
+        -- Only worry about trees within the line range
+        if root_start_line > line or root_end_line < line then return end
+
+        local query = highlighter:get_query(tree:lang())
+        -- Some injected languages may not have highlight queries.
+        if not query:query() then return end
+
+        local iter = query:query():iter_captures(root, highlighter.bufnr, line, line + 1)
+        for id, node in iter do
+            if is_in_node_range(node, line, col) then
+                if vim.tbl_contains(captures, query._query.captures[id]) then
+                    skip_node = node
+                    break
+                end
+            end
+        end
+    end, true)
+
+    return skip_node
 end
 
--- Returs node at line and column position
-function M.node_at(root, line, col)
-    return root:descendant_for_range(line, col, line, col + 1)
-end
-
--- True if `str` constains `pattern`
--- @param str (string)
--- @param pattern (string)
--- @return (bool)
+-- Determines whether `str` constains `pattern`
+-- @param str string
+-- @param pattern string
+-- @return boolean
 local function str_contains(str, pattern)
     return str:find(pattern, 1, true) ~= nil
 end
 
--- Returns `node` or the first parent of it that has one of the `types`
--- @param node (treesitter node)
--- @param types (list of strings) of all looking types
--- @return (treesitter node) or nil
-function M.get_node_of_type(node, types)
-    while node do
-        for _, type in ipairs(types) do
-            if str_contains(node:type(), type) then
-                return node
-            end
-        end
-        node = node:parent()
-    end
+-- Determines wheter `node` is type of comment
+-- @return boolean
+local function is_node_comment(node)
+    return str_contains(node:type(), 'comment')
 end
 
--- Returns true if any tree of ts parser has any of match in `skip_groups` at line and col position
--- @param parser (ts parser)
--- @param skip_groups (list of strings)
--- @param line (number)
--- @param col (number)
--- @return (bool, treesitter node or nil)
-function M.skip(parser, skip_groups, line, col)
-    local skip = false
-    local skip_node
-    parser:for_each_tree(function(tree)
-        if not skip then
-            local node_at_cursor = M.node_at(tree:root(), line, col)
-            skip_node = M.get_node_of_type(node_at_cursor, skip_groups)
-            if skip_node then
-                skip = true
-            end
-        end
-    end)
-    return skip, skip_node
+-- Returns treesitter highlighter for current buffer or nil
+function M.get_highlighter()
+    local bufnr = vim.api.nvim_get_current_buf()
+    return vim.treesitter.highlighter.active[bufnr]
+end
+
+-- Determines whether the cursor is inside ts type in (ts_skip_groups) option
+-- @return boolean
+function M.in_ts_skip_groups()
+    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+    if vim.fn.foldclosed(line) ~= -1 then
+        return false
+    end
+    return get_skip_node(conf.ts_highlighter, conf.ts_skip_groups, line - 1, col) ~= nil
 end
 
 -- Returns 0-based line and column of matched bracket if any or nil
 -- @param matchpair
--- @param node (treesitter node)
--- @param line 0-based current line number
--- @param insert true if in insert mode
--- @return number, number or nil
-function M.get_skip_match_pos(matchpair, node, line, insert)
-    local match_line
-    local match_col
-    local flags = matchpair.backward and 'bnW' or 'nW'
-    local timeout = insert and conf.timeout_insert or conf.timeout
-    local win_height = vim.api.nvim_win_get_height(0)
-    local stopline = matchpair.backward and math.max(1, line - win_height) or (line + win_height)
-    local ok, match_pos = pcall(vim.fn.searchpairpos,
-                                matchpair.left, '', matchpair.right, flags, '', stopline, timeout)
+-- @param line 1-based line number
+-- @param col 0-based column number
+-- @param insert boolean true if in insert mode
+-- @return (number, number) or nil
+function M.get_match_pos(matchpair, line, col, insert)
+    local node = get_skip_node(conf.ts_highlighter, conf.ts_skip_groups, line - 1, col)
+    -- TODO: this if condition only to fix annotying bug when treesitter isn't updated
+    if node and not is_node_comment(node) then
+        if not is_in_node_range(node, line - 1, col + 1) then
+            node = false
+        end
+    end
+    local skip_ref = node and '' or 'matchparen#ts_skip()'
+    local match_line, match_col = utils.search_pair_pos(matchpair, skip_ref, line, insert)
 
-    if ok then
-        match_line = match_pos[1] - 1
-        match_col = match_pos[2] - 1
-        local move_to_sibling = matchpair.backward and 'prev_sibling' or 'next_sibling'
-
+    -- if in string or comment
+    if node then
+        local go_to_sibling = matchpair.backward and 'prev_sibling' or 'next_sibling'
         while node do
+            -- limit search to current node only
             if is_in_node_range(node, match_line, match_col) then
-                return match_line, match_col
+                break
             end
-            if str_contains(node:type(), COMMENT) then
-                node = node[move_to_sibling](node)
-                if not (node and str_contains(node:type(), COMMENT)) then return end
+            -- but increase search limit for connected line comments if needed
+            if is_node_comment(node) then
+                node = node[go_to_sibling](node)
+                if not (node and is_node_comment(node)) then
+                    return
+                end
             else
                 return
             end
         end
     end
-end
 
--- Returns true if the cursor is inside ts type
--- that match any value in `ts_skip_groups` option list
--- @return (bool)
-function M.in_ts_skip_groups()
-    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-
-    if vim.fn.foldclosed(line) ~= -1 then
-        return false
-    end
-
-    local skip = M.skip(conf.parser, conf.ts_skip_groups, line - 1, col)
-    return skip
-end
-
--- Returns 0-based line and column of matched bracket if any or nil
--- @param matchpair
--- @param line 1-based current line number
--- @param insert (boolean) true if in insert mode
--- @return number, number or nil
-function M.get_match_pos(matchpair, line, insert)
-    local flags = matchpair.backward and 'bnW' or 'nW'
-    local timeout = insert and conf.timeout_insert or conf.timeout
-    local win_height = vim.api.nvim_win_get_height(0)
-    local stopline = matchpair.backward and math.max(1, line - win_height) or (line + win_height)
-    local ok, match_pos = pcall(vim.fn.searchpairpos,
-                                matchpair.left, '', matchpair.right, flags, 'matchparen#ts_skip()', stopline, timeout)
-
-    if not ok or match_pos[1] == 0 then return end
-    return match_pos[1] - 1, match_pos[2] - 1
+    return match_line, match_col
 end
 
 return M
