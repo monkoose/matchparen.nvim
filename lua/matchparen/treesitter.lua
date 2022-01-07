@@ -29,9 +29,10 @@ end
 
 -- Returns treesitter node at `line` and `col` position if it is in `captures` list
 -- @return treesitter node or nil
-local function get_skip_node(highlighter, captures, line, col)
+local function get_skip_node(line, col)
     local skip_node
-    highlighter.tree:for_each_tree(function(tstree, tree)
+    local hl = conf.ts_highlighter
+    hl.tree:for_each_tree(function(tstree, tree)
         if skip_node then return end
         if not tstree then return end
 
@@ -40,14 +41,14 @@ local function get_skip_node(highlighter, captures, line, col)
         -- Only worry about trees within the line range
         if root_start_line > line or root_end_line < line then return end
 
-        local query = highlighter:get_query(tree:lang())
+        local query = hl:get_query(tree:lang())
         -- Some injected languages may not have highlight queries.
         if not query:query() then return end
 
-        local iter = query:query():iter_captures(root, highlighter.bufnr, line, line + 1)
+        local iter = query:query():iter_captures(root, hl.bufnr, line, line + 1)
         for id, node in iter do
             if is_in_node_range(node, line, col) then
-                if vim.tbl_contains(captures, query._query.captures[id]) then
+                if vim.tbl_contains(conf.ts_skip_groups, query._query.captures[id]) then
                     skip_node = node
                     break
                 end
@@ -78,14 +79,10 @@ function M.get_highlighter()
     return vim.treesitter.highlighter.active[bufnr]
 end
 
--- Determines whether the cursor is inside ts type in (ts_skip_groups) option
+-- Determines whether the cursor is inside conf.ts_skip_groups option
 -- @return boolean
-function M.in_ts_skip_groups()
-    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-    if vim.fn.foldclosed(line) ~= -1 then
-        return false
-    end
-    return get_skip_node(conf.ts_highlighter, conf.ts_skip_groups, line - 1, col) ~= nil
+function M.in_ts_skip_region()
+    return utils.in_skip_region(get_skip_node)
 end
 
 -- Returns 0-based line and column of matched bracket if any or nil
@@ -95,7 +92,7 @@ end
 -- @param insert boolean true if in insert mode
 -- @return (number, number) or nil
 function M.get_match_pos(matchpair, line, col, insert)
-    local node = get_skip_node(conf.ts_highlighter, conf.ts_skip_groups, line - 1, col)
+    local node = get_skip_node(line - 1, col)
     -- TODO: this if condition only to fix annotying bug when treesitter isn't updated
     if node and not is_node_comment(node) then
         if not is_in_node_range(node, line - 1, col + 1) then

@@ -30,4 +30,16 @@ function M.search_pair_pos(matchpair, skip_ref, line, insert)
     end
 end
 
+-- Determines if cursor is in a specific region
+-- @param fn function that return nil outside of region
+-- @return boolean
+function M.in_skip_region(fn)
+    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+    if vim.fn.foldclosed(line) ~= -1 then
+        return false
+    end
+
+    return fn(line - 1, col) ~= nil
+end
+
 return M
