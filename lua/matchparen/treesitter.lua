@@ -106,7 +106,7 @@ function M.get_match_pos(matchpair, line, col, insert)
     local match_line, match_col = utils.search_pair_pos(matchpair, skip_ref, line, insert)
 
     -- if in string or comment
-    if node then
+    if node and match_line then
         local go_to_sibling = matchpair.backward and 'prev_sibling' or 'next_sibling'
         while node do
             -- limit search to current node only
