@@ -16,6 +16,7 @@ end
 
 -- setup
 function M.setup(options)
+    vim.g.loaded_matchparen = 1
     M.config = vim.tbl_deep_extend('force', defaults, options or {})
     M.config.namespace = vim.api.nvim_create_namespace(M.config.augroup_name)
     M.config.extmarks = { current = 0, match = 0 }

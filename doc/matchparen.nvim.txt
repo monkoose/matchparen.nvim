@@ -21,14 +21,6 @@ brackets inside comments and strings in treesitter parsed buffers.
 ==============================================================================
 USAGE                                                  *matchparen.nvim-usage*
 
-Disable default |matchparen| plugin inside init.vim
->
-    let g:loaded_matchparen = 1
-
-or inside init.lua
->
-    vim.g.loaded_matchparen = 1
-<
                                          *:MatchParenEnable* *:MatchParenDisable*
 To enable highlighting if it was previously disabled or `on_startup = false` >
     :MatchParenEnable

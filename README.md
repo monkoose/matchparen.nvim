@@ -29,21 +29,12 @@ use 'monkoose/matchparen.nvim'
 
 ### Usage
 
-You need to disable default matchparen plugin
-```vim
-let g:loaded_matchparen = 1
-```
-or
-```lua
-vim.g.loaded_matchparen = 1
-```
-
-Initialize it with this line somewhere in your config
+Initialize the plugin with this line somewhere in your config
 ```lua
 require('matchparen').setup()
 ```
 
-There is two commands to temporary disable or enable the plugin
+There are two commands to temporary disable or enable the plugin
 ```
 :MatchParenDisable
 :MatchParenEnable
