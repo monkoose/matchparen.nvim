@@ -42,4 +42,84 @@ function M.in_skip_region(fn)
     return fn(line - 1, col) ~= nil
 end
 
+local function find_forward_char(text, chars, limit)
+    local index, _, bracket = string.find(text, '([' .. chars .. '])', limit)
+    return index, bracket
+end
+
+local function find_backward_char(text, chars, limit)
+    local _, index, bracket = string.find(text:sub(1, limit), '.*([' .. chars .. '])')
+    return index, bracket
+end
+
+local function find_char(text, chars, limit, backward)
+        if backward then
+            return find_backward_char(text, chars, limit and limit - 1)
+        else
+            return find_forward_char(text, chars, limit and limit + 1)
+        end
+end
+
+local function next_line_pos(line, backward)
+    line = backward and line - 1 or line + 1
+    return line, nil
+end
+
+local function get_line(line)
+    return vim.api.nvim_buf_get_lines(0, line, line + 1, false)[1]
+end
+
+
+function M.search(char, line, col, backward, skip, stop)
+    local index
+    local text = get_line(line)
+    stop = stop or function() end
+    skip = skip or function() end
+
+    repeat
+        index = find_char(text, char, col, backward)
+
+        if index then
+            if not skip(line, col) then
+                return line, index - 1
+            end
+            col = index
+        else
+            line, col = next_line_pos(line, backward)
+            text = get_line(line)
+        end
+    until not text or stop(line, col)
+end
+
+function M.search_pair(left, right, line, col, backward, skip, stop)
+    local count = 0
+    local text = get_line(line)
+    local index, bracket
+    local chars = right .. left
+    local same_bracket = backward and right or left
+    stop = stop or function() end
+    skip = skip or function() end
+
+    repeat
+        index, bracket = find_char(text, chars, col, backward)
+        if index then
+            if not skip(line, col) then
+                if bracket == same_bracket then
+                    count = count + 1
+                else
+                    if count == 0 then
+                        return line, index - 1
+                    else
+                        count = count - 1
+                    end
+                end
+            end
+            col = index
+        else
+            line, col = next_line_pos(line, backward)
+            text = get_line(line)
+        end
+    until not text or stop(line, col)
+end
+
 return M
