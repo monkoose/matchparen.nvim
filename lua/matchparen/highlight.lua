@@ -42,15 +42,15 @@ end
 -- @param col number column of `bracket`
 -- @param insert boolean true if in insert mode
 -- @return (number, number) or nil
-local function get_match_pos(bracket, line, col, insert)
+local function get_match_pos(bracket, line, col)
     local match_line
     local match_col
     conf.ts_highlighter = ts.get_highlighter()
 
     if conf.ts_highlighter then
-        match_line, match_col = ts.get_match_pos(conf.matchpairs[bracket], line, col, insert)
+        match_line, match_col = ts.get_match_pos(conf.matchpairs[bracket], line, col)
     else  -- try built-in syntax to skip highlighting in strings and comments
-        match_line, match_col = syntax.get_match_pos(conf.matchpairs[bracket], line, insert)
+        match_line, match_col = syntax.get_match_pos(conf.matchpairs[bracket], line, col)
     end
     return match_line, match_col
 end
@@ -94,7 +94,7 @@ function M.update(in_insert)
         vim.api.nvim_win_set_cursor(0, { cursor_line, cursor_col })
     end
 
-    local match_line, match_col = get_match_pos(bracket, cursor_line, cursor_col, in_insert)
+    local match_line, match_col = get_match_pos(bracket, cursor_line - 1, cursor_col)
     if match_line then
         apply_highlight(cursor_line - 1, cursor_col, match_line, match_col)
     end

@@ -7,8 +7,8 @@ local M = {}
 -- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
 --- Determines whether (line, col) position is in node range
 -- @param node Node defining the range
--- @param line A line (0-based)
--- @param col A column (0-based)
+-- @param line number (0-based) line number
+-- @param col number (0-based) column number
 -- @return bool
 local function is_in_node_range(node, line, col)
     local start_line, start_col, end_line, end_col = node:range()
@@ -28,6 +28,8 @@ local function is_in_node_range(node, line, col)
 end
 
 -- Returns treesitter node at `line` and `col` position if it is in `captures` list
+-- @param line number (0-based) line number
+-- @param col number (0-based) column number
 -- @return treesitter node or nil
 local function get_skip_node(line, col)
     local skip_node
@@ -80,49 +82,75 @@ function M.get_highlighter()
 end
 
 -- Determines whether the cursor is inside conf.ts_skip_groups option
+-- @param line number (0-based) line
+-- @param col number (0-based) column
 -- @return boolean
-function M.in_ts_skip_region()
-    return utils.in_skip_region(get_skip_node)
+local function in_ts_skip_region(line, col)
+    return utils.in_skip_region(line, col, function(l, c)
+        return get_skip_node(l, c)
+    end)
+end
+
+-- Determines whether a search should stop if outside of the `node`
+-- @param node treesitter node
+-- @param backward boolean direction of the search
+-- @return boolean
+local function limit_by_node(node, backward)
+    return function(l, c)
+        if not c then return end
+
+        local get_sibling = backward and 'prev_sibling' or 'next_sibling'
+        while node do
+            -- limit the search to the current node only
+            if is_in_node_range(node, l, c) then
+                return false
+            end
+
+            -- but increase the search limit for connected line comments
+            if is_node_comment(node) then
+                node = node[get_sibling](node)
+                if not (node and is_node_comment(node)) then
+                    return true
+                end
+            else
+                return true
+            end
+        end
+    end
 end
 
 -- Returns 0-based line and column of matched bracket if any or nil
 -- @param matchpair
 -- @param line 1-based line number
 -- @param col 0-based column number
--- @param insert boolean true if in insert mode
 -- @return (number, number) or nil
-function M.get_match_pos(matchpair, line, col, insert)
-    local node = get_skip_node(line - 1, col)
+function M.get_match_pos(matchpair, line, col)
+    local node = get_skip_node(line, col)
     -- TODO: this if condition only to fix annotying bug when treesitter isn't updated
     if node and not is_node_comment(node) then
-        if not is_in_node_range(node, line - 1, col + 1) then
+        if not is_in_node_range(node, line, col + 1) then
             node = false
         end
     end
-    local skip_ref = node and '' or 'matchparen#ts_skip()'
-    local match_line, match_col = utils.search_pair_pos(matchpair, skip_ref, line, insert)
 
-    -- if in string or comment
-    if node and match_line then
-        local go_to_sibling = matchpair.backward and 'prev_sibling' or 'next_sibling'
-        while node do
-            -- limit search to current node only
-            if is_in_node_range(node, match_line, match_col) then
-                break
-            end
-            -- but increase search limit for connected line comments if needed
-            if is_node_comment(node) then
-                node = node[go_to_sibling](node)
-                if not (node and is_node_comment(node)) then
-                    return
-                end
-            else
-                return
-            end
+    local skip
+    local stop
+    if node then  -- inside string or comment
+        stop = limit_by_node(node, matchpair.backward)
+    else
+        skip = function(l, c)
+            return in_ts_skip_region(l, c)
         end
+        stop = utils.limit_by_line(line, matchpair.backward)
     end
 
-    return match_line, match_col
+    return utils.search_pair(matchpair.left,
+                             matchpair.right,
+                             line,
+                             col,
+                             matchpair.backward,
+                             skip,
+                             stop)
 end
 
 return M
