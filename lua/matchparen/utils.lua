@@ -42,7 +42,9 @@ local function find_forward_char(text, chars, limit)
 end
 
 local function find_backward_char(text, chars, limit)
-    local _, index, bracket = string.find(text:sub(1, limit), '.*([' .. chars .. '])')
+    text = text:sub(1, limit)
+    if not string.find(text, '([' .. chars ..'])') then return end
+    local _, index, bracket = string.find(text, '.*([' .. chars .. '])')
     return index, bracket
 end
 
