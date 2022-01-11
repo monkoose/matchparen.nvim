@@ -1,5 +1,3 @@
-local conf = require('matchparen').config
-
 local M = {}
 
 -- Determines whether cursor is in a special region
