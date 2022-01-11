@@ -2,6 +2,7 @@ local conf = require('matchparen').config
 local utils = require('matchparen.utils')
 
 local M = {}
+local root
 
 -- copied from nvim-tresitter plugin
 -- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
@@ -27,11 +28,19 @@ local function is_in_node_range(node, line, col)
     end
 end
 
+local function node_at(line, col)
+    return root:descendant_for_range(line, col, line, col + 1)
+end
+
 -- Returns treesitter node at `line` and `col` position if it is in `captures` list
 -- @param line number (0-based) line number
 -- @param col number (0-based) column number
 -- @return treesitter node or nil
-local function get_skip_node(line, col)
+local function get_skip_node(line, col, parent)
+    if parent and parent ~= node_at(line, col):parent() then
+        return true
+    end
+
     local skip_node
     local hl = conf.ts_highlighter
     hl.tree:for_each_tree(function(tstree, tree)
@@ -85,9 +94,9 @@ end
 -- @param line number (0-based) line
 -- @param col number (0-based) column
 -- @return boolean
-local function in_ts_skip_region(line, col)
+local function in_ts_skip_region(line, col, parent)
     return utils.in_skip_region(line, col, function(l, c)
-        return get_skip_node(l, c)
+        return get_skip_node(l, c, parent)
     end)
 end
 
@@ -138,8 +147,10 @@ function M.get_match_pos(matchpair, line, col)
     if node then  -- inside string or comment
         stop = limit_by_node(node, matchpair.backward)
     else
+        root = vim.treesitter.get_parser():parse()[1]:root()
+        local parent = node_at(line, col):parent()
         skip = function(l, c)
-            return in_ts_skip_region(l, c)
+            return in_ts_skip_region(l, c, parent)
         end
         stop = utils.limit_by_line(line, matchpair.backward)
     end
