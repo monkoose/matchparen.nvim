@@ -105,13 +105,18 @@ function M.search_pair(left, right, line, col, backward, skip, stop)
     col = col + 1
     stop = stop or function() end
     skip = skip or function() end
+    local ok, to_skip
 
     repeat
         index, bracket = find_char(text, chars, col, backward)
         if index then
             col = index
             index = index - 1
-            if not skip(line, index) then
+
+            ok, to_skip = pcall(skip, line, index)
+            if not ok then return end
+
+            if not to_skip then
                 if bracket == same_bracket then
                     count = count + 1
                 else
