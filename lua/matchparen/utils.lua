@@ -79,6 +79,7 @@ function M.search(char, line, col, backward, skip, stop)
             col = index
             index = index - 1
             if not skip(line, index) then
+                if stop(line, index) then return end
                 return line, index
             end
         else
