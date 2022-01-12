@@ -35,54 +35,75 @@ function M.limit_by_line(line, backward)
 end
 
 local function find_forward_char(text, chars, limit)
-    local index, _, bracket = string.find(text, '([' .. chars .. '])', limit)
+    local index, _, bracket = string.find(text, '([' .. chars .. '])', limit and limit + 1)
     return index, bracket
 end
 
-local function find_backward_char(text, chars, limit)
-    text = text:sub(1, limit)
-    if not string.find(text, '([' .. chars ..'])') then return end
-    local _, index, bracket = string.find(text, '.*([' .. chars .. '])')
-    return index, bracket
-end
-
-local function find_char(text, chars, limit, backward)
-        if backward then
-            return find_backward_char(text, chars, limit and limit - 1)
-        else
-            return find_forward_char(text, chars, limit and limit + 1)
-        end
-end
-
-local function next_line_pos(line, backward)
-    line = backward and line - 1 or line + 1
-    return line, nil
+local function find_backward_char(reversed_text, chars, limit)
+    local length = #reversed_text + 1
+    local index, bracket = find_forward_char(reversed_text, chars, limit and length - limit)
+    if index then
+        return length - index, bracket
+    end
 end
 
 local function get_line(line)
     return vim.api.nvim_buf_get_lines(0, line, line + 1, false)[1]
 end
 
+local function get_reversed_line(line)
+    local text = get_line(line)
+    if text then
+        return string.reverse(get_line(line))
+    end
+end
+
+local function increment(number)
+    return number + 1
+end
+
+local function decrement(number)
+    return number - 1
+end
 
 function M.search(char, line, col, backward, skip, stop)
     local index
-    local text = get_line(line)
+    col = col + 1
     stop = stop or function() end
     skip = skip or function() end
+    local ok, to_skip
+    local next_line
+    local find_char
+    local get_line_text
+    if backward then
+        next_line = decrement
+        find_char = find_backward_char
+        get_line_text = get_reversed_line
+    else
+        next_line = increment
+        find_char = find_forward_char
+        get_line_text = get_line
+    end
+    local text = get_line_text(line)
 
     repeat
-        index = find_char(text, char, col, backward)
+        index = find_char(text, char, col)
 
         if index then
             col = index
             index = index - 1
-            if not skip(line, index) then
+
+            ok, to_skip = pcall(skip, line, index)
+            if not ok then return end
+
+            if not to_skip then
                 if stop(line, index) then return end
                 return line, index
             end
         else
-            line, col = next_line_pos(line, backward)
-            text = get_line(line)
+            col = nil
+            line = next_line(line)
+            text = get_line_text(line)
         end
     until not text or stop(line, col)
 end
@@ -98,17 +119,31 @@ end
 -- @return (number, number) or nil
 function M.search_pair(left, right, line, col, backward, skip, stop)
     local count = 0
-    local text = get_line(line)
     local index, bracket
     local chars = right .. left
-    local same_bracket = backward and right or left
     col = col + 1
     stop = stop or function() end
     skip = skip or function() end
     local ok, to_skip
+    local same_bracket
+    local next_line
+    local find_char
+    local get_line_text
+    if backward then
+        same_bracket = right
+        next_line = decrement
+        find_char = find_backward_char
+        get_line_text = get_reversed_line
+    else
+        same_bracket = left
+        next_line = increment
+        find_char = find_forward_char
+        get_line_text = get_line
+    end
+    local text = get_line_text(line)
 
     repeat
-        index, bracket = find_char(text, chars, col, backward)
+        index, bracket = find_char(text, chars, col)
         if index then
             col = index
             index = index - 1
@@ -129,8 +164,9 @@ function M.search_pair(left, right, line, col, backward, skip, stop)
                 end
             end
         else
-            line, col = next_line_pos(line, backward)
-            text = get_line(line)
+            col = nil
+            line = next_line(line)
+            text = get_line_text(line)
         end
     until not text or stop(line, col)
 end
