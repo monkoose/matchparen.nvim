@@ -27,11 +27,11 @@ local function in_syntax_skip_region(line, col)
     end)
 end
 
--- Returns skip function for `get_match_pos()`
+-- Returns skip function for `search.match_pos()`
 -- @param line 0-based line number
 -- @param col 0-based column number
 -- @return function
-local function skip_by_region(line, col)
+function M.skip_by_region(line, col)
     local skip
     if is_syntax_on() then
         if in_syntax_skip_region(line, col) then
@@ -45,25 +45,6 @@ local function skip_by_region(line, col)
         end
     end
     return skip
-end
-
--- Returns 0-based line and column of matched bracket if any or nil
--- @param matchpair
--- @param line 0-based line number
--- @param col 0-based column number
--- @return (number, number) or nil
-function M.get_match_pos(matchpair, line, col)
-    local skip = skip_by_region(line, col)
-
-    local stop = utils.limit_by_line(line, matchpair.backward)
-
-    return utils.search_pair(matchpair.left,
-                             matchpair.right,
-                             line,
-                             col,
-                             matchpair.backward,
-                             skip,
-                             stop)
 end
 
 return M
