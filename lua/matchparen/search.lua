@@ -26,15 +26,12 @@ local function limit_by_line(line, backward)
     return stop
 end
 
-function M.char(char, line, col, backward, skip, stop)
-    local index
+function M.char(chars, line, col, backward, skip, stop)
     col = col + 1
     stop = stop or function() end
     skip = skip or function() end
-    local ok, to_skip
-    local next_line
-    local find_char
-    local get_line_text
+
+    local next_line, find_char, get_line_text
     if backward then
         next_line = utils.decrement
         find_char = utils.find_backward_char
@@ -44,16 +41,18 @@ function M.char(char, line, col, backward, skip, stop)
         find_char = utils.find_forward_char
         get_line_text = utils.get_line
     end
+
+    local index, bracket
+    local ok, to_skip
     local text = get_line_text(line)
 
     repeat
-        index = find_char(text, char, col)
-
+        index, bracket = find_char(text, chars, col)
         if index then
             col = index
             index = index - 1
 
-            ok, to_skip = pcall(skip, line, index)
+            ok, to_skip = pcall(skip, line, index, bracket)
             if not ok then return end
 
             if not to_skip then
@@ -69,64 +68,41 @@ function M.char(char, line, col, backward, skip, stop)
 end
 
 -- Returns line and column of a matched bracket
--- @param matchpair table
+-- @param left string of brackets
+-- @param right string of brackets
 -- @param line number (0-based) line number
 -- @param col number (0-based) column number
+-- @param backward boolean direction of the search
 -- @param skip function
 -- @param stop function
 -- @return (number, number) or nil
-function M.pair(matchpair, line, col, skip, stop)
+function M.pair(left, right, line, col, backward, skip, stop)
     local count = 0
-    local index, bracket
-    local chars = matchpair.right .. matchpair.left
-    col = col + 1
-    stop = stop or function() end
-    skip = skip or function() end
-    local ok, to_skip
-    local same_bracket
-    local next_line
-    local find_char
-    local get_line_text
-    if matchpair.backward then
-        same_bracket = matchpair.right
-        next_line = utils.decrement
-        find_char = utils.find_backward_char
-        get_line_text = utils.get_reversed_line
-    else
-        same_bracket = matchpair.left
-        next_line = utils.increment
-        find_char = utils.find_forward_char
-        get_line_text = utils.get_line
-    end
-    local text = get_line_text(line)
-
-    repeat
-        index, bracket = find_char(text, chars, col)
-        if index then
-            col = index
-            index = index - 1
-
-            ok, to_skip = pcall(skip, line, index)
-            if not ok then return end
-
-            if not to_skip then
-                if bracket == same_bracket then
-                    count = count + 1
-                else
-                    if count == 0 then
-                        if stop(line, index) then return end
-                        return line, index
-                    else
-                        count = count - 1
-                    end
-                end
-            end
+    local chars = right .. left
+    local same_bracket = backward and right or left
+    local skip_same_bracket = function(_, _, bracket)
+        if bracket == same_bracket then
+            count = count + 1
         else
-            col = nil
-            line = next_line(line)
-            text = get_line_text(line)
+            if count == 0 then
+                return false
+            else
+                count = count - 1
+            end
         end
-    until not text or stop(line, col)
+        return true
+    end
+
+    if skip then
+        local old_skip = skip
+        skip = function(l, c, bracket)
+            return old_skip(l, c) or skip_same_bracket(l, c, bracket)
+        end
+    else
+        skip = skip_same_bracket
+    end
+
+    return M.char(chars, line, col, backward, skip, stop)
 end
 
 -- Returns matched bracket position
@@ -135,7 +111,7 @@ end
 -- @param col number column of `bracket`
 -- @param stopline function
 -- @return (number, number) or nil
-function M.match_pos(matchpair, line, col, stopline)
+function M.match_pos(matchpair, line, col)
     local stop
     local skip
     ts.highlighter = ts.get_highlighter()
@@ -157,14 +133,14 @@ function M.match_pos(matchpair, line, col, stopline)
             skip = function(l, c)
                 return ts.in_ts_skip_region(l, c, parent)
             end
-            stop = stopline or limit_by_line(line, matchpair.backward)
+            stop = limit_by_line(line, matchpair.backward)
         end
     else  -- try built-in syntax to skip highlighting in strings and comments
         skip = syntax.skip_by_region(line, col)
-        stop = stopline or limit_by_line(line, matchpair.backward)
+        stop = limit_by_line(line, matchpair.backward)
     end
 
-    return M.pair(matchpair, line, col, skip, stop)
+    return M.pair(matchpair.left, matchpair.right, line, col, matchpair.backward, skip, stop)
 end
 
 return M
