@@ -1,7 +1,7 @@
 local conf = require('matchparen').config
 local utils = require('matchparen.utils')
 
-local M = { highlighter = nil, root = nil }
+local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
 
 -- copied from nvim-tresitter plugin
 -- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
@@ -34,39 +34,49 @@ end
 -- Returns treesitter node at `line` and `col` position if it is in `captures` list
 -- @param line number (0-based) line number
 -- @param col number (0-based) column number
+-- @param parent treesitter node
 -- @return treesitter node or nil
 function M.get_skip_node(line, col, parent)
     if parent and parent ~= M.node_at(line, col):parent() then
         return true
     end
 
-    local skip_node
-    local hl = M.highlighter
-    hl.tree:for_each_tree(function(tstree, tree)
-        if skip_node then return end
-        if not tstree then return end
-
-        local root = tstree:root()
-        local root_start_line, _, root_end_line, _ = root:range()
-        -- Only worry about trees within the line range
-        if root_start_line > line or root_end_line < line then return end
-
-        local query = hl:get_query(tree:lang())
-        -- Some injected languages may not have highlight queries.
-        if not query:query() then return end
-
-        local iter = query:query():iter_captures(root, hl.bufnr, line, line + 1)
-        for id, node in iter do
-            if M.is_in_node_range(node, line, col) then
-                if vim.tbl_contains(conf.ts_skip_groups, query._query.captures[id]) then
-                    skip_node = node
-                    break
+    if not M.skip_nodes[line] then
+        M.skip_nodes[line] = {}
+        for _, tree in ipairs(M.trees) do
+            local iter = tree.query:iter_captures(tree.root, M.hl.bufnr, line, line + 1)
+            for id, node in iter do
+                if vim.tbl_contains(conf.ts_skip_groups, tree.query.captures[id]) then
+                    table.insert(M.skip_nodes[line], node)
                 end
             end
         end
+    end
+
+    for _, node in ipairs(M.skip_nodes[line]) do
+        if M.is_in_node_range(node, line, col) then
+            return node
+        end
+    end
+end
+
+-- Returns all treesitter trees which have root nodes and highlight queries
+-- @return table
+function M.get_trees()
+    local trees = {}
+    M.hl.tree:for_each_tree(function(tstree, tree)
+        if not tstree then return end
+
+        local root = tstree:root()
+        local query = M.hl:get_query(tree:lang()):query()
+
+        -- Some injected languages may not have highlight queries.
+        if not query then return end
+
+        table.insert(trees, { root = root, query = query })
     end, true)
 
-    return skip_node
+    return trees
 end
 
 -- Determines wheter `node` is type of comment

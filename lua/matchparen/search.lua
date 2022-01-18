@@ -114,19 +114,21 @@ end
 function M.match_pos(matchpair, line, col)
     local stop
     local skip
-    ts.highlighter = ts.get_highlighter()
+    ts.hl = ts.get_highlighter()
 
-    if ts.highlighter then
-        local node = ts.get_skip_node(line, col)
-        -- FiXME: this if condition only to fix annotying bug when treesitter isn't updated
-        if node and not ts.is_node_comment(node) then
-            if not ts.is_in_node_range(node, line, col + 1) then
-                node = false
+    if ts.hl then
+        ts.trees = ts.get_trees()
+        ts.skip_nodes = {}
+        local skip_node = ts.get_skip_node(line, col)
+        -- FiXME: this if condition only to fix annotying bug for treesitter strings
+        if skip_node and not ts.is_node_comment(skip_node) then
+            if not ts.is_in_node_range(skip_node, line, col + 1) then
+                skip_node = false
             end
         end
 
-        if node then  -- inside string or comment
-            stop = ts.limit_by_node(node, matchpair.backward)
+        if skip_node then  -- inside string or comment
+            stop = ts.limit_by_node(skip_node, matchpair.backward)
         else
             ts.root = ts.get_tree_root()
             local parent = ts.node_at(line, col):parent()
