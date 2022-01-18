@@ -32,15 +32,14 @@ end
 -- Updates the highlight of brackets by first removing previous highlight
 -- and then if there is matching brackets pair at the new cursor position highlight them
 function M.update(in_insert)
-    vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
-
     M.remove()
+
+    vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
     local line, col = utils.get_current_pos()
     local inc_line = line + 1
+
     -- Do not process current line if it is in closed fold
     if vim.fn.foldclosed(inc_line) ~= -1 then return end
-    -- Should it also check for `pumvisible()` as original matchparen does?
-    -- Because I do not notice any difference and popupmenu doesn't close
 
     local text = vim.api.nvim_get_current_line()
     local inc_col = col + 1

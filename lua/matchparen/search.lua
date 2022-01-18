@@ -26,19 +26,19 @@ local function limit_by_line(line, backward)
     return stop
 end
 
-function M.char(chars, line, col, backward, skip, stop)
+function M.match(pattern, line, col, backward, skip, stop)
     col = col + 1
     stop = stop or function() end
     skip = skip or function() end
 
-    local next_line, find_char, get_line_text
+    local next_line, find, get_line_text
     if backward then
         next_line = utils.decrement
-        find_char = utils.find_backward_char
+        find = utils.find_backward
         get_line_text = utils.get_reversed_line
     else
         next_line = utils.increment
-        find_char = utils.find_forward_char
+        find = utils.find_forward
         get_line_text = utils.get_line
     end
 
@@ -47,7 +47,7 @@ function M.char(chars, line, col, backward, skip, stop)
     local text = get_line_text(line)
 
     repeat
-        index, bracket = find_char(text, chars, col)
+        index, bracket = find(text, pattern, col)
         if index then
             col = index
             index = index - 1
@@ -78,7 +78,7 @@ end
 -- @return (number, number) or nil
 function M.pair(left, right, line, col, backward, skip, stop)
     local count = 0
-    local chars = right .. left
+    local pattern = '([' .. right .. left .. '])'
     local same_bracket = backward and right or left
     local skip_same_bracket = function(_, _, bracket)
         if bracket == same_bracket then
@@ -102,7 +102,7 @@ function M.pair(left, right, line, col, backward, skip, stop)
         skip = skip_same_bracket
     end
 
-    return M.char(chars, line, col, backward, skip, stop)
+    return M.match(pattern, line, col, backward, skip, stop)
 end
 
 -- Returns matched bracket position

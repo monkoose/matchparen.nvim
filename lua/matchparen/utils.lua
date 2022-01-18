@@ -19,7 +19,7 @@ function M.is_in_insert_mode()
     return mode == 'i' or mode == 'R'
 end
 
--- Determines whether `str` constains `pattern`
+-- Returns true if `str` constains `pattern`, false otherwise
 -- @param str string
 -- @param pattern string
 -- @return boolean
@@ -34,19 +34,27 @@ function M.get_current_pos()
     return line - 1, column
 end
 
-function M.find_forward_char(text, chars, limit)
-    local index, _, bracket = string.find(text, '([' .. chars .. '])', limit and limit + 1)
+-- Returns first found index and full match substring in the `text` or nil
+-- @param text string
+-- @param pattern string
+-- @param init number same as in string.find
+-- @return (number, string) or nil
+function M.find_forward(text, pattern, init)
+    local index, _, bracket = string.find(text, pattern, init and init + 1)
     return index, bracket
 end
 
-function M.find_backward_char(reversed_text, chars, limit)
+function M.find_backward(reversed_text, pattern, init)
     local length = #reversed_text + 1
-    local index, bracket = M.find_forward_char(reversed_text, chars, limit and length - limit)
+    local index, bracket = M.find_forward(reversed_text, pattern, init and length - init)
     if index then
         return length - index, bracket
     end
 end
 
+-- Returns text for the `line` of the current buffer
+-- @param line number (0-based) line number
+-- @return string
 function M.get_line(line)
     return vim.api.nvim_buf_get_lines(0, line, line + 1, false)[1]
 end
