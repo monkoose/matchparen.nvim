@@ -144,8 +144,8 @@ function M.show_error()
     })
 
     function M.close_windows()
-        vim.api.nvim_win_close(bottom_win, false)
-        vim.api.nvim_win_close(top_win, false)
+        pcall(vim.api.nvim_win_close, bottom_win, false)
+        pcall(vim.api.nvim_win_close, top_win, false)
     end
 
     vim.cmd('autocmd WinClosed ' .. win .. ' lua require("matchparen.utils").close_windows()')
