@@ -16,10 +16,11 @@ end
 -- @return boolean
 local function in_syntax_skip_region(line, col)
     return utils.in_skip_region(line, col, function(l, c)
-        for _, id in ipairs(vim.fn.synstack(l + 1, c + 1)) do
-            local synname = string.lower(vim.fn.synIDattr(id, 'name'))
+        local synstack = vim.fn.synstack(l + 1, c + 1)
+        for i = #synstack, math.max(1, #synstack - 3), -1 do
+            local synname = string.lower(vim.fn.synIDattr(synstack[i], 'name'))
             for _, pattern in ipairs(conf.syntax_skip_groups) do
-                if string.find(synname, pattern) then
+                if utils.str_contains(synname, pattern) then
                     return true
                 end
             end
