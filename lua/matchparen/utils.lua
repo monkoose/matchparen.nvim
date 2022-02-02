@@ -118,18 +118,21 @@ function M.show_error()
     vim.api.nvim_buf_set_lines(bottom_message, 0, 1, true, { bottom_text })
     vim.highlight.range(bottom_message, 0, 'FloatBorder', { 0, 0 }, { 1, 1000 })
     vim.highlight.range(bottom_message, 0, 'Number', { 0, 1 }, { 0, 9 })
-    vim.highlight.range(bottom_message, 0, 'Number', { 0, 31 }, { 0, 33 })
-    local bottom_win = vim.api.nvim_open_win(bottom_message, 0, {
-        relative = 'editor',
-        width = bottom_width,
-        height = 1,
-        row = row + height + 1,
-        col = col + width / 2 - bottom_width / 2,
-        border = 'none',
-        style = 'minimal',
-        zindex = 1010,
-        focusable = false,
-    })
+    vim.highlight.range(bottom_message, 0, 'Number', { 0, 32 }, { 0, 34 })
+    local bottom_win
+    if bottom_width + 2 <= width then
+        bottom_win = vim.api.nvim_open_win(bottom_message, 0, {
+            relative = 'editor',
+            width = bottom_width,
+            height = 1,
+            row = row + height + 1,
+            col = col + width / 2 - bottom_width / 2,
+            border = 'none',
+            style = 'minimal',
+            zindex = 1010,
+            focusable = false,
+        })
+    end
 
     -- main window
     local win = vim.api.nvim_open_win(buf, 0, {
