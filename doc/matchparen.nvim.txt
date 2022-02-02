@@ -27,6 +27,15 @@ To enable highlighting if it was previously disabled or `on_startup = false` >
 
 To temporary disable plugin >
     :MatchParenDisable
+<
+                                                            *:MatchParenError*
+If error occurs during bracket highlighing calculation, it would not break
+you workflow and just print information message into the echo area. When this
+happens highlighing could be wrong, consider to create new issues on the
+plugin's github repository https://github.com/monkoose/matchparen.nvim/issues.
+To read full error message `:MatchParenError` could be used.
+It would open new window with full error stack. To close this window use
+`Esc` or `q`, to copy error message use `yy`.
 
 ==============================================================================
 CONFIGURATION                                  *matchparen.nvim-configuration*
