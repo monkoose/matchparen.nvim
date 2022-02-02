@@ -1,4 +1,4 @@
-local M = {}
+local M = { error = nil }
 
 -- Determines whether cursor is in a special region
 -- @param line number (0-based) line number
@@ -72,6 +72,88 @@ end
 
 function M.decrement(number)
     return number - 1
+end
+
+local function max_display_width(strings)
+    local width = 0
+    for _, str in ipairs(strings) do
+        width = math.max(vim.fn.strdisplaywidth(str), width)
+    end
+    return width
+end
+
+function M.show_error()
+    local buf = vim.api.nvim_create_buf(false, true)
+    local ui = vim.api.nvim_list_uis()[1]
+    local lines = vim.split(M.error, '\n')
+    vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
+    vim.highlight.range(buf, 0, 'ErrorMsg', { 0, 0 }, { #lines, 1000 })
+    local width = math.min(ui.width - 20, max_display_width(lines))
+    local height = math.min(ui.height - 8, #lines)
+    local col = ui.width / 2 - width / 2
+    local row = ui.height / 2 - height / 2 - 2
+
+    -- top border text
+    local top_message = vim.api.nvim_create_buf(false, true)
+    local top_text = ' matchparen Error '
+    local top_width = string.len(top_text)
+    vim.api.nvim_buf_set_lines(top_message, 0, -1, true, { top_text })
+    vim.highlight.range(top_message, 0, 'FloatBorder', { 0, 0 }, { 1, 1000 })
+    local top_win = vim.api.nvim_open_win(top_message, 0, {
+        relative = 'editor',
+        width = top_width,
+        height = 1,
+        row = row,
+        col = col + width / 2 - top_width / 2,
+        border = 'none',
+        style = 'minimal',
+        zindex = 1010,
+        focusable = false,
+    })
+
+    -- bottom border text
+    local bottom_message = vim.api.nvim_create_buf(false, true)
+    local bottom_text = ' Esc or q - closes this window, yy - to copy the error message '
+    local bottom_width = string.len(bottom_text)
+    vim.api.nvim_buf_set_lines(bottom_message, 0, 1, true, { bottom_text })
+    vim.highlight.range(bottom_message, 0, 'FloatBorder', { 0, 0 }, { 1, 1000 })
+    vim.highlight.range(bottom_message, 0, 'Number', { 0, 1 }, { 0, 9 })
+    vim.highlight.range(bottom_message, 0, 'Number', { 0, 31 }, { 0, 33 })
+    local bottom_win = vim.api.nvim_open_win(bottom_message, 0, {
+        relative = 'editor',
+        width = bottom_width,
+        height = 1,
+        row = row + height + 1,
+        col = col + width / 2 - bottom_width / 2,
+        border = 'none',
+        style = 'minimal',
+        zindex = 1010,
+        focusable = false,
+    })
+
+    -- main window
+    local win = vim.api.nvim_open_win(buf, 0, {
+        relative = 'editor',
+        width = width,
+        height = height,
+        col = col,
+        row = row,
+        border = 'single',
+        style = 'minimal',
+        zindex = 1000,
+    })
+
+    function M.close_windows()
+        vim.api.nvim_win_close(bottom_win, false)
+        vim.api.nvim_win_close(top_win, false)
+    end
+
+    vim.cmd('autocmd WinClosed ' .. win .. ' lua require("matchparen.utils").close_windows()')
+    vim.api.nvim_win_set_option(win, 'wrap', true)
+    vim.api.nvim_buf_set_option(buf, 'modifiable', false)
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<Esc>', '<Cmd>close<CR>', { noremap = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', '<Cmd>close<CR>', { noremap = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'yy', '<Cmd>%yank +<CR>', {})
 end
 
 return M

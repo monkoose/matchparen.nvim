@@ -31,7 +31,7 @@ end
 
 -- Updates the highlight of brackets by first removing previous highlight
 -- and then if there is matching brackets pair at the new cursor position highlight them
-function M.update(in_insert)
+local function update(in_insert)
     M.remove()
 
     vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
@@ -74,12 +74,30 @@ function M.update(in_insert)
     end
 end
 
+function M.pcall_update(in_insert)
+    local ok, err = xpcall(update, debug.traceback, in_insert)
+    if not ok and not utils.error then
+        utils.error = err
+        vim.cmd("silent! command MatchParenError lua require'matchparen.utils'.show_error()")
+        vim.api.nvim_echo(
+            {
+                { ' matchparen.nvim: ', 'String' },
+                { 'ERROR detected ', 'ErrorMsg' },
+                { 'highlighting could be broken, ', 'Normal' },
+                { ':MatchParenError ', 'WarningMsg' },
+                { 'for more info', 'Normal' },
+            },
+            true, {}
+        )
+    end
+end
+
 -- Updates highlighting only if changedtick is changed
 -- currently used only for TextChanged and TextChangedI autocmds
--- so they do not repeat `update()` function after CursorMoved autocmds
+-- so they do not repeat `pcall_update()` function after CursorMoved autocmds
 function M.update_on_tick()
     if vim.g.matchparen_tick ~= vim.api.nvim_buf_get_changedtick(0) then
-        M.update()
+        M.pcall_update()
     end
 end
 

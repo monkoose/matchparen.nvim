@@ -32,7 +32,7 @@ end
 function M.enable()
     mp.create_autocmds()
     M.create()
-    hl.update()
+    hl.pcall_update()
 end
 
 -- Disables plugin
