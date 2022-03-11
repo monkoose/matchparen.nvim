@@ -12,18 +12,19 @@ local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
 -- @return bool
 function M.is_in_node_range(node, line, col)
     local start_line, start_col, end_line, end_col = node:range()
-    if line >= start_line and line <= end_line then
-        if line == start_line and line == end_line then
-            return col >= start_col and col < end_col
-        elseif line == start_line then
-            return col >= start_col
-        elseif line == end_line then
-            return col < end_col
-        else
-            return true
-        end
-    else
+
+    if not (line >= start_line and line <= end_line) then
         return false
+    end
+
+    if line == start_line and line == end_line then
+        return col >= start_col and col < end_col
+    elseif line == start_line then
+        return col >= start_col
+    elseif line == end_line then
+        return col < end_col
+    else
+        return true
     end
 end
 
@@ -41,15 +42,19 @@ function M.get_skip_node(line, col, parent)
         return true
     end
 
+    local function filter_captures(tree, iter)
+        for id, node in iter do
+            if vim.tbl_contains(conf.ts_skip_groups, tree.query.captures[id]) then
+                table.insert(M.skip_nodes[line], node)
+            end
+        end
+    end
+
     if not M.skip_nodes[line] then
         M.skip_nodes[line] = {}
         for _, tree in ipairs(M.trees) do
             local iter = tree.query:iter_captures(tree.root, M.hl.bufnr, line, line + 1)
-            for id, node in iter do
-                if vim.tbl_contains(conf.ts_skip_groups, tree.query.captures[id]) then
-                    table.insert(M.skip_nodes[line], node)
-                end
-            end
+            filter_captures(tree, iter)
         end
     end
 
@@ -117,17 +122,13 @@ function M.limit_by_node(node, backward)
         local get_sibling = backward and 'prev_sibling' or 'next_sibling'
         while node do
             -- limit the search to the current node only
-            if M.is_in_node_range(node, l, c) then
-                return false
+            if M.is_in_node_range(node, l, c) then return end
+            if not M.is_node_comment(node) then
+                return true
             end
-
-            -- but increase the search limit for connected line comments
-            if M.is_node_comment(node) then
-                node = node[get_sibling](node)
-                if not (node and M.is_node_comment(node)) then
-                    return true
-                end
-            else
+            -- increase the search limit for connected comments
+            node = node[get_sibling](node)
+            if not (node and M.is_node_comment(node)) then
                 return true
             end
         end

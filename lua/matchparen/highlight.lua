@@ -6,10 +6,8 @@ local M = {}
 
 -- Creates extmark
 local function create_extmark(line, col)
-    return vim.api.nvim_buf_set_extmark(
-        0, conf.namespace, line, col,
-        { end_col = col + 1, hl_group = conf.hl_group }
-    )
+    return vim.api.nvim_buf_set_extmark(0, conf.namespace, line, col,
+                                        { end_col = col + 1, hl_group = conf.hl_group })
 end
 
 -- Deletes extmark

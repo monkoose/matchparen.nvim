@@ -9,21 +9,19 @@ local M = {}
 -- @param backward boolean direction of the search
 -- @return boolean
 local function limit_by_line(line, backward)
-    local stop
     local stopline
     local win_height = vim.api.nvim_win_get_height(0)
     if backward then
         stopline = line - win_height
-        stop = function(l)
+        return function(l)
             return l < stopline
         end
     else
         stopline = line + win_height
-        stop = function(l)
+        return function(l)
             return l > stopline
         end
     end
-    return stop
 end
 
 function M.match(pattern, line, col, backward, skip, stop)
