@@ -4,31 +4,31 @@ local search = require('matchparen.search')
 
 local M = {}
 
--- Creates extmark
+---Creates extmark
 local function create_extmark(line, col)
     return vim.api.nvim_buf_set_extmark(0, conf.namespace, line, col,
                                         { end_col = col + 1, hl_group = conf.hl_group })
 end
 
--- Deletes extmark
+---Deletes extmark
 local function delete_extmark(id)
     vim.api.nvim_buf_del_extmark(0, conf.namespace, id)
 end
 
--- Removes highlighting from matching brackets
+---Removes highlighting from matching brackets
 function M.remove()
     delete_extmark(conf.extmarks.current)
     delete_extmark(conf.extmarks.match)
 end
 
--- Highlights characters at positions x and y
+---Highlights characters at positions x and y
 local function apply_highlight(x_line, x_col, y_line, y_col)
     conf.extmarks.current = create_extmark(x_line, x_col)
     conf.extmarks.match = create_extmark(y_line, y_col)
 end
 
--- Updates the highlight of brackets by first removing previous highlight
--- and then if there is matching brackets pair at the new cursor position highlight them
+---Updates the highlight of brackets by first removing previous highlight
+---and then if there is matching brackets pair at the new cursor position highlight them
 local function update(in_insert)
     M.remove()
 
@@ -90,9 +90,9 @@ function M.pcall_update(in_insert)
     end
 end
 
--- Updates highlighting only if changedtick is changed
--- currently used only for TextChanged and TextChangedI autocmds
--- so they do not repeat `pcall_update()` function after CursorMoved autocmds
+---Updates highlighting only if changedtick is changed
+---currently used only for TextChanged and TextChangedI autocmds
+---so they do not repeat `pcall_update()` function after CursorMoved autocmds
 function M.update_on_tick()
     if vim.g.matchparen_tick ~= vim.api.nvim_buf_get_changedtick(0) then
         M.pcall_update()

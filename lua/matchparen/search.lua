@@ -4,10 +4,10 @@ local utils = require('matchparen.utils')
 
 local M = {}
 
--- Determines whether a search should stop if searched line outside of range
--- @param line number (0-based) line number
--- @param backward boolean direction of the search
--- @return boolean
+---Determines whether a search should stop if searched line outside of range
+---@param line number 0-based line number
+---@param backward boolean direction of the search
+---@return boolean
 local function limit_by_line(line, backward)
     local stopline
     local win_height = vim.api.nvim_win_get_height(0)
@@ -24,31 +24,41 @@ local function limit_by_line(line, backward)
     end
 end
 
+---Returns functions based on `backward` direction
+---@param backward boolean
+---@return function, function, function
+local function get_direction_funcs(backward)
+    if backward then
+        return utils.dec, utils.find_backward, utils.get_reversed_line
+    else
+        return utils.inc, utils.find_forward, utils.get_line
+    end
+end
+
+---Returns positon of the first match of the `pattern` in the current buffer
+---starting from `line` and `col`
+---@param pattern string
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param backward boolean direction of the search
+---@param skip function
+---@param stop function
+---@return number|nil, number
 function M.match(pattern, line, col, backward, skip, stop)
     col = col + 1
     stop = stop or function() end
     skip = skip or function() end
 
-    local next_line, find, get_line_text
-    if backward then
-        next_line = utils.decrement
-        find = utils.find_backward
-        get_line_text = utils.get_reversed_line
-    else
-        next_line = utils.increment
-        find = utils.find_forward
-        get_line_text = utils.get_line
-    end
-
     local index, bracket
     local ok, to_skip
+    local next_line, find, get_line_text = get_direction_funcs(backward)
     local text = get_line_text(line)
 
-    repeat
+    while text do
         index, bracket = find(text, pattern, col)
         if index then
             col = index
-            index = index - 1
+            index = utils.dec(index)
 
             ok, to_skip = pcall(skip, line, index, bracket)
             if not ok then return end
@@ -58,22 +68,23 @@ function M.match(pattern, line, col, backward, skip, stop)
                 return line, index
             end
         else
-            col = nil
             line = next_line(line)
+            if stop(line) then return end
+            col = nil
             text = get_line_text(line)
         end
-    until not text or stop(line, col)
+    end
 end
 
--- Returns line and column of a matched bracket
--- @param left string of brackets
--- @param right string of brackets
--- @param line number (0-based) line number
--- @param col number (0-based) column number
--- @param backward boolean direction of the search
--- @param skip function
--- @param stop function
--- @return (number, number) or nil
+---Returns line and column of a matched bracket
+---@param left string
+---@param right string
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param backward boolean direction of the search
+---@param skip function
+---@param stop function
+---@return number|nil, number
 function M.pair(left, right, line, col, backward, skip, stop)
     local count = 0
     local pattern = '([' .. right .. left .. '])'
@@ -103,12 +114,11 @@ function M.pair(left, right, line, col, backward, skip, stop)
     return M.match(pattern, line, col, backward, skip, stop)
 end
 
--- Returns matched bracket position
--- @param matchpair table
--- @param line number line of `bracket`
--- @param col number column of `bracket`
--- @param stopline function
--- @return (number, number) or nil
+---Returns matched bracket position
+---@param matchpair table
+---@param line number line of `bracket`
+---@param col number column of `bracket`
+---@return number|nil, number
 function M.match_pos(matchpair, line, col)
     local stop
     local skip

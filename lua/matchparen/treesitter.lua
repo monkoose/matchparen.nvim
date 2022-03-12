@@ -3,13 +3,14 @@ local utils = require('matchparen.utils')
 
 local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
 
--- copied from nvim-tresitter plugin
--- https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
---- Determines whether (line, col) position is in node range
--- @param node Node defining the range
--- @param line number (0-based) line number
--- @param col number (0-based) column number
--- @return bool
+---Determines whether (line, col) position is in node range
+---@param node any node defining the range
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@return boolean
+---
+---copied from nvim-tresitter plugin
+---https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
 function M.is_in_node_range(node, line, col)
     local start_line, start_col, end_line, end_col = node:range()
 
@@ -28,15 +29,19 @@ function M.is_in_node_range(node, line, col)
     end
 end
 
+---Returns treesitter node at (line, col) position
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@return any
 function M.node_at(line, col)
     return M.root:descendant_for_range(line, col, line, col + 1)
 end
 
--- Returns treesitter node at `line` and `col` position if it is in `captures` list
--- @param line number (0-based) line number
--- @param col number (0-based) column number
--- @param parent treesitter node
--- @return treesitter node or nil
+---Returns treesitter node at `line` and `col` position if it is in `captures` list
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param parent any treesitter node
+---@return table|nil node
 function M.get_skip_node(line, col, parent)
     if parent and parent ~= M.node_at(line, col):parent() then
         return true
@@ -65,8 +70,8 @@ function M.get_skip_node(line, col, parent)
     end
 end
 
--- Returns all treesitter trees which have root nodes and highlight queries
--- @return table
+---Returns all treesitter trees which have root nodes and highlight queries
+---@return table
 function M.get_trees()
     local trees = {}
     M.hl.tree:for_each_tree(function(tstree, tree)
@@ -84,39 +89,41 @@ function M.get_trees()
     return trees
 end
 
--- Determines wheter `node` is type of comment
--- @return boolean
+---Determines wheter `node` is type of comment
+---@return boolean
 function M.is_node_comment(node)
     return utils.str_contains(node:type(), 'comment')
 end
 
--- Returns treesitter highlighter for current buffer or nil
+---Returns treesitter highlighter for current buffer or nil
 function M.get_highlighter()
     local bufnr = vim.api.nvim_get_current_buf()
     return vim.treesitter.highlighter.active[bufnr]
 end
 
--- Returns treesitter tree root
+---Returns treesitter tree root
 function M.get_tree_root()
     return vim.treesitter.get_parser():parse()[1]:root()
 end
 
--- Determines whether the cursor is inside conf.ts_skip_groups option
--- @param line number (0-based) line
--- @param col number (0-based) column
--- @return boolean
+---Determines whether the cursor is inside conf.ts_skip_groups option
+---@param line number 0-based line
+---@param col number 0-based column
+---@param parent any treesitter node
+---@return boolean
 function M.in_ts_skip_region(line, col, parent)
     return utils.in_skip_region(line, col, function(l, c)
         return M.get_skip_node(l, c, parent)
     end)
 end
 
--- Determines whether a search should stop if outside of the `node`
--- @param node treesitter node
--- @param backward boolean direction of the search
--- @return boolean
+---Determines whether a search should stop if outside of the `node`
+---@param node any treesitter node
+---@param backward boolean direction of the search
+---@return boolean
 function M.limit_by_node(node, backward)
     return function(l, c)
+        -- TODO: limit by line here maybe
         if not c then return end
 
         local get_sibling = backward and 'prev_sibling' or 'next_sibling'

@@ -4,8 +4,8 @@ local mp = require('matchparen')
 
 local M = {}
 
--- Returns splitted by `:` matchpairs vim option
--- @return table
+---Returns splitted by `:` matchpairs vim option
+---@return table
 local function split()
     local t = {}
     for _, pair in ipairs(vim.opt.matchpairs:get()) do
@@ -16,7 +16,7 @@ local function split()
     return t
 end
 
--- Updates `matchpairs` table only if it was changed, can be changed by buffer local option
+---Updates `matchpairs` table only if it was changed, can be changed by buffer local option
 function M.create()
     if conf.cached_matchpairs == vim.o.matchpairs then return end
 
@@ -28,14 +28,14 @@ function M.create()
     end
 end
 
--- Enables plugin
+---Enables the plugin
 function M.enable()
     mp.create_autocmds()
     M.create()
     hl.pcall_update()
 end
 
--- Disables plugin
+---Disables the plugin
 function M.disable()
     mp.remove_autocmds()
     hl.remove()

@@ -1,10 +1,10 @@
 local M = { error = nil }
 
--- Determines whether cursor is in a special region
--- @param line number (0-based) line number
--- @param col number (0-based) column number
--- @param fn function that return nil outside of region
--- @return boolean
+---Determines whether cursor is in a special region
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param fn function that return nil outside of the region
+---@return boolean
 function M.in_skip_region(line, col, fn)
     if vim.fn.foldclosed(line + 1) ~= -1 then
         return false
@@ -12,38 +12,43 @@ function M.in_skip_region(line, col, fn)
     return fn(line, col) ~= nil
 end
 
--- Determines whether current mode is insert or Replace
--- @return boolean
+---Determines whether current mode is insert or Replace
+---@return boolean
 function M.is_in_insert_mode()
     local mode = vim.api.nvim_get_mode().mode
     return mode == 'i' or mode == 'R'
 end
 
--- Returns true if `str` constains `pattern`, false otherwise
--- @param str string
--- @param pattern string
--- @return boolean
+---Returns true if `str` constains `pattern`, false otherwise
+---@param str string
+---@param pattern string
+---@return boolean
 function M.str_contains(str, pattern)
     return str:find(pattern, 1, true) ~= nil
 end
 
--- Returns 0-based current line and column
--- @return number, number
+---Returns 0-based current line and column
+---@return number, number
 function M.get_current_pos()
     local line, column = unpack(vim.api.nvim_win_get_cursor(0))
     return line - 1, column
 end
 
--- Returns first found index and full match substring in the `text` or nil
--- @param text string
--- @param pattern string
--- @param init number same as in string.find
--- @return (number, string) or nil
+---Returns first found index and full match substring in the `text` or nil
+---@param text string
+---@param pattern string
+---@param init number same as in string.find
+---@return number|nil, string
 function M.find_forward(text, pattern, init)
     local index, _, bracket = string.find(text, pattern, init and init + 1)
     return index, bracket
 end
 
+---Returns first backward index and full match substring in the `text` or nil
+---@param reversed_text string
+---@param pattern string
+---@param init number same as in string.find
+---@return number|nil, string
 function M.find_backward(reversed_text, pattern, init)
     local length = #reversed_text + 1
     local index, bracket = M.find_forward(reversed_text, pattern, init and length - init)
@@ -52,13 +57,16 @@ function M.find_backward(reversed_text, pattern, init)
     end
 end
 
--- Returns text for the `line` of the current buffer
--- @param line number (0-based) line number
--- @return string
+---Returns text for the `line` of the current buffer
+---@param line number 0-based line number
+---@return string
 function M.get_line(line)
     return vim.api.nvim_buf_get_lines(0, line, line + 1, false)[1]
 end
 
+---Returns reversed text for the `line` of the current buffer
+---@param line number 0-based line number
+---@return string
 function M.get_reversed_line(line)
     local text = M.get_line(line)
     if text then
@@ -66,14 +74,23 @@ function M.get_reversed_line(line)
     end
 end
 
-function M.increment(number)
-    return number + 1
+---Increments `n` by 1
+---@param n number
+---@return number
+function M.inc(n)
+    return n + 1
 end
 
-function M.decrement(number)
-    return number - 1
+---Decrements `n` by 1
+---@param n number
+---@return number
+function M.dec(n)
+    return n - 1
 end
 
+---Calculates maximum width based on length of the `strings`
+---@param strings string[]
+---@return number
 local function max_display_width(strings)
     local width = 0
     for _, str in ipairs(strings) do
@@ -82,6 +99,7 @@ local function max_display_width(strings)
     return width
 end
 
+---Displays floating window with error information
 function M.show_error()
     local buf = vim.api.nvim_create_buf(false, true)
     local ui = vim.api.nvim_list_uis()[1]
