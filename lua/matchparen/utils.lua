@@ -1,5 +1,25 @@
 local M = { error = nil }
 
+---Determines whether a search should stop if searched line outside of range
+---@param line number 0-based line number
+---@param backward boolean direction of the search
+---@return boolean
+function M.limit_by_line(line, backward)
+    local stopline
+    local win_height = vim.api.nvim_win_get_height(0)
+    if backward then
+        stopline = line - win_height
+        return function(l)
+            return l < stopline
+        end
+    else
+        stopline = line + win_height
+        return function(l)
+            return l > stopline
+        end
+    end
+end
+
 ---Determines whether cursor is in a special region
 ---@param line number 0-based line number
 ---@param col number 0-based column number

@@ -11,7 +11,7 @@ local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
 ---
 ---copied from nvim-tresitter plugin
 ---https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
-function M.is_in_node_range(node, line, col)
+local function is_in_node_range(node, line, col)
     local start_line, start_col, end_line, end_col = node:range()
 
     if not (line >= start_line and line <= end_line) then
@@ -33,7 +33,7 @@ end
 ---@param line number 0-based line number
 ---@param col number 0-based column number
 ---@return any
-function M.node_at(line, col)
+local function node_at(line, col)
     return M.root:descendant_for_range(line, col, line, col + 1)
 end
 
@@ -42,8 +42,8 @@ end
 ---@param col number 0-based column number
 ---@param parent any treesitter node
 ---@return table|nil node
-function M.get_skip_node(line, col, parent)
-    if parent and parent ~= M.node_at(line, col):parent() then
+local function get_skip_node(line, col, parent)
+    if parent and parent ~= node_at(line, col):parent() then
         return true
     end
 
@@ -64,7 +64,7 @@ function M.get_skip_node(line, col, parent)
     end
 
     for _, node in ipairs(M.skip_nodes[line]) do
-        if M.is_in_node_range(node, line, col) then
+        if is_in_node_range(node, line, col) then
             return node
         end
     end
@@ -72,7 +72,7 @@ end
 
 ---Returns all treesitter trees which have root nodes and highlight queries
 ---@return table
-function M.get_trees()
+local function get_trees()
     local trees = {}
     M.hl.tree:for_each_tree(function(tstree, tree)
         if not tstree then return end
@@ -91,18 +91,12 @@ end
 
 ---Determines wheter `node` is type of comment
 ---@return boolean
-function M.is_node_comment(node)
+local function is_node_comment(node)
     return utils.str_contains(node:type(), 'comment')
 end
 
----Returns treesitter highlighter for current buffer or nil
-function M.get_highlighter()
-    local bufnr = vim.api.nvim_get_current_buf()
-    return vim.treesitter.highlighter.active[bufnr]
-end
-
 ---Returns treesitter tree root
-function M.get_tree_root()
+local function get_tree_root()
     return vim.treesitter.get_parser():parse()[1]:root()
 end
 
@@ -111,9 +105,9 @@ end
 ---@param col number 0-based column
 ---@param parent any treesitter node
 ---@return boolean
-function M.in_ts_skip_region(line, col, parent)
+local function in_ts_skip_region(line, col, parent)
     return utils.in_skip_region(line, col, function(l, c)
-        return M.get_skip_node(l, c, parent)
+        return get_skip_node(l, c, parent)
     end)
 end
 
@@ -121,25 +115,61 @@ end
 ---@param node any treesitter node
 ---@param backward boolean direction of the search
 ---@return boolean
-function M.limit_by_node(node, backward)
+local function limit_by_node(node, backward)
     return function(l, c)
-        -- TODO: limit by line here maybe
         if not c then return end
 
         local get_sibling = backward and 'prev_sibling' or 'next_sibling'
         while node do
             -- limit the search to the current node only
-            if M.is_in_node_range(node, l, c) then return end
-            if not M.is_node_comment(node) then
+            if is_in_node_range(node, l, c) then return end
+            if not is_node_comment(node) then
                 return true
             end
             -- increase the search limit for connected comments
             node = node[get_sibling](node)
-            if not (node and M.is_node_comment(node)) then
+            if not (node and is_node_comment(node)) then
                 return true
             end
         end
     end
+end
+
+---Returns treesitter highlighter for current buffer or nil
+function M.get_highlighter()
+    local bufnr = vim.api.nvim_get_current_buf()
+    return vim.treesitter.highlighter.active[bufnr]
+end
+
+---Returns `skip` and `stop` functions for `match_pos`
+---based on treesitter node under the `line` and `col`
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param backward boolean direction of the search
+---@return function, function
+function M.skip_and_stop(line, col, backward)
+    local skip, stop
+    M.trees = get_trees()
+    M.skip_nodes = {}
+    local skip_node = get_skip_node(line, col)
+    -- FiXME: this if condition only to fix annotying bug for treesitter strings
+    if skip_node and not is_node_comment(skip_node) then
+        if not is_in_node_range(skip_node, line, col + 1) then
+            skip_node = false
+        end
+    end
+
+    if skip_node then  -- inside string or comment
+        stop = limit_by_node(skip_node, backward)
+    else
+        M.root = get_tree_root()
+        local parent = node_at(line, col):parent()
+        skip = function(l, c)
+            return in_ts_skip_region(l, c, parent)
+        end
+        stop = utils.limit_by_line(line, backward)
+    end
+    return skip, stop
 end
 
 return M

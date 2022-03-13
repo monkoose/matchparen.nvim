@@ -4,26 +4,6 @@ local utils = require('matchparen.utils')
 
 local M = {}
 
----Determines whether a search should stop if searched line outside of range
----@param line number 0-based line number
----@param backward boolean direction of the search
----@return boolean
-local function limit_by_line(line, backward)
-    local stopline
-    local win_height = vim.api.nvim_win_get_height(0)
-    if backward then
-        stopline = line - win_height
-        return function(l)
-            return l < stopline
-        end
-    else
-        stopline = line + win_height
-        return function(l)
-            return l > stopline
-        end
-    end
-end
-
 ---Returns functions based on `backward` direction
 ---@param backward boolean
 ---@return function, function, function
@@ -89,7 +69,7 @@ function M.pair(left, right, line, col, backward, skip, stop)
     local count = 0
     local pattern = '([' .. right .. left .. '])'
     local same_bracket = backward and right or left
-    local skip_same_bracket = function(_, _, bracket)
+    local skip_same_bracket = function(bracket)
         if bracket == same_bracket then
             count = count + 1
         else
@@ -102,16 +82,18 @@ function M.pair(left, right, line, col, backward, skip, stop)
         return true
     end
 
+    local skip_fn
     if skip then
-        local old_skip = skip
-        skip = function(l, c, bracket)
-            return old_skip(l, c) or skip_same_bracket(l, c, bracket)
+        skip_fn = function(l, c, bracket)
+            return skip(l, c) or skip_same_bracket(bracket)
         end
     else
-        skip = skip_same_bracket
+        skip_fn = function(_, _, bracket)
+            return skip_same_bracket(bracket)
+        end
     end
 
-    return M.match(pattern, line, col, backward, skip, stop)
+    return M.match(pattern, line, col, backward, skip_fn, stop)
 end
 
 ---Returns matched bracket position
@@ -125,29 +107,10 @@ function M.match_pos(matchpair, line, col)
     ts.hl = ts.get_highlighter()
 
     if ts.hl then
-        ts.trees = ts.get_trees()
-        ts.skip_nodes = {}
-        local skip_node = ts.get_skip_node(line, col)
-        -- FiXME: this if condition only to fix annotying bug for treesitter strings
-        if skip_node and not ts.is_node_comment(skip_node) then
-            if not ts.is_in_node_range(skip_node, line, col + 1) then
-                skip_node = false
-            end
-        end
-
-        if skip_node then  -- inside string or comment
-            stop = ts.limit_by_node(skip_node, matchpair.backward)
-        else
-            ts.root = ts.get_tree_root()
-            local parent = ts.node_at(line, col):parent()
-            skip = function(l, c)
-                return ts.in_ts_skip_region(l, c, parent)
-            end
-            stop = limit_by_line(line, matchpair.backward)
-        end
+        skip, stop = ts.skip_and_stop(line, col, matchpair.backward)
     else  -- try built-in syntax to skip highlighting in strings and comments
         skip = syntax.skip_by_region(line, col)
-        stop = limit_by_line(line, matchpair.backward)
+        stop = utils.limit_by_line(line, matchpair.backward)
     end
 
     return M.pair(matchpair.left, matchpair.right, line, col, matchpair.backward, skip, stop)
