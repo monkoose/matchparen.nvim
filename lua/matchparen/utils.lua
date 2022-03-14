@@ -54,7 +54,8 @@ function M.get_current_pos()
     return line - 1, column
 end
 
----Returns first found index and full match substring in the `text` or nil
+---Returns first found index and full match substring (if pattern
+---is in a capture) in the `text` or nil
 ---@param text string
 ---@param pattern string
 ---@param init number same as in string.find
@@ -111,7 +112,7 @@ end
 ---Calculates maximum width based on length of the `strings`
 ---@param strings string[]
 ---@return number
-local function max_display_width(strings)
+function M.max_display_width(strings)
     local width = 0
     for _, str in ipairs(strings) do
         width = math.max(vim.fn.strdisplaywidth(str), width)
@@ -126,7 +127,7 @@ function M.show_error()
     local lines = vim.split(M.error, '\n')
     vim.api.nvim_buf_set_lines(buf, 0, -1, true, lines)
     vim.highlight.range(buf, 0, 'ErrorMsg', { 0, 0 }, { #lines, 1000 })
-    local width = math.min(ui.width - 20, max_display_width(lines))
+    local width = math.min(ui.width - 20, M.max_display_width(lines))
     local height = math.min(ui.height - 8, #lines)
     local col = ui.width / 2 - width / 2
     local row = ui.height / 2 - height / 2 - 2

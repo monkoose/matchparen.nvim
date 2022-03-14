@@ -4,7 +4,6 @@
         "vim",
         "describe",
         "it",
-        "pending",
-        "mock"
+        "pending"
     ]
 }

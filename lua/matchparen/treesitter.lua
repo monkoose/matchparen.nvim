@@ -4,7 +4,7 @@ local utils = require('matchparen.utils')
 local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
 
 ---Determines whether (line, col) position is in node range
----@param node any node defining the range
+---@param node userdata node defining the range
 ---@param line number 0-based line number
 ---@param col number 0-based column number
 ---@return boolean
@@ -32,7 +32,7 @@ end
 ---Returns treesitter node at (line, col) position
 ---@param line number 0-based line number
 ---@param col number 0-based column number
----@return any
+---@return userdata
 local function node_at(line, col)
     return M.root:descendant_for_range(line, col, line, col + 1)
 end
@@ -40,8 +40,8 @@ end
 ---Returns treesitter node at `line` and `col` position if it is in `captures` list
 ---@param line number 0-based line number
 ---@param col number 0-based column number
----@param parent any treesitter node
----@return table|nil node
+---@param parent userdata treesitter node
+---@return userdata|nil node
 local function get_skip_node(line, col, parent)
     if parent and parent ~= node_at(line, col):parent() then
         return true
@@ -103,7 +103,7 @@ end
 ---Determines whether the cursor is inside conf.ts_skip_groups option
 ---@param line number 0-based line
 ---@param col number 0-based column
----@param parent any treesitter node
+---@param parent userdata treesitter node
 ---@return boolean
 local function in_ts_skip_region(line, col, parent)
     return utils.in_skip_region(line, col, function(l, c)
@@ -112,7 +112,7 @@ local function in_ts_skip_region(line, col, parent)
 end
 
 ---Determines whether a search should stop if outside of the `node`
----@param node any treesitter node
+---@param node userdata treesitter node
 ---@param backward boolean direction of the search
 ---@return boolean
 local function limit_by_node(node, backward)
