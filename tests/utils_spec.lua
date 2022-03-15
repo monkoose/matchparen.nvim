@@ -80,18 +80,22 @@ end)
 
 describe("is_in_insert_mode", function()
     local cur_mode = stub(vim.api, "nvim_get_mode")
+
     it("should return true in insert or replace modes", function()
         cur_mode.returns({ mode = "i"})
         assert.is_true(utils.is_in_insert_mode())
         cur_mode.returns({ mode = "R"})
         assert.is_true(utils.is_in_insert_mode())
     end)
+
     it("sould return false in not insert or replace modes", function()
         cur_mode.returns({ mode = "v"})
         assert.is_false(utils.is_in_insert_mode())
         cur_mode.returns({ mode = "c"})
         assert.is_false(utils.is_in_insert_mode())
     end)
+
+    cur_mode:revert()
 end)
 
 describe("Functional", function()
