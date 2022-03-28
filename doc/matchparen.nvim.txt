@@ -51,11 +51,6 @@ or inside init.lua >
 `setup()` function accepts table with following keys
     on_startup~
         Boolean. If `true` the plugin will highlight brackets on neovim start.
-    timeout~
-        Number in milliseconds. If processing to highlight brackets takes that
-        match or more time, than skip highlighting.
-    timeout_insert~
-        Number in milliseconds. Same as above, but in insert mode.
     hl_group~
         String. Highlight group.
     augroup_name~
@@ -74,8 +69,6 @@ or inside init.lua >
 Defaults are >
     require('matchparen').setup({
         on_startup = true,
-        timeout = 150,
-        timeout_insert = 50,
         hl_group = 'MatchParen',
         augroup_name = 'matchparen',
         syntax_skip_groups = {

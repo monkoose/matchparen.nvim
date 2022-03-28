@@ -1,7 +1,5 @@
 return {
     on_startup = true,
-    timeout = 150,
-    timeout_insert = 50,
     hl_group = 'MatchParen',
     augroup_name = 'matchparen',
 
