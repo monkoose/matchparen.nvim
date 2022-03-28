@@ -20,13 +20,20 @@ function M.limit_by_line(line, backward)
     end
 end
 
+---Returns true if line is inside closed fold
+---@param line number 0-based line number
+---@return boolean
+function M.inside_closed_fold(line)
+    return vim.fn.foldclosed(line + 1) ~= -1
+end
+
 ---Determines whether cursor is in a special region
 ---@param line number 0-based line number
 ---@param col number 0-based column number
 ---@param fn function that return nil outside of the region
 ---@return boolean
 function M.in_skip_region(line, col, fn)
-    if vim.fn.foldclosed(line + 1) ~= -1 then
+    if M.inside_closed_fold(line) then
         return false
     end
     return fn(line, col) ~= nil
