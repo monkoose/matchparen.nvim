@@ -51,6 +51,7 @@ end
 
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
+---@param in_insert boolean
 local function update(in_insert)
     M.remove()
     vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
@@ -68,6 +69,8 @@ local function update(in_insert)
     end
 end
 
+---Safely executes update() function, on error prints error message into echo area
+---@param in_insert boolean
 function M.pcall_update(in_insert)
     local ok, err = xpcall(update, debug.traceback, in_insert)
     if not ok and not utils.error then
