@@ -17,6 +17,15 @@ end
 -- setup
 function M.setup(options)
     vim.g.loaded_matchparen = 1
+    if vim.fn.exists(":DoMatchParen") ~= 0 then
+        vim.api.nvim_echo(
+            {
+                { ' matchparen.nvim: ', 'String' },
+                { 'default MatchParen plugin still active. Fix your config.', 'WarningMsg' },
+            },
+            true, {}
+        )
+    end
     M.config = vim.tbl_deep_extend('force', defaults, options or {})
     M.config.namespace = vim.api.nvim_create_namespace(M.config.augroup_name)
     M.config.extmarks = { current = 0, match = 0 }
@@ -29,6 +38,7 @@ end
 
 -- autocmds
 function M.create_autocmds()
+    -- TODO: Change to new autocmd API after 0.7 release
     if not augroup_exists(M.config.augroup_name) then
         vim.cmd('augroup ' .. M.config.augroup_name)
         vim.cmd [[
