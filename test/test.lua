@@ -1,5 +1,5 @@
 -- Testing file
--- test get_line
+-- test get-line
 local syntax = require('matchparen.syntax')
 --    |    result is 2 14 2 58
 local opana = (syntax.skip_by_region('hellloworld(opana)'))
