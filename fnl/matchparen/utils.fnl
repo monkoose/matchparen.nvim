@@ -19,6 +19,13 @@
   (not= (str:find pattern 1 true)
         nil))
 
+(defn string-contains-any? [str table-of-strings]
+  "True when `str` contains any pattern from the `table-of-strings`."
+  (each [_ pattern (ipairs table-of-strings)]
+    (if (string-contains? str pattern)
+      (lua "return true")))
+  false)
+
 (defn get-cursor-pos []
   "Return line and column of the cursor position."
   (let [[line col] (nvim.win_get_cursor 0)]

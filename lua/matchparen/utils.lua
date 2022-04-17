@@ -10,7 +10,7 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("matchparen.aniseed.autoload")).autoload
+local autoload = (require("aniseed.autoload")).autoload
 local a, nvim = autoload("matchparen.aniseed.core"), autoload("matchparen.aniseed.nvim")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["nvim"] = nvim
@@ -29,37 +29,47 @@ local function string_contains_3f(str, pattern)
   return (str:find(pattern, 1, true) ~= nil)
 end
 _2amodule_2a["string-contains?"] = string_contains_3f
+local function string_contains_any_3f(str, table_of_strings)
+  for _, pattern in ipairs(table_of_strings) do
+    if string_contains_3f(str, pattern) then
+      return true
+    else
+    end
+  end
+  return false
+end
+_2amodule_2a["string-contains-any?"] = string_contains_any_3f
 local function get_cursor_pos()
-  local _let_1_ = nvim.win_get_cursor(0)
-  local line = _let_1_[1]
-  local col = _let_1_[2]
+  local _let_2_ = nvim.win_get_cursor(0)
+  local line = _let_2_[1]
+  local col = _let_2_[2]
   return a.dec(line), col
 end
 _2amodule_2a["get-cursor-pos"] = get_cursor_pos
 local function find_forward(text, pattern, init)
   local index, _, capture = nil, nil, nil
-  local function _2_()
+  local function _3_()
     if init then
       return a.inc(init)
     else
       return nil
     end
   end
-  index, _, capture = string.find(text, pattern, _2_())
+  index, _, capture = string.find(text, pattern, _3_())
   return index, capture
 end
 _2amodule_2a["find-forward"] = find_forward
 local function find_backward(reversed_text, pattern, init)
   local len = a.inc(#reversed_text)
   local index, capture = nil, nil
-  local function _3_()
+  local function _4_()
     if init then
       return (len - init)
     else
       return nil
     end
   end
-  index, capture = find_forward(reversed_text, pattern, _3_())
+  index, capture = find_forward(reversed_text, pattern, _4_())
   if index then
     return (len - index), capture
   else
@@ -68,8 +78,8 @@ local function find_backward(reversed_text, pattern, init)
 end
 _2amodule_2a["find-backward"] = find_backward
 local function get_line(line)
-  local _let_5_ = nvim.buf_get_lines(0, line, a.inc(line), false)
-  local text = _let_5_[1]
+  local _let_6_ = nvim.buf_get_lines(0, line, a.inc(line), false)
+  local text = _let_6_[1]
   return text
 end
 _2amodule_2a["get-line"] = get_line
