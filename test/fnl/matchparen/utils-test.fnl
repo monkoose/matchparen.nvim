@@ -14,7 +14,7 @@
   (vim.cmd "normal! zd"))
 
 (deftest insert-mode?
-  (def- get-mode nvim.get_mode)
+  (local get-mode nvim.get_mode)
   (set nvim.get_mode #{:mode "i"})
   (t.ok? (utils.insert-mode?)
          "should be true in insert mode")
@@ -26,7 +26,7 @@
          "should be false when not in insert or Replace mode"))
 
 (deftest string-contains?
-  (def- text "hello, world!")
+  (local text "hello, world!")
   (t.ok? (utils.string-contains? text "ello"))
   (t.ok? (utils.string-contains? text "w"))
   (t.ok? (utils.string-contains? "hello(" "("))
@@ -39,8 +39,8 @@
   (t.= (values 1 2) (utils.get-cursor-pos)))
 
 (deftest find-forward-backward
-  (def- text "hello( brave( world!")
-  (def- reversed-text (string.reverse text))
+  (local text "hello( brave( world!")
+  (local reversed-text (string.reverse text))
   (t.= 2 (utils.find-forward text "e"))
   (t.= nil (utils.find-forward text "([[])"))
   (t.= 13 (utils.find-forward text "([(])" 6))

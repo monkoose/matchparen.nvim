@@ -8,7 +8,6 @@
 (def- options
   (. (require "matchparen.defaults") :options))
 
-
 (defn- syntax-on? []
   (and (= g.syntax_on 1)
        (not= o.syntax "")))
@@ -32,13 +31,13 @@
       (if (<= index len)
         (get-synname (. last-three index))))))
 
-
 (defn- in-syntax-skip-region? [line col]
   (var result false)
   (each [synname (last-three-synnames line col)
          :until result]
-    (utils.string-contains-any? synname
-                                options.syntax_skip_groups))
+    (set result
+         (utils.string-contains-any?
+           synname options.syntax_skip_groups)))
   result)
 
 (defn- skip-region? [line col]
@@ -48,6 +47,7 @@
 
 (defn skip-by-region [line col]
   "Return skip function accepted by `search.match-pos`."
-  (if (skip-region? line col)
-    #(not (skip-region? $1 $2))
-    #(skip-region? $1 $2)))
+  (when syntax-on?
+    (if (skip-region? line col)
+      #(not (skip-region? $1 $2))
+      #(skip-region? $1 $2))))
