@@ -3,11 +3,11 @@
              utils matchparen.utils
              search matchparen.search}})
 
-(def- options
+(def- opts
   (. (require "matchparen.defaults") :options))
 
 (defn- delete-extmark [id]
-  (nvim.buf_del_extmark 0 options.namespace id))
+  (nvim.buf_del_extmark 0 opts.namespace id))
 
 (defn- hide-extmark [id])
 

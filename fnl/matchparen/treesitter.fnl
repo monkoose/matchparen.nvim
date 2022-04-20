@@ -3,7 +3,7 @@
              nvim matchparen.aniseed.nvim
              utils matchparen.utils}})
 
-(def- options
+(def- opts
   (. (require "matchparen.defaults") :options))
 (def- cache {:trees {}
              :root nil
@@ -32,7 +32,7 @@
 
 (defn- cache-nodes [line tree iter]
   (each [id node [iter]]
-    (when (vim.tbl_contains options.ts_skip_groups
+    (when (vim.tbl_contains opts.ts_skip_groups
                             (. tree.query.captures id))
       (table.insert (. cache.skip-nodes line) node))))
 

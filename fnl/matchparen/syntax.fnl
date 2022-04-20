@@ -2,10 +2,10 @@
   {autoload {a matchparen.aniseed.core
              utils matchparen.utils}})
 
-(def f vim.fn)
-(def g vim.g)
-(def o vim.o)
-(def- options
+(def- f vim.fn)
+(def- g vim.g)
+(def- o vim.o)
+(def- opts
   (. (require "matchparen.defaults") :options))
 
 (defn- syntax-on? []
@@ -19,7 +19,7 @@
   "Return iterator with last three syntax group names
   under the `line` and `col` in a current buffer."
   (let [syn-ids (f.synstack (a.inc line)
-                             (a.inc col))
+                            (a.inc col))
         len (length syn-ids)
         last-three [(. syn-ids len)
                     (. syn-ids (- len 1))
@@ -37,7 +37,7 @@
          :until result]
     (set result
          (utils.string-contains-any?
-           synname options.syntax_skip_groups)))
+           synname opts.syntax_skip_groups)))
   result)
 
 (defn- skip-region? [line col]
