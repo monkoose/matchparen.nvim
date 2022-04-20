@@ -53,13 +53,13 @@
         (set options
              (vim.tbl_extend "error" options adds))))
     (autocmd [:CursorMoved :CursorMovedI :WinEnter]
-             #(hl.pcall-update)})
+             #(hl.pcall-update))
     (autocmd :InsertEnter
-             #(hl.pcall-update true)})
+             #(hl.pcall-update true))
     (autocmd [:TextChanged :TextChangedI]
-             #(hl.update-on-tick)})
+             #(hl.update-on-tick))
     (autocmd [:WinLeave :BufLeave]
-             #(hl.remove)})
+             #(hl.remove))
     (autocmd [:WinEnter :BufWinEnter :FileType]
              update-matchpairs)
     (autocmd :OptionSet

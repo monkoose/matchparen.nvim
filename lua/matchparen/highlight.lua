@@ -15,10 +15,10 @@ local nvim, search, utils = autoload("matchparen.aniseed.nvim"), autoload("match
 do end (_2amodule_locals_2a)["nvim"] = nvim
 _2amodule_locals_2a["search"] = search
 _2amodule_locals_2a["utils"] = utils
-local options = (require("matchparen.defaults")).options
-_2amodule_locals_2a["options"] = options
+local opts = (require("matchparen.defaults")).options
+_2amodule_locals_2a["opts"] = opts
 local function delete_extmark(id)
-  return nvim.buf_del_extmark(0, options.namespace, id)
+  return nvim.buf_del_extmark(0, opts.namespace, id)
 end
 _2amodule_locals_2a["delete-extmark"] = delete_extmark
 local function hide_extmark(id)

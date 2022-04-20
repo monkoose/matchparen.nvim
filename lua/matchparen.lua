@@ -11,19 +11,14 @@ do
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
 local autoload = (require("aniseed.autoload")).autoload
-local hl, nvim, opts = autoload("matchparen.highlight"), autoload("matchparen.aniseed.nvim"), autoload("matchparen.defaults")
-do end (_2amodule_locals_2a)["hl"] = hl
+local defaults, hl, nvim = autoload("matchparen.defaults"), autoload("matchparen.highlight"), autoload("matchparen.aniseed.nvim")
+do end (_2amodule_locals_2a)["defaults"] = defaults
+_2amodule_locals_2a["hl"] = hl
 _2amodule_locals_2a["nvim"] = nvim
-_2amodule_locals_2a["opts"] = opts
 local f = vim.fn
 _2amodule_locals_2a["f"] = f
-local options = opts.options
-_2amodule_locals_2a["options"] = options
-local function create_commands()
-  nvim.add_user_command("MatchParenEnable", "lua require('matchparen.matchpairs').enable()", {})
-  return nvim.add_user_command("MatchParenDisable", "lua require('matchparen.matchpairs').disable()", {})
-end
-_2amodule_locals_2a["create-commands"] = create_commands
+local opts = defaults.options
+_2amodule_locals_2a["opts"] = opts
 local function disable_builtin()
   vim.g.loaded_matchparen = 1
   if (f.exists(":NoMatchParen") ~= 0) then
@@ -34,7 +29,7 @@ local function disable_builtin()
 end
 _2amodule_locals_2a["disable-builtin"] = disable_builtin
 local function create_namespace()
-  options["namespace"] = nvim.create_namespace(options.augroup_name)
+  opts["namespace"] = nvim.create_namespace(opts.augroup_name)
   return nil
 end
 _2amodule_locals_2a["create-namespace"] = create_namespace
@@ -42,51 +37,17 @@ local function augroup_exists(name)
   return (0 ~= f.exists(("#" .. name)))
 end
 _2amodule_locals_2a["augroup-exists"] = augroup_exists
-local function create_autocmds()
-  if not augroup_exists(options.augroup_name) then
-    local group = nvim.create_augroup(options.augroup_name, {})
-    local function _2_()
-      return hl["pcall-update"]()
-    end
-    nvim.create_autocmd({"CursorMoved", "CursorMovedI", "WinEnter"}, {group = group, callback = _2_})
-    local function _3_()
-      return hl["pcall-update"](true)
-    end
-    nvim.create_autocmd("InsertEnter", {group = group, callback = _3_})
-    local function _4_()
-      return hl["update-on-tick"]()
-    end
-    nvim.create_autocmd({"TextChanged", "TextChangedI"}, {group = group, callback = _4_})
-    local function _5_()
-      return hl.remove()
-    end
-    nvim.create_autocmd({"WinLeave", "BufLeave"}, {group = group, callback = _5_})
-    nvim.create_autocmd({"WinEnter", "BufWinEnter", "FileType", "VimEnter"}, {group = group, callback = __fnl_global__update_2dmatchpairs})
-    return nvim.create_autocmd("OptionSet", {group = group, pattern = "matchpairs", callback = __fnl_global__update_2dmatchpairs})
-  else
-    return nil
-  end
-end
-_2amodule_locals_2a["create-autocmds"] = create_autocmds
-local function delete_autocmds()
-  if augroup_exists(options.augroup_name) then
-    return nvim.del_augroup_by_name(options.augroup_name)
-  else
-    return nil
-  end
-end
-_2amodule_locals_2a["delete-autocmds"] = delete_autocmds
 local function split_matchpairs()
   local tbl_12_auto = {}
   for _, pair in ipairs((vim.opt.matchpairs):get()) do
-    local _8_, _9_ = nil, nil
+    local _2_, _3_ = nil, nil
     do
       local left, right = pair:match("(.+):(.+)")
-      _8_, _9_ = left, right
+      _2_, _3_ = left, right
     end
-    if ((nil ~= _8_) and (nil ~= _9_)) then
-      local k_13_auto = _8_
-      local v_14_auto = _9_
+    if ((nil ~= _2_) and (nil ~= _3_)) then
+      local k_13_auto = _2_
+      local v_14_auto = _3_
       tbl_12_auto[k_13_auto] = v_14_auto
     else
     end
@@ -95,12 +56,12 @@ local function split_matchpairs()
 end
 _2amodule_locals_2a["split-matchpairs"] = split_matchpairs
 local function update_matchpairs()
-  if (options["cached-matchpairs"] ~= vim.o.matchpairs) then
-    options["cached-matchpairs"] = vim.o.matchpairs
-    options["matchpairs"] = {}
+  if (opts["cached-matchpairs"] ~= vim.o.matchpairs) then
+    opts["cached-matchpairs"] = vim.o.matchpairs
+    opts["matchpairs"] = {}
     for l, r in pairs(split_matchpairs()) do
-      options.matchpairs[l] = {left = l, right = r, backward = false}
-      options.matchpairs[r] = {left = l, right = r, backward = true}
+      opts.matchpairs[l] = {left = l, right = r, backward = false}
+      opts.matchpairs[r] = {left = l, right = r, backward = true}
     end
     return nil
   else
@@ -108,6 +69,49 @@ local function update_matchpairs()
   end
 end
 _2amodule_locals_2a["update-matchpairs"] = update_matchpairs
+local function create_autocmds()
+  if not augroup_exists(opts.augroup_name) then
+    local group = nvim.create_augroup(opts.augroup_name, {})
+    local function autocmd(events, callback, adds)
+      local options = {group = group, callback = callback}
+      if adds then
+        options = vim.tbl_extend("error", options, adds)
+        return nil
+      else
+        return nil
+      end
+    end
+    local function _7_()
+      return hl["pcall-update"]()
+    end
+    autocmd({"CursorMoved", "CursorMovedI", "WinEnter"}, _7_)
+    local function _8_()
+      return hl["pcall-update"](true)
+    end
+    autocmd("InsertEnter", _8_)
+    local function _9_()
+      return hl["update-on-tick"]()
+    end
+    autocmd({"TextChanged", "TextChangedI"}, _9_)
+    local function _10_()
+      return hl.remove()
+    end
+    autocmd({"WinLeave", "BufLeave"}, _10_)
+    autocmd({"WinEnter", "BufWinEnter", "FileType"}, update_matchpairs)
+    return autocmd("OptionSet", update_matchpairs, {pattern = "matchpairs"})
+  else
+    return nil
+  end
+end
+_2amodule_locals_2a["create-autocmds"] = create_autocmds
+local function delete_autocmds()
+  if augroup_exists(opts.augroup_name) then
+    return nvim.del_augroup_by_name(opts.augroup_name)
+  else
+    return nil
+  end
+end
+_2amodule_locals_2a["delete-autocmds"] = delete_autocmds
 local function enable()
   create_autocmds()
   update_matchpairs()
@@ -119,11 +123,17 @@ local function disable()
   return hl.remove()
 end
 _2amodule_locals_2a["disable"] = disable
+local function create_commands()
+  nvim.add_user_command("MatchParenEnable", enable, {})
+  return nvim.add_user_command("MatchParenDisable", disable, {})
+end
+_2amodule_locals_2a["create-commands"] = create_commands
 local function setup(config)
   disable_builtin()
-  opts.update(config)
+  defaults.update(config)
   create_commands()
   create_namespace()
+  update_matchpairs()
   do end (config)["extmarks"] = {current = 0, match = 0}
   if opts.on_startup then
     return create_autocmds()

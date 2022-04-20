@@ -43,7 +43,7 @@ local function get_cursor_pos()
   local _let_2_ = nvim.win_get_cursor(0)
   local line = _let_2_[1]
   local col = _let_2_[2]
-  return a.dec(line), col
+  return {a.dec(line), col}
 end
 _2amodule_2a["get-cursor-pos"] = get_cursor_pos
 local function find_forward(text, pattern, init)

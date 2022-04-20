@@ -31,6 +31,7 @@
                                    line (a.inc col)))
 
 (defn- cache-nodes [line tree iter]
+  "Caches skip nodes."
   (each [id node [iter]]
     (when (vim.tbl_contains opts.ts_skip_groups
                             (. tree.query.captures id))
