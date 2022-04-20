@@ -27,9 +27,9 @@
   false)
 
 (defn get-cursor-pos []
-  "Return line and column of the cursor position."
+  "Return seq table with line and column of the cursor position."
   (let [[line col] (nvim.win_get_cursor 0)]
-    (values (a.dec line) col)))
+    [(a.dec line) col]))
 
 ;; TODO: make it find pattern under the cursor
 (defn find-forward [text pattern init]
