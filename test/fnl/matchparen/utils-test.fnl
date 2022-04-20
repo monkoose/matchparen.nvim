@@ -33,10 +33,22 @@
   (t.ok? (not (utils.string-contains? "hello(" "[")))
   (t.ok? (not (utils.string-contains? text "illo"))))
 
+(deftest string-contains-any?
+  (local text "hello, world!")
+  (t.ok? (utils.string-contains-any? text ["next"
+                                           "previous"
+                                           "hello"]))
+  (t.ok? (utils.string-contains-any? text ["next"
+                                           "previous"
+                                           "!"]))
+  (t.ok? (not (utils.string-contains-any? text ["next"
+                                                "previous"
+                                                "line"]))))
+
 (deftest get-cursor-pos
   ;; nvim_win_set_cursor line is 1-based
   (nvim.win_set_cursor 0 [2 2])
-  (t.= (values 1 2) (utils.get-cursor-pos)))
+  (t.pr= [1 2] (utils.get-cursor-pos)))
 
 (deftest find-forward-backward
   (local text "hello( brave( world!")
