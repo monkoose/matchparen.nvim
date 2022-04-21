@@ -2,7 +2,9 @@ local syntax = require("matchparen.syntax")
 
 describe("skip_by_region", function()
     vim.cmd("e tests/example.lua")
-    vim.cmd("TSBufDisable highlight")
+    if vim.fn.exists(':TSBufDisable') ~= 0 then
+        vim.cmd("TSBufDisable highlight")
+    end
 
     it("should return function that returns false when cursor is on string or comment", function()
         assert.falsy(syntax.skip_by_region(2, 30)(2, 30))
