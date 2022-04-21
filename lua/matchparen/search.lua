@@ -1,6 +1,7 @@
 local syntax = require('matchparen.syntax')
 local ts = require('matchparen.treesitter')
 local utils = require('matchparen.utils')
+local opts = require('matchparen.options').opts
 
 local M = {}
 
@@ -104,9 +105,9 @@ end
 function M.match_pos(mp, line, col)
   local stop
   local skip
-  ts.hl = ts.get_highlighter()
+  opts.cache.hl = ts.get_highlighter()
 
-  if ts.hl then
+  if opts.cache.hl then
     skip, stop = ts.skip_and_stop(line, col, mp.backward)
   else  -- try built-in syntax to skip highlighting in strings and comments
     skip = syntax.skip_by_region(line, col)

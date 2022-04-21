@@ -2,7 +2,13 @@ local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 local nvim = require('missinvim')
 
-local M = { hl = nil, root = nil, trees = {}, skip_nodes = {} }
+local M = {}
+
+local cache = {
+  root = nil,
+  trees = {},
+  skip_nodes = {},
+}
 
 ---Determines whether (line, col) position is in node range
 ---@param node userdata node defining the range
@@ -35,7 +41,22 @@ end
 ---@param col number 0-based column number
 ---@return userdata
 local function node_at(line, col)
-  return M.root:descendant_for_range(line, col, line, col + 1)
+  return cache.root:descendant_for_range(line, col, line, col + 1)
+end
+
+---Caches `line` skip nodes
+---@param line integer 0-based line number
+local function cache_nodes(line)
+  cache.skip_nodes[line] = {}
+  for _, tree in ipairs(cache.trees) do
+    local iter = tree.query:iter_captures(tree.root, opts.cache.hl.bufnr,
+      line, line + 1)
+    for id, node in iter do
+      if vim.tbl_contains(opts.ts_skip_groups, tree.query.captures[id]) then
+        table.insert(cache.skip_nodes[line], node)
+      end
+    end
+  end
 end
 
 ---Returns treesitter node at `line` and `col` position if it is in `captures` list
@@ -48,24 +69,11 @@ local function get_skip_node(line, col, parent)
     return true
   end
 
-  local function filter_captures(tree, iter)
-    for id, node in iter do
-      if vim.tbl_contains(opts.ts_skip_groups, tree.query.captures[id]) then
-        table.insert(M.skip_nodes[line], node)
-      end
-    end
+  if not cache.skip_nodes[line] then
+    cache_nodes(line)
   end
 
-  if not M.skip_nodes[line] then
-    M.skip_nodes[line] = {}
-    for _, tree in ipairs(M.trees) do
-      local iter = tree.query:iter_captures(tree.root, M.hl.bufnr,
-                                            line, line + 1)
-      filter_captures(tree, iter)
-    end
-  end
-
-  for _, node in ipairs(M.skip_nodes[line]) do
+  for _, node in ipairs(cache.skip_nodes[line]) do
     if is_in_node_range(node, line, col) then
       return node
     end
@@ -76,11 +84,11 @@ end
 ---@return table
 local function get_trees()
   local trees = {}
-  M.hl.tree:for_each_tree(function(tstree, tree)
+  opts.cache.hl.tree:for_each_tree(function(tstree, tree)
     if not tstree then return end
 
     local root = tstree:root()
-    local query = M.hl:get_query(tree:lang()):query()
+    local query = opts.cache.hl:get_query(tree:lang()):query()
 
     -- Some injected languages may not have highlight queries.
     if query then
@@ -152,8 +160,8 @@ end
 ---@return function, function
 function M.skip_and_stop(line, col, backward)
   local skip, stop
-  M.trees = get_trees()
-  M.skip_nodes = {}
+  cache.trees = get_trees()
+  cache.skip_nodes = {}
   local skip_node = get_skip_node(line, col)
   -- FiXME: this if condition only to fix annotying bug for treesitter strings
   if skip_node and not is_node_comment(skip_node) then
@@ -165,7 +173,7 @@ function M.skip_and_stop(line, col, backward)
   if skip_node then  -- inside string or comment
     stop = limit_by_node(skip_node, backward)
   else
-    M.root = get_tree_root()
+    cache.root = get_tree_root()
     local parent = node_at(line, col):parent()
     skip = function(l, c)
       return is_ts_skip_region(l, c, parent)
