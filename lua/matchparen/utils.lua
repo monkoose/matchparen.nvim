@@ -77,14 +77,12 @@ local function find_backward(reversed_text, pattern, init)
   end
 end
 _2amodule_2a["find-backward"] = find_backward
-local function get_line(line)
-  local _let_6_ = nvim.buf_get_lines(0, line, a.inc(line), false)
-  local text = _let_6_[1]
-  return text
+local function get_lines(line, count)
+  return nvim.buf_get_lines(0, line, (line + count), false)
 end
-_2amodule_2a["get-line"] = get_line
+_2amodule_2a["get-lines"] = get_lines
 local function get_reversed_line(line)
-  local text = get_line(line)
+  local text = __fnl_global__get_2dline(line)
   if text then
     return string.reverse(text)
   else

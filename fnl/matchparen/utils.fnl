@@ -52,10 +52,9 @@
     (if index
       (values (- len index) capture))))
 
-(defn get-line [line]
+(defn get-lines [line count]
   "Return text of the `line` in a current buffer."
-  (let [[text] (nvim.buf_get_lines 0 line (a.inc line) false)]
-    text))
+  (nvim.buf_get_lines 0 line (+ line count) false))
 
 (defn get-reversed-line [line]
   "Return reversed text of the `line` in a current buffer."

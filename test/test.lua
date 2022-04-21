@@ -9,3 +9,4 @@ local opana = (syntax.skip_by_region('hellloworld(opana)'))
 local opana = (syntax.skip_by_region('hellloworld(opana)'))
 --                                                 |    result is 8 49 8 55
 local opana = (syntax.skip_by_region('hellloworld(opana)'))
+-- last line

@@ -61,7 +61,9 @@
   (t.= (values 13 "(") (utils.find-backward reversed-text "([(])"))
   (t.= nil (utils.find-backward text "([[])")))
 
-(deftest get-line
-  (nvim.win_set_cursor 0 [2 2])
-  (t.= "-- test get-line" (utils.get-line 1)
-       "should return right text."))
+(deftest get-lines
+  (t.pr= ["-- Testing file"
+          "-- test get-line"] (utils.get-lines 0 2))
+  (t.pr= ["-- test get-line"] (utils.get-lines 1 1)
+       "should return correct lines.")
+  (t.pr= ["-- last line"] (utils.get-lines 11 10)))
