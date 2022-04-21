@@ -47,21 +47,6 @@ describe("find_backward", function()
     end)
 end)
 
-describe("max_display_width", function()
-    local long_string = "long long long string for example"
-    local long_string_length = vim.fn.strdisplaywidth(long_string)
-    local strings = {
-        "hello",
-        "long long string",
-        long_string,
-        "short string"
-    }
-
-    it("should return max display width amongs all strings", function()
-        assert.equal(long_string_length, utils.max_display_width(strings))
-    end)
-end)
-
 describe("limit_by_line", function()
     local get_height = stub(vim.api, "nvim_win_get_height")
     get_height.returns(10)

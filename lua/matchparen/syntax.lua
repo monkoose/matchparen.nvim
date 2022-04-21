@@ -1,12 +1,21 @@
-local conf = require('matchparen').config
+local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 
+local fn = vim.fn
 local M = {}
 
----Determines whether built-in syntax is on and current buffer has syntax for its filetype
+---Returns true when built in syntax is on and
+---current buffer has syntax for its filetype
 ---@return boolean
 local function is_syntax_on()
-    return vim.g.syntax_on == 1 and vim.opt.syntax:get() ~= ''
+  return vim.g.syntax_on == 1 and vim.o.syntax ~= ''
+end
+
+---Returns name of the syntax id group
+---@param synid integer
+---@return string
+local function get_synname(synid)
+  return string.lower(fn.synIDattr(synid, 'name'))
 end
 
 ---Returns iterator with the last three syntax group names
@@ -15,22 +24,21 @@ end
 ---@param col number 0-based column number
 ---@return function
 local function last3_synnames(line, col)
-    local synstack = vim.fn.synstack(line + 1, col + 1)
-    local len = #synstack
-    local last3 = {
-        synstack[len],
-        synstack[len - 1],
-        synstack[len - 2],
-    }
-    local i = 0
+  local synstack = fn.synstack(line + 1, col + 1)
+  local len = #synstack
+  local last3 = {
+    synstack[len],
+    synstack[len - 1],
+    synstack[len - 2],
+  }
+  local i = 0
 
-    return function ()
-        i = i + 1
-        if i <= #last3 then
-            local synname = string.lower(vim.fn.synIDattr(last3[i], "name"))
-            return synname
-        end
+  return function()
+    i = i + 1
+    if i <= #last3 then
+      return get_synname(last3[i])
     end
+  end
 end
 
 ---Determines whether the cursor is inside neovim syntax id name
@@ -38,16 +46,18 @@ end
 ---@param line number 0-based line number
 ---@param col number 0-based column number
 ---@return boolean
-local function in_syntax_skip_region(line, col)
-    return utils.in_skip_region(line, col, function(l, c)
-        for synname in last3_synnames(l, c) do
-            for _, pattern in ipairs(conf.syntax_skip_groups) do
-                if utils.str_contains(synname, pattern) then
-                    return true
-                end
-            end
-        end
-    end)
+local function is_syntax_skip_region(line, col)
+  if utils.inside_closed_fold(line) then
+    return false
+  end
+
+  for synname in last3_synnames(line, col) do
+    if utils.str_contains_any(synname,
+        opts.syntax_skip_groups) then
+      return true
+    end
+  end
+  return false
 end
 
 ---Returns skip function for `search.match_pos()`
@@ -55,17 +65,19 @@ end
 ---@param col number 0-based column number
 ---@return function|nil
 function M.skip_by_region(line, col)
-    if not is_syntax_on() then return end
+  if not is_syntax_on() then return end
 
-    if in_syntax_skip_region(line, col) then
-        return function(l, c)
-            return not in_syntax_skip_region(l, c)
-        end
-    else
-        return function(l, c)
-            return in_syntax_skip_region(l, c)
-        end
+  if is_syntax_skip_region(line, col) then
+    return function(l, c)
+      return not is_syntax_skip_region(l, c)
     end
+  else
+    return function(l, c)
+      return is_syntax_skip_region(l, c)
+    end
+  end
 end
 
 return M
+
+-- vim:sw=2:et

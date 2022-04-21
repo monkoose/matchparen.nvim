@@ -6,7 +6,7 @@ local fn = vim.fn
 local opts = options.opts
 local M = {}
 
----Returns true when augroup with `name` exists.
+---Returns true when augroup with `name` exists
 ---@param name string
 ---@return boolean
 local function augroup_exists(name)
@@ -14,7 +14,7 @@ local function augroup_exists(name)
 end
 
 ---Returns table created by splitting vim `matchpairs` option
----with opening brackets as keys and closing brackets as values.
+---with opening brackets as keys and closing brackets as values
 ---@return table
 local function split_matchpairs()
   local t = {}
@@ -41,7 +41,7 @@ local function update_matchpairs()
 end
 
 ---Creates augroup and contained autocmds which are
----required for the plugin to work.
+---required for the plugin to work
 local function create_autocmds()
   if augroup_exists(opts.augroup_name) then return end
 
@@ -63,41 +63,41 @@ local function create_autocmds()
   autocmd('OptionSet', update_matchpairs, { pattern = 'matchpairs' })
 end
 
----Delets plugins augroup and clears all it's autocmds.
+---Delets plugins augroup and clears all it's autocmds
 local function delete_autocmds()
   if augroup_exists(opts.augroup_name) then
     nvim.del_augroup_by_name(opts.augroup_name)
   end
 end
 
----Disables built in matchparen plugin.
+---Disables built in matchparen plugin
 local function disable_builtin()
   vim.g.loaded_matchparen = 1
-  if fn.exists(":NoMatchParen") ~= 0 then
-    nvim.command("NoMatchParen")
+  if fn.exists(':NoMatchParen') ~= 0 then
+    nvim.command('NoMatchParen')
   end
 end
 
----Enables the plugin.
+---Enables the plugin
 local function enable()
   create_autocmds()
   update_matchpairs()
   hl.update()
 end
 
----Disables the plugin.
+---Disables the plugin
 local function disable()
   delete_autocmds()
   hl.remove()
 end
 
----Creates plugin's custom commands.
+---Creates plugin's custom commands
 local function create_commands()
   nvim.create_user_command('MatchParenEnable', enable, {})
   nvim.create_user_command('MatchParenDisable', disable, {})
 end
 
----Initializes the plugin.
+---Initializes the plugin
 ---@param config table
 function M.setup(config)
   disable_builtin()
