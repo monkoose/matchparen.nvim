@@ -6,7 +6,7 @@ local fn = vim.fn
 local utils = {}
 
 ---Returns true if line is inside closed fold
----@param line number 0-based line number
+---@param line integer 0-based line number
 ---@return boolean
 function utils.inside_closed_fold(line)
   return fn.foldclosed(line + 1) ~= -1
@@ -41,8 +41,8 @@ function utils.str_contains_any(str, tbl)
 end
 
 ---Returns 0-based current line and column
----@return number, number
-function utils.get_current_pos()
+---@return integer, integer
+function utils.get_cursor_pos()
   local line, column = unpack(win.get_cursor(0))
   return line - 1, column
 end
@@ -51,8 +51,8 @@ end
 ---is in a capture) in the `text` or nil
 ---@param text string
 ---@param pattern string
----@param init number same as in string.find
----@return number|nil, string
+---@param init integer same as in string.find
+---@return integer|nil, string
 function utils.find_forward(text, pattern, init)
   local index, _, bracket = string.find(text, pattern, init and init + 1)
   return index, bracket
@@ -61,8 +61,8 @@ end
 ---Returns first backward index and full match substring in the `text` or nil
 ---@param reversed_text string
 ---@param pattern string
----@param init number same as in string.find
----@return number|nil, string
+---@param init integer same as in string.find
+---@return integer|nil, string
 function utils.find_backward(reversed_text, pattern, init)
   local length = #reversed_text + 1
   local index, bracket = utils.find_forward(reversed_text,
@@ -75,6 +75,7 @@ end
 
 ---Returns table of `count` lines starting from `start`
 ---@param start integer 0-based line number
+---@param count integer number of lines to get
 ---@return string[]
 function utils.get_lines(start, count)
   return buf.get_lines(0, start, start + count, false)

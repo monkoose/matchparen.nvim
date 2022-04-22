@@ -97,7 +97,7 @@ function search.match(pattern, line, col, backward, count, skip)
   end
 end
 
----Returns `0` for balanced bracket and `1` for unbalanced
+---Returns clojure for finding balanced bracket
 ---@param left string opening bracket
 ---@param right string closing bracket
 ---@param backward boolean direction of the search
@@ -123,11 +123,11 @@ end
 ---Returns line and column of a matched bracket
 ---@param left string
 ---@param right string
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@param backward boolean direction of the search
 ---@param skip function
----@return number|nil, number
+---@return integer|nil, integer
 function search.pair(left, right, line, col, backward, skip)
   local pattern = '([' .. right .. left .. '])'
   local max = win.get_height(0)
@@ -150,9 +150,9 @@ end
 
 ---Returns matched bracket position
 ---@param mp table
----@param line number line of `bracket`
----@param col number column of `bracket`
----@return number|nil, number
+---@param line integer line of `bracket`
+---@param col integer column of `bracket`
+---@return integer|nil, integer
 function search.match_pos(mp, line, col)
   local skip
   opts.cache.hl = ts.get_highlighter()

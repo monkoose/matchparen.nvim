@@ -18,14 +18,17 @@ local function get_synname(synid)
   return string.lower(fn.synIDattr(synid, 'name'))
 end
 
----Returns iterator with the last three syntax group names
+---Iterator with the last three syntax group names
 ---under the `line` `col` position in the current buffer
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@return function
 local function last3_synnames(line, col)
   local synstack = fn.synstack(line + 1, col + 1)
   local len = #synstack
+  -- last three synnames should be more than enough to determine
+  -- if syntax under the cursor belongs to some syntax group
+  -- at least for such groups like comment and string
   local last3 = {
     synstack[len],
     synstack[len - 1],
@@ -41,10 +44,10 @@ local function last3_synnames(line, col)
   end
 end
 
----Determines whether the cursor is inside neovim syntax id name
+---Returns true when the cursor is inside neovim syntax id name
 ---that match any value in `syntax_skip_groups` option list
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@return boolean
 local function is_syntax_skip_region(line, col)
   if utils.inside_closed_fold(line) then
@@ -61,8 +64,8 @@ local function is_syntax_skip_region(line, col)
 end
 
 ---Returns skip function for `search.match_pos()`
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@return function|nil
 function syntax.skip_by_region(line, col)
   if not is_syntax_on() then return end

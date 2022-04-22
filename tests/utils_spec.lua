@@ -70,7 +70,7 @@ describe("Functional", function()
   describe("get_current_pos", function()
     vim.api.nvim_win_set_cursor(0, { 2, 4 })
     it("should return 0-based line, column", function()
-      assert.same({1, 4}, {utils.get_current_pos()})
+      assert.same({1, 4}, {utils.get_cursor_pos()})
     end)
   end)
 

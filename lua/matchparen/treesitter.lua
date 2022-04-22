@@ -12,8 +12,8 @@ local cache = {
 
 ---Determines whether (line, col) position is in node range
 ---@param node userdata node defining the range
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@return boolean
 ---
 ---copied from nvim-tresitter plugin
@@ -37,8 +37,8 @@ local function is_in_node_range(node, line, col)
 end
 
 ---Returns treesitter node at (line, col) position
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@return userdata
 local function node_at(line, col)
   return cache.root:descendant_for_range(line, col, line, col + 1)
@@ -60,8 +60,8 @@ local function cache_nodes(line)
 end
 
 ---Returns treesitter node at `line` and `col` position if it is in `captures` list
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@param parent userdata treesitter node
 ---@return userdata|nil node
 local function get_skip_node(line, col, parent)
@@ -120,8 +120,8 @@ local function get_tree_root()
 end
 
 ---Determines whether the cursor is inside conf.ts_skip_groups option
----@param line number 0-based line
----@param col number 0-based column
+---@param line integer 0-based line
+---@param col integer 0-based column
 ---@param parent userdata treesitter node
 ---@return boolean
 local function is_ts_skip_region(line, col, parent)
@@ -136,12 +136,13 @@ end
 ---@param backward boolean direction of the search
 ---@return integer
 local function limit_by_node(node, backward)
+  local get_sibling = backward and 'prev_sibling' or 'next_sibling'
+
   return function(l, c)
     if not c then
       return 0
     end
 
-    local get_sibling = backward and 'prev_sibling' or 'next_sibling'
     while node do
       -- limit the search to the current node only
       if is_in_node_range(node, l, c) then
@@ -167,12 +168,12 @@ function ts.get_highlighter()
   return vim.treesitter.highlighter.active[bufnr]
 end
 
----Returns `skip` and `stop` functions for `match_pos`
+---Returns `skip` function for `match_pos`
 ---based on treesitter node under the `line` and `col`
----@param line number 0-based line number
----@param col number 0-based column number
+---@param line integer 0-based line number
+---@param col integer 0-based column number
 ---@param backward boolean direction of the search
----@return function, function
+---@return function
 function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
   cache.skip_nodes = {}

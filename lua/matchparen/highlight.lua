@@ -55,7 +55,7 @@ end
 function M.update(in_insert)
   M.remove()
   vim.g.matchparen_tick = buf.get_changedtick(0)
-  local line, col = utils.get_current_pos()
+  local line, col = utils.get_cursor_pos()
 
   if utils.inside_closed_fold(line) then return end
 
