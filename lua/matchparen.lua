@@ -1,6 +1,6 @@
 local options = require('matchparen.options')
 local hl = require('matchparen.highlight')
-local nvim = require('missinvim')
+local nvim = require('matchparen.missinvim')
 
 local fn = vim.fn
 local opts = options.opts
@@ -32,7 +32,7 @@ local function update_matchpairs()
     return
   end
 
-  opts.cached_matchpairs = vim.o.matchpairs
+  opts.cache.matchpairs = vim.o.matchpairs
   opts.matchpairs = {}
   for l, r in pairs(split_matchpairs()) do
     opts.matchpairs[l] = { left = l, right = r, backward = false }

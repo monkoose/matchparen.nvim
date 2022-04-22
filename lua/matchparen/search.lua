@@ -2,7 +2,7 @@ local syntax = require('matchparen.syntax')
 local ts = require('matchparen.treesitter')
 local utils = require('matchparen.utils')
 local opts = require('matchparen.options').opts
-local win = require('missinvim').win
+local win = require('matchparen.missinvim').win
 
 local search = {}
 

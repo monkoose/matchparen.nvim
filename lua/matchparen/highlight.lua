@@ -1,7 +1,7 @@
 local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 local search = require('matchparen.search')
-local nvim = require('missinvim')
+local nvim = require('matchparen.missinvim')
 
 local buf = nvim.buf
 local M = {}

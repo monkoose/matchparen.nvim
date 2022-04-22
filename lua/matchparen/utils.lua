@@ -1,4 +1,4 @@
-local nvim = require('missinvim')
+local nvim = require('matchparen.missinvim')
 
 local win = nvim.win
 local buf = nvim.buf
