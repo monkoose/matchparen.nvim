@@ -4,7 +4,7 @@ local utils = require('matchparen.utils')
 local opts = require('matchparen.options').opts
 local win = require('missinvim').win
 
-local M = {}
+local search = {}
 
 local function forward_matches(pattern, line, col, count)
   local lines = utils.get_lines(line, count)
@@ -43,7 +43,6 @@ local function backward_matches(pattern, line, col, count)
       index, capture = utils.find_backward(r_text, pattern, index)
 
       if index then
-        -- TODO: check correct return
         local match_line = line - #lines + i
         return match_line, index - 1, capture
       end
@@ -63,7 +62,7 @@ end
 ---@param count integer number of lines to search
 ---@param skip function
 ---@return number|nil, number
-function M.match(pattern, line, col, backward, count, skip)
+function search.match(pattern, line, col, backward, count, skip)
   skip = skip or function() end
   local ok, to_skip
   local matches = backward and backward_matches or forward_matches
@@ -78,20 +77,11 @@ function M.match(pattern, line, col, backward, count, skip)
   end
 end
 
----Returns line and column of a matched bracket
----@param left string
----@param right string
----@param line number 0-based line number
----@param col number 0-based column number
----@param backward boolean direction of the search
----@param skip function
----@return number|nil, number
-function M.pair(left, right, line, col, backward, skip)
+local function skip_same_bracket(left, right, backward)
   local count = 0
-  local pattern = '([' .. right .. left .. '])'
   local same_bracket = backward and right or left
-  local max = win.get_height(0)
-  local skip_same_bracket = function(bracket)
+
+  return function(bracket)
     if bracket == same_bracket then
       count = count + 1
     else
@@ -103,19 +93,33 @@ function M.pair(left, right, line, col, backward, skip)
     end
     return true
   end
+end
+
+---Returns line and column of a matched bracket
+---@param left string
+---@param right string
+---@param line number 0-based line number
+---@param col number 0-based column number
+---@param backward boolean direction of the search
+---@param skip function
+---@return number|nil, number
+function search.pair(left, right, line, col, backward, skip)
+  local pattern = '([' .. right .. left .. '])'
+  local max = win.get_height(0)
+  local skip_bracket = skip_same_bracket(left, right, backward)
 
   local skip_fn
   if skip then
     skip_fn = function(l, c, bracket)
-      return skip(l, c) or skip_same_bracket(bracket)
+      return skip(l, c) or skip_bracket(bracket)
     end
   else
     skip_fn = function(_, _, bracket)
-      return skip_same_bracket(bracket)
+      return skip_bracket(bracket)
     end
   end
 
-  return M.match(pattern, line, col, backward, max, skip_fn)
+  return search.match(pattern, line, col, backward, max, skip_fn)
 end
 
 ---Returns matched bracket position
@@ -123,7 +127,7 @@ end
 ---@param line number line of `bracket`
 ---@param col number column of `bracket`
 ---@return number|nil, number
-function M.match_pos(mp, line, col)
+function search.match_pos(mp, line, col)
   local skip
   opts.cache.hl = ts.get_highlighter()
 
@@ -134,9 +138,9 @@ function M.match_pos(mp, line, col)
     skip = syntax.skip_by_region(line, col)
   end
 
-  return M.pair(mp.left, mp.right, line, col, mp.backward, skip)
+  return search.pair(mp.left, mp.right, line, col, mp.backward, skip)
 end
 
-return M
+return search
 
 -- vim:sw=2:et

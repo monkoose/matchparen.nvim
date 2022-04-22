@@ -95,7 +95,7 @@ end
 ---@param start integer 0-based line number
 ---@return string[]
 function M.get_lines(start, count)
-  return buf.get_lines(0, start, count, false)
+  return buf.get_lines(0, start, start + count, false)
 end
 
 ---Returns text for the `line` of the current buffer
