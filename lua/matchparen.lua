@@ -4,7 +4,7 @@ local nvim = require('missinvim')
 
 local fn = vim.fn
 local opts = options.opts
-local M = {}
+local mp = {}
 
 ---Returns true when augroup with `name` exists
 ---@param name string
@@ -99,7 +99,7 @@ end
 
 ---Initializes the plugin
 ---@param config table
-function M.setup(config)
+function mp.setup(config)
   disable_builtin()
   options.update(config)
   opts.cache = {}
@@ -113,6 +113,6 @@ function M.setup(config)
   end
 end
 
-return M
+return mp
 
 -- vim:sw=2:et

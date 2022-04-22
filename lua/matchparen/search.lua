@@ -71,8 +71,10 @@ function search.match(pattern, line, col, backward, count, skip)
     ok, to_skip = pcall(skip, l, c, capture)
     if not ok then return end
 
-    if not to_skip then
+    if to_skip == 0 then
       return l, c
+    elseif to_skip == -1 then
+      return
     end
   end
 end
@@ -86,12 +88,12 @@ local function skip_same_bracket(left, right, backward)
       count = count + 1
     else
       if count == 0 then
-        return false
+        return 0
       else
         count = count - 1
       end
     end
-    return true
+    return 1
   end
 end
 
@@ -111,7 +113,8 @@ function search.pair(left, right, line, col, backward, skip)
   local skip_fn
   if skip then
     skip_fn = function(l, c, bracket)
-      return skip(l, c) or skip_bracket(bracket)
+      local s = skip(l, c)
+      return s ~= 0 and s or skip_bracket(bracket)
     end
   else
     skip_fn = function(_, _, bracket)
@@ -133,7 +136,7 @@ function search.match_pos(mp, line, col)
 
   -- try treesitter highlighting or fallback to regex syntax
   if opts.cache.hl then
-    skip = ts.skip_and_stop(line, col, mp.backward)
+    skip = ts.skip_by_region(line, col, mp.backward)
   else
     skip = syntax.skip_by_region(line, col)
   end

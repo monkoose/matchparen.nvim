@@ -2,7 +2,7 @@ local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 
 local fn = vim.fn
-local M = {}
+local syntax = {}
 
 ---Returns true when built in syntax is on and
 ---current buffer has syntax for its filetype
@@ -64,20 +64,20 @@ end
 ---@param line number 0-based line number
 ---@param col number 0-based column number
 ---@return function|nil
-function M.skip_by_region(line, col)
+function syntax.skip_by_region(line, col)
   if not is_syntax_on() then return end
 
   if is_syntax_skip_region(line, col) then
     return function(l, c)
-      return not is_syntax_skip_region(l, c)
+      return is_syntax_skip_region(l, c) and 0 or 1
     end
   else
     return function(l, c)
-      return is_syntax_skip_region(l, c)
+      return is_syntax_skip_region(l, c) and 1 or 0
     end
   end
 end
 
-return M
+return syntax
 
 -- vim:sw=2:et

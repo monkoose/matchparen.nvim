@@ -3,38 +3,18 @@ local nvim = require('missinvim')
 local win = nvim.win
 local buf = nvim.buf
 local fn = vim.fn
-local M = { error = nil }
-
----Determines whether a search should stop if searched line outside of range
----@param line number 0-based line number
----@param backward boolean direction of the search
----@return function
-function M.limit_by_line(line, backward)
-  local stopline
-  local win_height = win.get_height(0)
-  if backward then
-    stopline = line - win_height
-    return function(l)
-      return l < stopline
-    end
-  else
-    stopline = line + win_height
-    return function(l)
-      return l > stopline
-    end
-  end
-end
+local utils = {}
 
 ---Returns true if line is inside closed fold
 ---@param line number 0-based line number
 ---@return boolean
-function M.inside_closed_fold(line)
+function utils.inside_closed_fold(line)
   return fn.foldclosed(line + 1) ~= -1
 end
 
 ---Returns true when current mode is insert or Replace
 ---@return boolean
-function M.is_in_insert_mode()
+function utils.is_in_insert_mode()
   local mode = nvim.get_mode().mode
   return mode == 'i' or mode == 'R'
 end
@@ -43,7 +23,7 @@ end
 ---@param str string
 ---@param pattern string
 ---@return boolean
-function M.str_contains(str, pattern)
+function utils.str_contains(str, pattern)
   return str:find(pattern, 1, true) ~= nil
 end
 
@@ -51,9 +31,9 @@ end
 ---@param str string
 ---@param tbl string[]
 ---@return boolean
-function M.str_contains_any(str, tbl)
+function utils.str_contains_any(str, tbl)
   for _, pattern in ipairs(tbl) do
-    if M.str_contains(str, pattern) then
+    if utils.str_contains(str, pattern) then
       return true
     end
   end
@@ -62,7 +42,7 @@ end
 
 ---Returns 0-based current line and column
 ---@return number, number
-function M.get_current_pos()
+function utils.get_current_pos()
   local line, column = unpack(win.get_cursor(0))
   return line - 1, column
 end
@@ -73,7 +53,7 @@ end
 ---@param pattern string
 ---@param init number same as in string.find
 ---@return number|nil, string
-function M.find_forward(text, pattern, init)
+function utils.find_forward(text, pattern, init)
   local index, _, bracket = string.find(text, pattern, init and init + 1)
   return index, bracket
 end
@@ -83,9 +63,11 @@ end
 ---@param pattern string
 ---@param init number same as in string.find
 ---@return number|nil, string
-function M.find_backward(reversed_text, pattern, init)
+function utils.find_backward(reversed_text, pattern, init)
   local length = #reversed_text + 1
-  local index, bracket = M.find_forward(reversed_text, pattern, init and length - init)
+  local index, bracket = utils.find_forward(reversed_text,
+                                            pattern,
+                                            init and length - init)
   if index then
     return length - index, bracket
   end
@@ -94,10 +76,10 @@ end
 ---Returns table of `count` lines starting from `start`
 ---@param start integer 0-based line number
 ---@return string[]
-function M.get_lines(start, count)
+function utils.get_lines(start, count)
   return buf.get_lines(0, start, start + count, false)
 end
 
-return M
+return utils
 
 -- vim:sw=2:et

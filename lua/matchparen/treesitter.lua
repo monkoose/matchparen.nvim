@@ -2,7 +2,7 @@ local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 local nvim = require('missinvim')
 
-local M = {}
+local ts = {}
 
 local cache = {
   root = nil,
@@ -99,7 +99,15 @@ local function get_trees()
 return trees
 end
 
+---Returns true when `node` type is string
+---@param node userdata
+---@return boolean
+local function is_node_string(node)
+  return utils.str_contains(node:type(), 'string')
+end
+
 ---Returns true when `node` type is comment
+---@param node userdata
 ---@return boolean
 local function is_node_comment(node)
   return utils.str_contains(node:type(), 'comment')
@@ -126,22 +134,27 @@ end
 ---Determines whether a search should stop if outside of the `node`
 ---@param node userdata treesitter node
 ---@param backward boolean direction of the search
----@return boolean
+---@return integer
 local function limit_by_node(node, backward)
   return function(l, c)
-    if not c then return end
+    if not c then
+      return 0
+    end
 
     local get_sibling = backward and 'prev_sibling' or 'next_sibling'
     while node do
       -- limit the search to the current node only
-      if is_in_node_range(node, l, c) then return end
-      if not is_node_comment(node) then
-        return true
+      if is_in_node_range(node, l, c) then
+        return 0
       end
+
       -- increase the search limit for connected comments
+      if not is_node_comment(node) then
+        return -1
+      end
       node = node[get_sibling](node)
       if not (node and is_node_comment(node)) then
-        return true
+        return -1
       end
     end
   end
@@ -149,7 +162,7 @@ end
 
 ---Returns treesitter highlighter for current buffer or nil
 ---@return table
-function M.get_highlighter()
+function ts.get_highlighter()
   local bufnr = nvim.get_current_buf()
   return vim.treesitter.highlighter.active[bufnr]
 end
@@ -160,31 +173,28 @@ end
 ---@param col number 0-based column number
 ---@param backward boolean direction of the search
 ---@return function, function
-function M.skip_and_stop(line, col, backward)
-  local skip, stop
+function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
   cache.skip_nodes = {}
   local skip_node = get_skip_node(line, col)
   -- FiXME: this if condition only to fix annotying bug for treesitter strings
-  if skip_node and not is_node_comment(skip_node) then
+  if skip_node and is_node_string(skip_node) then
     if not is_in_node_range(skip_node, line, col + 1) then
       skip_node = false
     end
   end
 
   if skip_node then  -- inside string or comment
-    stop = limit_by_node(skip_node, backward)
+    return limit_by_node(skip_node, backward)
   else
     cache.root = get_tree_root()
     local parent = node_at(line, col):parent()
-    skip = function(l, c)
-      return is_ts_skip_region(l, c, parent)
+    return function(l, c)
+      return is_ts_skip_region(l, c, parent) and 1 or 0
     end
-    stop = utils.limit_by_line(line, backward)
   end
-  return skip, stop
 end
 
-return M
+return ts
 
 -- vim:sw=2:et
