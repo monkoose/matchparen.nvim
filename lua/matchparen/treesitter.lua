@@ -99,13 +99,14 @@ local function get_trees()
 return trees
 end
 
----Determines wheter `node` is type of comment
+---Returns true when `node` type is comment
 ---@return boolean
 local function is_node_comment(node)
   return utils.str_contains(node:type(), 'comment')
 end
 
 ---Returns treesitter tree root
+---@return userdata
 local function get_tree_root()
   return vim.treesitter.get_parser():parse()[1]:root()
 end
@@ -147,6 +148,7 @@ local function limit_by_node(node, backward)
 end
 
 ---Returns treesitter highlighter for current buffer or nil
+---@return table
 function M.get_highlighter()
   local bufnr = nvim.get_current_buf()
   return vim.treesitter.highlighter.active[bufnr]

@@ -56,11 +56,11 @@ local function create_autocmds()
   end
 
   autocmd('InsertEnter', function() hl.update(true) end)
-  autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, hl.update)
-  autocmd({ 'TextChanged', 'TextChangedI' }, hl.update_on_tick)
-  autocmd({ 'WinLeave', 'BufLeave' }, hl.remove)
-  autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, update_matchpairs)
-  autocmd('OptionSet', update_matchpairs, { pattern = 'matchpairs' })
+  autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update() end)
+  autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
+  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.remove() end)
+  autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
+  autocmd('OptionSet', function() update_matchpairs() end, { pattern = 'matchpairs' })
 end
 
 ---Delets plugins augroup and clears all it's autocmds

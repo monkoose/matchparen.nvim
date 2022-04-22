@@ -32,7 +32,7 @@ function M.inside_closed_fold(line)
   return fn.foldclosed(line + 1) ~= -1
 end
 
----Determines whether current mode is insert or Replace
+---Returns true when current mode is insert or Replace
 ---@return boolean
 function M.is_in_insert_mode()
   local mode = nvim.get_mode().mode
@@ -49,7 +49,7 @@ end
 
 ---Returns true when `str` contains any element from the `tbl`
 ---@param str string
----@param tbl table<string>
+---@param tbl string[]
 ---@return boolean
 function M.str_contains_any(str, tbl)
   for _, pattern in ipairs(tbl) do
@@ -89,6 +89,13 @@ function M.find_backward(reversed_text, pattern, init)
   if index then
     return length - index, bracket
   end
+end
+
+---Returns table of `count` lines starting from `start`
+---@param start integer 0-based line number
+---@return string[]
+function M.get_lines(start, count)
+  return buf.get_lines(0, start, count, false)
 end
 
 ---Returns text for the `line` of the current buffer

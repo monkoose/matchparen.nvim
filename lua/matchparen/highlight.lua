@@ -35,7 +35,7 @@ end
 ---@return table|nil, number
 local function get_bracket(col, in_insert)
   local text = nvim.get_current_line()
-  in_insert = utils.is_in_insert_mode() or in_insert
+  in_insert = in_insert or utils.is_in_insert_mode()
 
   if col > 0 and in_insert then
     local before_char = text:sub(col, col)
