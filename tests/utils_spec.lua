@@ -1,18 +1,6 @@
 local utils = require("matchparen.utils")
 local stub = require("luassert.stub")
 
-describe("dec", function()
-  it("should decrement a number", function()
-    assert.equal(utils.dec(5), 4)
-  end)
-end)
-
-describe("inc", function()
-  it("should increment a number", function()
-    assert.equal(6, utils.inc(5))
-  end)
-end)
-
 describe("str_contains", function()
   local text = "Hello, world!"
 
@@ -70,24 +58,17 @@ end)
 
 describe("Functional", function()
   vim.cmd("e tests/example.lua")
-  local test_string = "-- test get_line"
+  local test_strings = {"-- Testing file", "-- test get_line"}
 
-  describe("get_line", function()
-    vim.api.nvim_win_set_cursor(0, { 2, 4 })
-    it("should return correct text of the line number", function()
-      -- get_line is 0-based
-      assert.equal(test_string, utils.get_line(1))
-    end)
-  end)
-
-  describe("get_reversed_line", function()
-    vim.api.nvim_win_set_cursor(0, { 2, 4 })
-    it("should return correct reversed text of the line number", function()
-      assert.equal(string.reverse(test_string), utils.get_reversed_line(1))
+  describe("get_lines", function()
+    it("should return correct array of strings.", function()
+      assert.same(test_strings, utils.get_lines(0, 2))
+      assert.same({ test_strings[2] }, utils.get_lines(1, 1))
     end)
   end)
 
   describe("get_current_pos", function()
+    vim.api.nvim_win_set_cursor(0, { 2, 4 })
     it("should return 0-based line, column", function()
       assert.same({1, 4}, {utils.get_current_pos()})
     end)

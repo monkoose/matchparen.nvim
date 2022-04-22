@@ -98,37 +98,6 @@ function M.get_lines(start, count)
   return buf.get_lines(0, start, start + count, false)
 end
 
----Returns text for the `line` of the current buffer
----@param line number 0-based line number
----@return string
-function M.get_line(line)
-  return buf.get_lines(0, line, line + 1, false)[1]
-end
-
----Returns reversed text for the `line` of the current buffer
----@param line number 0-based line number
----@return string
-function M.get_reversed_line(line)
-  local text = M.get_line(line)
-  if text then
-    return string.reverse(M.get_line(line))
-  end
-end
-
----Increments `n` by 1
----@param n number
----@return number
-function M.inc(n)
-  return n + 1
-end
-
----Decrements `n` by 1
----@param n number
----@return number
-function M.dec(n)
-  return n - 1
-end
-
 return M
 
 -- vim:sw=2:et
