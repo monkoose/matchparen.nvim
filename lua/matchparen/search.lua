@@ -6,6 +6,12 @@ local win = require('matchparen.missinvim').win
 
 local search = {}
 
+---Returns clojure for finding `pattern` on the `line` and below
+---@param pattern string
+---@param line integer 0-based line number
+---@param col integer 0-based column number
+---@param count integer number of lines to process
+---@return function
 local function forward_matches(pattern, line, col, count)
   local lines = utils.get_lines(line, count)
   local i = 1
@@ -28,6 +34,12 @@ local function forward_matches(pattern, line, col, count)
   end
 end
 
+---Returns clojure for finding `pattern` on the `line` and above
+---@param pattern string
+---@param line integer 0-based line number
+---@param col integer 0-based column number
+---@param count integer number of lines to process
+---@return function
 local function backward_matches(pattern, line, col, count)
   local start = math.max(0, line - count)
   local lines = utils.get_lines(start, line - start + 1)
@@ -68,9 +80,15 @@ function search.match(pattern, line, col, backward, count, skip)
   local matches = backward and backward_matches or forward_matches
 
   for l, c, capture in matches(pattern, line, col, count) do
+    -- pcall because some skip functions can be errorness
+    -- like `synstack()` for syntax
     ok, to_skip = pcall(skip, l, c, capture)
     if not ok then return end
 
+    -- skip functions should return:
+    --  0 - don't skip current match (match is found)
+    --  1 - skip current match (continue to another match)
+    -- -1 - stop searching without match
     if to_skip == 0 then
       return l, c
     elseif to_skip == -1 then
@@ -79,6 +97,11 @@ function search.match(pattern, line, col, backward, count, skip)
   end
 end
 
+---Returns `0` for balanced bracket and `1` for unbalanced
+---@param left string opening bracket
+---@param right string closing bracket
+---@param backward boolean direction of the search
+---@return function
 local function skip_same_bracket(left, right, backward)
   local count = 0
   local same_bracket = backward and right or left
