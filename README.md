@@ -1,6 +1,10 @@
 ## Matchparen.nvim
 ### alternative to default neovim matchparen plugin
 
+**main** branch requires neovim v0.7 or higher.
+
+Last version that uses neovim v0.6 can be found at this commit 8df2b177cd92c0fa7e4d4a7c1812612d9a59651d.
+
 **BE AWARE:** highlighting should work as expected, but jumping to highlighted
 bracket with `%` or text objects as `i(`, `a[` etc not implemented yet, so it
 could work improperly when there are some unmatched brackets in strings or
