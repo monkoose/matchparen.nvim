@@ -40,14 +40,6 @@ There are two commands to temporary disable or enable the plugin
 :MatchParenEnable
 ```
 
-If error occurs during bracket highlighing calculation, it would not break
-you workflow and just print information message into the echo area. When this
-happens highlighing could be wrong, consider to create new issue with the
-error message.
-To read full error message `:MatchParenError` could be used.
-It would open new window with full error stack. To close this window use
-`Esc` or `q`, to copy error message use `yy`.
-
 ### Configuration
 
 ```lua
@@ -74,5 +66,3 @@ require('matchparen').setup({
     }
 })
 ```
-
-Some inspiration for built-in syntax was taken from neovim matchparen plugin itself and this [PR](https://github.com/vim/vim/pull/7985) from vim repository by [lacygoill](https://github.com/lacygoill)
