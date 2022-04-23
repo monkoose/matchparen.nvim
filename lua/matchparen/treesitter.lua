@@ -125,7 +125,7 @@ end
 ---@param parent userdata treesitter node
 ---@return boolean
 local function is_ts_skip_region(line, col, parent)
-  if utils.inside_closed_fold(line) then
+  if utils.is_inside_fold(line) then
     return false
   end
   return get_skip_node(line, col, parent) ~= nil

@@ -57,7 +57,7 @@ function M.update(in_insert)
   vim.g.matchparen_tick = buf.get_changedtick(0)
   local line, col = utils.get_cursor_pos()
 
-  if utils.inside_closed_fold(line) then return end
+  if utils.is_inside_fold(line) then return end
 
   local match_bracket
   match_bracket, col = get_bracket(col, in_insert)

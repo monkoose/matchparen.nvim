@@ -8,7 +8,7 @@ local utils = {}
 ---Returns true if line is inside closed fold
 ---@param line integer 0-based line number
 ---@return boolean
-function utils.inside_closed_fold(line)
+function utils.is_inside_fold(line)
   return fn.foldclosed(line + 1) ~= -1
 end
 

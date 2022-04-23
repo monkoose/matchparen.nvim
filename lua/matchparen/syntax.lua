@@ -50,7 +50,7 @@ end
 ---@param col integer 0-based column number
 ---@return boolean
 local function is_syntax_skip_region(line, col)
-  if utils.inside_closed_fold(line) then
+  if utils.is_inside_fold(line) then
     return false
   end
 
