@@ -61,7 +61,7 @@ local function create_autocmds()
   autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end)
   autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
   autocmd('OptionSet', function() update_matchpairs() end, { pattern = 'matchpairs' })
-  autocmd({ 'BufRead', 'BufNewFile', 'VimEnter' }, function(t) hl.create_extmarks(t.buf) end)
+  autocmd({ 'BufNew', 'VimEnter', 'CmdwinEnter' }, function(t) hl.create_extmarks(t.buf) end)
 end
 
 ---Delets plugins augroup and clears all it's autocmds
