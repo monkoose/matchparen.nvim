@@ -3,7 +3,7 @@
 
 **main** branch requires neovim v0.7 or higher.
 
-Last version that uses neovim v0.6 can be found at this commit 8df2b177cd92c0fa7e4d4a7c1812612d9a59651d.
+Last version that uses neovim v0.6 is [8df2b17](https://github.com/monkoose/matchparen.nvim/commit/8df2b177cd92c0fa7e4d4a7c1812612d9a59651d).
 
 **BE AWARE:** highlighting should work as expected, but jumping to highlighted
 bracket with `%` or text objects as `i(`, `a[` etc not implemented yet, so it
