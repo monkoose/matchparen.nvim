@@ -18,7 +18,7 @@ end
 ---@return table
 local function split_matchpairs()
   local t = {}
-  for _, pair in ipairs(vim.opt.matchpairs:get()) do
+  for _, pair in ipairs(vim.opt_local.matchpairs:get()) do
     local left, right = pair:match('(.+):(.+)')
     t[left] = right
   end
@@ -28,11 +28,11 @@ end
 ---Updates `matchpairs` opt only if it was changed,
 ---can be changed by buffer local option
 local function update_matchpairs()
-  if opts.cache.matchpairs == vim.o.matchpairs then
+  if opts.cache.matchpairs == vim.bo.matchpairs then
     return
   end
 
-  opts.cache.matchpairs = vim.o.matchpairs
+  opts.cache.matchpairs = vim.bo.matchpairs
   opts.matchpairs = {}
   for l, r in pairs(split_matchpairs()) do
     opts.matchpairs[l] = { left = l, right = r, backward = false }

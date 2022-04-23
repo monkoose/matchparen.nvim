@@ -8,7 +8,7 @@ local syntax = {}
 ---current buffer has syntax for its filetype
 ---@return boolean
 local function is_syntax_on()
-  return vim.g.syntax_on == 1 and vim.o.syntax ~= ''
+  return vim.g.syntax_on == 1 and vim.bo.syntax ~= ''
 end
 
 ---Returns name of the syntax id group
