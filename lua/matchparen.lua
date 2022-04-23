@@ -58,9 +58,10 @@ local function create_autocmds()
   autocmd('InsertEnter', function() hl.update(true) end)
   autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update() end)
   autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
-  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.remove() end)
+  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end)
   autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
   autocmd('OptionSet', function() update_matchpairs() end, { pattern = 'matchpairs' })
+  autocmd({ 'BufRead', 'BufNewFile' }, function(t) hl.create_extmarks(t.buf) end)
 end
 
 ---Delets plugins augroup and clears all it's autocmds
@@ -88,7 +89,7 @@ end
 ---Disables the plugin
 local function disable()
   delete_autocmds()
-  hl.remove()
+  hl.hide()
 end
 
 ---Creates plugin's custom commands
@@ -102,9 +103,9 @@ end
 function mp.setup(config)
   disable_builtin()
   options.update(config)
-  opts.cache = {}
   opts.namespace = nvim.create_namespace(opts.augroup_name)
-  opts.extmarks = { current = 0, match = 0 }
+  opts.cache = {}
+  opts.extmarks = {}
   update_matchpairs()
   create_commands()
 
