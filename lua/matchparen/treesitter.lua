@@ -135,7 +135,7 @@ end
 ---@param node userdata treesitter node
 ---@param backward boolean direction of the search
 ---@return integer
-local function limit_by_node(node, backward)
+local function skip_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
 
   return function(l, c)
@@ -186,7 +186,7 @@ function ts.skip_by_region(line, col, backward)
   end
 
   if skip_node then  -- inside string or comment
-    return limit_by_node(skip_node, backward)
+    return skip_by_node(skip_node, backward)
   else
     cache.root = get_tree_root()
     local parent = node_at(line, col):parent()
