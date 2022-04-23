@@ -178,7 +178,8 @@ function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
   cache.skip_nodes = {}
   local skip_node = get_skip_node(line, col)
-  -- FiXME: this if condition only to fix annotying bug for treesitter strings
+  -- FiXME: requires only to fix annoying bug for treesitter strings
+  -- that still shows that char after the string belongs to this string
   if skip_node and is_node_string(skip_node) then
     if not is_in_node_range(skip_node, line, col + 1) then
       skip_node = false
