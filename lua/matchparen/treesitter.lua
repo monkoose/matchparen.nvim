@@ -148,7 +148,6 @@ local function skip_by_node(node, backward)
       if is_in_node_range(node, l, c) then
         return 0
       end
-
       -- increase the search limit for connected comments
       if not is_node_comment(node) then
         return -1
