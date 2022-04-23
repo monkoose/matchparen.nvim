@@ -14,9 +14,11 @@ end
 
 ---Creates required extmarks for `bufnr`
 function hl.create_extmarks(bufnr)
-  opts.extmarks[bufnr] = {}
-  opts.extmarks[bufnr].cursor = create_extmark()
-  opts.extmarks[bufnr].match = create_extmark()
+  if not opts.extmarks[bufnr] then
+    opts.extmarks[bufnr] = {}
+    opts.extmarks[bufnr].cursor = create_extmark()
+    opts.extmarks[bufnr].match = create_extmark()
+  end
 end
 
 ---Sets new position for extmark with `id`
