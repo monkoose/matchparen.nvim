@@ -98,13 +98,8 @@ function hl.update(in_insert)
 
   local match_line, match_col = search.match_pos(match_bracket, line, col)
   if match_line then
-    highlight_brackets({
-      line = line,
-      col = col,
-    }, {
-      line = match_line,
-      col = match_col,
-    })
+    highlight_brackets({ line = line, col = col, },
+                       { line = match_line, col = match_col, })
   else
     hl.hide()
   end
