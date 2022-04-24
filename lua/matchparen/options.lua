@@ -29,7 +29,7 @@ local options = defaults
 ---Updates `options` table with values from `new_options`
 ---@param new_options table
 local function update_options(new_options)
-  for option, value in pairs(new_options) do
+  for option, value in pairs(new_options or {}) do
     if options[option] then
       options[option] = value
     end
