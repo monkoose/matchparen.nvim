@@ -105,8 +105,6 @@ function mp.setup(config)
   disable_builtin()
   options.update(config)
   opts.namespace = nvim.create_namespace(opts.augroup_name)
-  opts.cache = {}
-  opts.extmarks = {}
   update_matchpairs()
   create_commands()
 

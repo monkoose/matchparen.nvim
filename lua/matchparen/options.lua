@@ -1,36 +1,44 @@
 local defaults = {
+  -- public
   on_startup = true,
   hl_group = 'MatchParen',
   augroup_name = 'matchparen',
 
+  -- private
+  cache = {},
+  extmarks = {},
   -- Neovim builtin syntax names to limit search only for this range
   -- Not sure if we really need all of this just copied from matchparen plugin itself
   -- Here is the comment from Bram about this syntax names
   -- "We match 'escape' for special items, such as lispEscapeSpecial, and
   --  match "symbol" for lispBarSymbol."
-  syntax_skip_groups = {
+  syntax_skip = {
     'string',
     'comment',
     'character',
-    'singlequoute',
+    'singlequote',
     'escape',
     'symbol',
   },
-
   -- TreeSitter names to limit search only in this range
-  ts_skip_groups = {
+  treesitter_skip = {
     'string',
     'comment',
   }
 }
 
 local options = defaults
+local public_options = {
+  'on_startup',
+  'hl_group',
+  'augroup_name',
+}
 
----Updates `options` table with values from `new_options`
----@param new_options table
-local function update_options(new_options)
-  for option, value in pairs(new_options or {}) do
-    if options[option] then
+---Updates `options` table with values from `new`
+---@param new table
+local function update_options(new)
+  for option, value in pairs(new) do
+    if vim.tbl_contains(public_options, option) then
       options[option] = value
     end
   end

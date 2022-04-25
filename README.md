@@ -50,23 +50,6 @@ There are two commands to temporary disable or enable the plugin
 require('matchparen').setup({
     on_startup = true, -- Should it be enabled by default
     hl_group = 'MatchParen', -- highlight group for matched characters
-    augroup_name = 'matchparen',  -- almost no reason to touch this unless
-
-
-    -- list of neovim default syntax names to match brackets only in this blocks
-    syntax_skip_groups = {
-        'string',
-        'comment',
-        'character',
-        'singlequoute',
-        'escape',
-        'symbol',
-    },
-
-    -- list of TreeSitter query captures to match brackets only in this blocks
-    ts_skip_groups = {
-        'string',
-        'comment',
-    }
+    augroup_name = 'matchparen',  -- almost no reason to touch this unless there is already augroup with such name
 })
 ```

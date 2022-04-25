@@ -49,31 +49,12 @@ or inside init.lua >
         situations you don't need to change it, only if for some reason you
         already have augroup with the same name, to prevent it deleted by the
         plugin.
-    syntax_skip_groups~
-        Table of strings. Syntax groups where to limit brackets highlighting
-        in this region if the cursor is inside it or skip such groups if the
-        cursor is outside.
-    ts_skip_groups~
-        Table of strings. Same as above but for treesitter highlighting query
-        captures.
 
 Defaults are >
     require('matchparen').setup({
         on_startup = true,
         hl_group = 'MatchParen',
         augroup_name = 'matchparen',
-        syntax_skip_groups = {
-            'string',
-            'comment',
-            'character',
-            'singlequoute',
-            'escape',
-            'symbol',
-        },
-        ts_skip_groups = {
-            'string',
-            'comment',
-        }
     })
 
 ==============================================================================

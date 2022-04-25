@@ -52,7 +52,7 @@ local function cache_nodes(line)
     local iter = tree.query:iter_captures(tree.root, opts.cache.hl.bufnr,
       line, line + 1)
     for id, node in iter do
-      if vim.tbl_contains(opts.ts_skip_groups, tree.query.captures[id]) then
+      if vim.tbl_contains(opts.treesitter_skip, tree.query.captures[id]) then
         table.insert(cache.skip_nodes[line], node)
       end
     end
@@ -119,7 +119,7 @@ local function get_tree_root()
   return vim.treesitter.get_parser():parse()[1]:root()
 end
 
----Determines whether the cursor is inside conf.ts_skip_groups option
+---Returns true when the cursor is inside any of opts.treesitter_skip captures
 ---@param line integer 0-based line
 ---@param col integer 0-based column
 ---@param parent userdata treesitter node

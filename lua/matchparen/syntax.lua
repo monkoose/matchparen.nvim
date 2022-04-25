@@ -44,8 +44,7 @@ local function last3_synnames(line, col)
   end
 end
 
----Returns true when the cursor is inside neovim syntax id name
----that match any value in `syntax_skip_groups` option list
+---Returns true when the cursor is inside any of opts.syntax_skip groups
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@return boolean
@@ -55,8 +54,7 @@ local function is_syntax_skip_region(line, col)
   end
 
   for synname in last3_synnames(line, col) do
-    if utils.str_contains_any(synname,
-        opts.syntax_skip_groups) then
+    if utils.str_contains_any(synname, opts.syntax_skip) then
       return true
     end
   end
