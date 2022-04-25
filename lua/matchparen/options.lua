@@ -37,7 +37,7 @@ local public_options = {
 ---Updates `options` table with values from `new`
 ---@param new table
 local function update_options(new)
-  for option, value in pairs(new) do
+  for option, value in pairs(new or {}) do
     if vim.tbl_contains(public_options, option) then
       options[option] = value
     end
