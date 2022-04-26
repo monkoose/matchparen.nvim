@@ -110,7 +110,7 @@ end
 ---so they do not repeat `update()` function after CursorMoved autocmds
 function hl.update_on_tick()
   if vim.g.matchparen_tick ~= buf.get_changedtick(0) then
-    hl.update()
+    hl.update(false)
   end
 end
 

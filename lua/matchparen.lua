@@ -57,7 +57,7 @@ local function create_autocmds()
 
   autocmd({ 'WinEnter', 'BufWinEnter' }, function(t) hl.create_extmarks(t.buf) end)
   autocmd('InsertEnter', function() hl.update(true) end)
-  autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update() end)
+  autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update(false) end)
   autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
   autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end)
   autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
@@ -84,7 +84,7 @@ local function enable()
   create_autocmds()
   hl.create_extmarks(nvim.get_current_buf())
   update_matchpairs()
-  hl.update()
+  hl.update(false)
 end
 
 ---Disables the plugin
