@@ -5,7 +5,6 @@ local nvim = require('matchparen.missinvim')
 local ts = {}
 
 local cache = {
-  root = nil,
   trees = {},
   skip_nodes = {},
 }
@@ -36,14 +35,6 @@ local function is_in_node_range(node, line, col)
   end
 end
 
----Returns treesitter node at (line, col) position
----@param line integer 0-based line number
----@param col integer 0-based column number
----@return userdata
-local function node_at(line, col)
-  return cache.root:descendant_for_range(line, col, line, col + 1)
-end
-
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
 local function cache_nodes(line)
@@ -62,13 +53,8 @@ end
 ---Returns treesitter node at `line` and `col` position if it is in `captures` list
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@param parent userdata treesitter node
 ---@return userdata|nil node
-local function get_skip_node(line, col, parent)
-  if parent and parent ~= node_at(line, col):parent() then
-    return true
-  end
-
+local function get_skip_node(line, col)
   if not cache.skip_nodes[line] then
     cache_nodes(line)
   end
@@ -113,22 +99,15 @@ local function is_node_comment(node)
   return utils.str_contains(node:type(), 'comment')
 end
 
----Returns treesitter tree root
----@return userdata
-local function get_tree_root()
-  return vim.treesitter.get_parser():parse()[1]:root()
-end
-
 ---Returns true when the cursor is inside any of opts.treesitter_skip captures
 ---@param line integer 0-based line
 ---@param col integer 0-based column
----@param parent userdata treesitter node
 ---@return boolean
-local function is_ts_skip_region(line, col, parent)
+local function is_ts_skip_region(line, col)
   if utils.is_inside_fold(line) then
     return false
   end
-  return get_skip_node(line, col, parent) ~= nil
+  return get_skip_node(line, col) ~= nil
 end
 
 ---Determines whether a search should stop if outside of the `node`
@@ -188,10 +167,8 @@ function ts.skip_by_region(line, col, backward)
   if skip_node then  -- inside string or comment
     return skip_by_node(skip_node, backward)
   else
-    cache.root = get_tree_root()
-    local parent = node_at(line, col):parent()
     return function(l, c)
-      return is_ts_skip_region(l, c, parent) and 1 or 0
+      return is_ts_skip_region(l, c) and 1 or 0
     end
   end
 end
