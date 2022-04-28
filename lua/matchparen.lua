@@ -54,14 +54,31 @@ local function create_autocmds()
     nvim.create_autocmd(event, config)
   end
 
-  autocmd('InsertEnter', function() hl.update(true) end)
-  autocmd({ 'WinEnter', 'VimEnter' }, function() hl.update(false) end)
-  autocmd({ 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end)
-  autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
-  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end)
-  autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
-  autocmd('OptionSet', function() update_matchpairs() end, { pattern = 'matchpairs' })
-  autocmd({ 'BufDelete', 'BufUnload' }, function(t) hl.clear_extmarks(t.buf) end)
+  autocmd('InsertEnter', function() hl.update(true) end, {
+    desc = "Highlight matching pairs",
+  })
+  autocmd({ 'WinEnter', 'VimEnter' }, function() hl.update(false) end, {
+    desc = "Highlight matching pairs",
+  })
+  autocmd({ 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end, {
+    desc = "Highlight matching pairs",
+  })
+  autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end, {
+    desc = "Update highlight only when tick has changed after CursorMoved autocmd",
+  })
+  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end, {
+    desc = "Hide matching pairs highlight",
+  })
+  autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end, {
+    desc = "Update cache of matchpairs option",
+  })
+  autocmd('OptionSet', function() update_matchpairs() end, {
+    pattern = 'matchpairs',
+    desc = "Update cache of matchpairs option",
+  })
+  autocmd({ 'BufDelete', 'BufUnload' }, function(t) hl.clear_extmarks(t.buf) end, {
+    desc = "Make some cleanup",
+  })
 end
 
 ---Delets plugins augroup and clears all it's autocmds
