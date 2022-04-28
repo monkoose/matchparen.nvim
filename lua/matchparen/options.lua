@@ -6,7 +6,6 @@ local defaults = {
 
   -- private
   cache = {},
-  extmarks = { hidden = true },
   -- Neovim builtin syntax names to limit search only for this range
   -- Not sure if we really need all of this just copied from matchparen plugin itself
   -- Here is the comment from Bram about this syntax names

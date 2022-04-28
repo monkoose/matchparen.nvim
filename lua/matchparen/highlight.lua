@@ -13,7 +13,7 @@ local function create_extmark()
 end
 
 -- Create required extmarks for each buffer
-setmetatable(opts.extmarks, {
+local extmarks = setmetatable({ hidden = true }, {
   __index = function (t, k)
     local bufnr = {
       cursor = create_extmark(),
@@ -43,21 +43,21 @@ end
 ---@param cur table position of the cursor bracket
 ---@param match table position of the matching bracket
 local function highlight_brackets(cur, match)
-  if opts.extmarks.hidden then
-    opts.extmarks.hidden = false
+  if extmarks.hidden then
+    extmarks.hidden = false
   end
   local bufnr = nvim.get_current_buf()
-  set_extmark(cur.line, cur.col, opts.extmarks[bufnr].cursor)
-  set_extmark(match.line, match.col, opts.extmarks[bufnr].match)
+  set_extmark(cur.line, cur.col, extmarks[bufnr].cursor)
+  set_extmark(match.line, match.col, extmarks[bufnr].match)
 end
 
 ---Removes brackets highlighting
 function hl.hide()
-  if not opts.extmarks.hidden then
-    opts.extmarks.hidden = true
+  if not extmarks.hidden then
+    extmarks.hidden = true
     local bufnr = nvim.get_current_buf()
-    hide_extmark(opts.extmarks[bufnr].cursor)
-    hide_extmark(opts.extmarks[bufnr].match)
+    hide_extmark(extmarks[bufnr].cursor)
+    hide_extmark(extmarks[bufnr].match)
   end
 end
 
