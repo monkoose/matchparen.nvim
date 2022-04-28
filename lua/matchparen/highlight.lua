@@ -12,14 +12,17 @@ local function create_extmark()
   return buf.set_extmark(0, opts.namespace, 0, 0, {})
 end
 
----Creates required extmarks for `bufnr`
-function hl.create_extmarks(bufnr)
-  if not opts.extmarks[bufnr] then
-    opts.extmarks[bufnr] = {}
-    opts.extmarks[bufnr].cursor = create_extmark()
-    opts.extmarks[bufnr].match = create_extmark()
+-- Create required extmarks for each buffer
+setmetatable(opts.extmarks, {
+  __index = function (t, k)
+    local bufnr = {
+      cursor = create_extmark(),
+      match = create_extmark(),
+    }
+    rawset(t, k, bufnr)
+    return bufnr
   end
-end
+})
 
 ---Sets new position for extmark with `id`
 ---@param line integer 0-based line number

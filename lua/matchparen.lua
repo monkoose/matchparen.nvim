@@ -55,7 +55,6 @@ local function create_autocmds()
     nvim.create_autocmd(event, config)
   end
 
-  autocmd({ 'WinEnter', 'BufWinEnter' }, function(t) hl.create_extmarks(t.buf) end)
   autocmd('InsertEnter', function() hl.update(true) end)
   autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update(false) end)
   autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
@@ -82,7 +81,6 @@ end
 ---Enables the plugin
 local function enable()
   create_autocmds()
-  hl.create_extmarks(nvim.get_current_buf())
   update_matchpairs()
   hl.update(false)
 end
