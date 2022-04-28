@@ -1,6 +1,5 @@
 -- This module adds missing nvim table of neovim
 
-
 local api = vim.api
 
 return setmetatable({

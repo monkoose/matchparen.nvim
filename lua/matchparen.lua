@@ -49,8 +49,7 @@ local function create_autocmds()
   local autocmd = function(event, callback, conf)
     local config = { group = group, callback = callback }
     if conf then
-      config = vim.tbl_extend('error',
-        { group = group, callback = callback }, conf)
+      config = vim.tbl_extend('error', config, conf)
     end
     nvim.create_autocmd(event, config)
   end
