@@ -55,7 +55,8 @@ local function create_autocmds()
   end
 
   autocmd('InsertEnter', function() hl.update(true) end)
-  autocmd({ 'CursorMoved', 'CursorMovedI', 'WinEnter' }, function() hl.update(false) end)
+  autocmd({ 'WinEnter', 'VimEnter' }, function() hl.update(false) end)
+  autocmd({ 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end)
   autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end)
   autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end)
   autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end)
