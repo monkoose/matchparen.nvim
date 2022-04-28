@@ -24,6 +24,12 @@ local extmarks = setmetatable({ hidden = true }, {
   end
 })
 
+---Clears extmarks's table `bufnr` key
+---@param bufnr integer
+function hl.clear_extmarks(bufnr)
+  extmarks[bufnr] = nil
+end
+
 ---Sets new position for extmark with `id`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
