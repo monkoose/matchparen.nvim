@@ -56,7 +56,8 @@ end
 ---@return userdata|nil node
 local function get_skip_node(line, col)
   if not cache.skip_nodes[line] then
-    cache_nodes(line)
+    -- pcall for https://github.com/monkoose/matchparen.nvim/issues/14
+    pcall(cache_nodes, line)
   end
 
   for _, node in ipairs(cache.skip_nodes[line]) do
