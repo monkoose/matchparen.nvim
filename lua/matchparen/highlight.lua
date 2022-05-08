@@ -10,7 +10,7 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("aniseed.autoload")).autoload
+local autoload = (require("matchparen.aniseed.autoload")).autoload
 local nvim, search, utils = autoload("matchparen.aniseed.nvim"), autoload("matchparen.search"), autoload("matchparen.utils")
 do end (_2amodule_locals_2a)["nvim"] = nvim
 _2amodule_locals_2a["search"] = search

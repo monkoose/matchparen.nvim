@@ -10,15 +10,17 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("aniseed.autoload")).autoload
+local autoload = (require("matchparen.aniseed.autoload")).autoload
 local a, nvim, utils = autoload("matchparen.aniseed.core"), autoload("matchparen.aniseed.nvim"), autoload("matchparen.utils")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["nvim"] = nvim
 _2amodule_locals_2a["utils"] = utils
-local opts = (require("matchparen.defaults")).options
+local opts = (require("matchparen.options")).options
 _2amodule_locals_2a["opts"] = opts
-local cache = {trees = {}, root = nil, highlighter = {}, ["skip-nodes"] = {}}
+local cache = {trees = {}, ["skip-nodes"] = {}}
 _2amodule_locals_2a["cache"] = cache
+local ts_skip = {"string", "comment"}
+_2amodule_locals_2a["ts-skip"] = ts_skip
 local function in_node_range_3f(node, line, col)
   local startline, startcol, endline, endcol = node:range()
   if (function(_1_,_2_,_3_) return (_1_ <= _2_) and (_2_ <= _3_) end)(startline,line,endline) then
@@ -36,10 +38,6 @@ local function in_node_range_3f(node, line, col)
   end
 end
 _2amodule_locals_2a["in-node-range?"] = in_node_range_3f
-local function node_at_pos(line, col)
-  return (cache.root):descendant_for_range(line, col, line, a.inc(col))
-end
-_2amodule_locals_2a["node-at-pos"] = node_at_pos
 local function cache_nodes(line, tree, iter)
   for id, node in {iter} do
     if vim.tbl_contains(opts.ts_skip_groups, tree.query.captures[id]) then
@@ -50,6 +48,10 @@ local function cache_nodes(line, tree, iter)
   return nil
 end
 _2amodule_locals_2a["cache-nodes"] = cache_nodes
+local function node_at_pos(line, col)
+  return (cache.root):descendant_for_range(line, col, line, a.inc(col))
+end
+_2amodule_locals_2a["node-at-pos"] = node_at_pos
 local function get_skip_node(line, col, parent)
   if (parent and (parent ~= node_at_pos(line, col):parent())) then
     return true
@@ -92,14 +94,14 @@ local function get_trees()
   return trees
 end
 _2amodule_locals_2a["get-trees"] = get_trees
+local function string_node_3f(node)
+  return utils["string-contains?"](node:type(), "string")
+end
+_2amodule_locals_2a["string-node?"] = string_node_3f
 local function comment_node_3f(node)
   return utils["string-contains?"](node:type(), "comment")
 end
 _2amodule_locals_2a["comment-node?"] = comment_node_3f
-local function get_tree_root()
-  return (vim.treesitter.get_parser():parse()[1]):root()
-end
-_2amodule_locals_2a["get-tree-root"] = get_tree_root
 local function skip_region_3f(line, col, parent)
   if utils["inside-closed-fold"](line) then
     return false

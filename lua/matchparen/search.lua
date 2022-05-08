@@ -10,7 +10,7 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("aniseed.autoload")).autoload
+local autoload = (require("matchparen.aniseed.autoload")).autoload
 local a, nvim, utils = autoload("matchparen.aniseed.core"), autoload("matchparen.aniseed.nvim"), autoload("matchparen.utils")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["nvim"] = nvim
@@ -55,11 +55,20 @@ local function find_match(pattern, line, col, skip_3f)
   local lines = utils["get-lines"](line, max_lines)
   for l, c, cap in _2amatch_forward(lines, pattern, line, col_2b1) do
     if not skip_3f0(l, c, cap) then
-      return l, c, cap
+      return {l, c, cap}
     else
     end
   end
   return nil
 end
 _2amodule_locals_2a["find-match"] = find_match
+do
+  local start_24_auto = vim.loop.hrtime()
+  local result_25_auto
+  do
+    result_25_auto = find_match("([(])", a.dec(vim.fn.line(".")), a.dec(vim.fn.col(".")))
+  end
+  local end_26_auto = vim.loop.hrtime()
+  print(("Elapsed time: " .. ((end_26_auto - start_24_auto) / 1000000) .. " msecs"))
+end
 return _2amodule_2a

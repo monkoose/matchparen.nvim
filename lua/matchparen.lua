@@ -11,43 +11,34 @@ do
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
 local autoload = (require("aniseed.autoload")).autoload
-local defaults, hl, nvim = autoload("matchparen.defaults"), autoload("matchparen.highlight"), autoload("matchparen.aniseed.nvim")
-do end (_2amodule_locals_2a)["defaults"] = defaults
+local a, hl, nvim, options = autoload("matchparen.aniseed.core"), autoload("matchparen.highlight"), autoload("matchparen.aniseed.nvim"), autoload("matchparen.options")
+do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["hl"] = hl
 _2amodule_locals_2a["nvim"] = nvim
+_2amodule_locals_2a["options"] = options
 local f = vim.fn
 _2amodule_locals_2a["f"] = f
-local opts = defaults.options
+local opts = options.opts
 _2amodule_locals_2a["opts"] = opts
-local function disable_builtin()
-  vim.g.loaded_matchparen = 1
-  if (f.exists(":NoMatchParen") ~= 0) then
-    return nvim.command("NoMatchParen")
-  else
-    return nil
-  end
-end
-_2amodule_locals_2a["disable-builtin"] = disable_builtin
-local function create_namespace()
-  opts["namespace"] = nvim.create_namespace(opts.augroup_name)
-  return nil
-end
-_2amodule_locals_2a["create-namespace"] = create_namespace
 local function augroup_exists(name)
   return (0 ~= f.exists(("#" .. name)))
 end
 _2amodule_locals_2a["augroup-exists"] = augroup_exists
+local function command_exists(name)
+  return (0 ~= f.exists((":" .. name)))
+end
+_2amodule_locals_2a["command-exists"] = command_exists
 local function split_matchpairs()
   local tbl_12_auto = {}
   for _, pair in ipairs((vim.opt.matchpairs):get()) do
-    local _2_, _3_ = nil, nil
+    local _1_, _2_ = nil, nil
     do
       local left, right = pair:match("(.+):(.+)")
-      _2_, _3_ = left, right
+      _1_, _2_ = left, right
     end
-    if ((nil ~= _2_) and (nil ~= _3_)) then
-      local k_13_auto = _2_
-      local v_14_auto = _3_
+    if ((nil ~= _1_) and (nil ~= _2_)) then
+      local k_13_auto = _1_
+      local v_14_auto = _2_
       tbl_12_auto[k_13_auto] = v_14_auto
     else
     end
@@ -59,9 +50,9 @@ local function update_matchpairs()
   if (opts["cached-matchpairs"] ~= vim.o.matchpairs) then
     opts["cached-matchpairs"] = vim.o.matchpairs
     opts["matchpairs"] = {}
-    for l, r in pairs(split_matchpairs()) do
-      opts.matchpairs[l] = {left = l, right = r, backward = false}
-      opts.matchpairs[r] = {left = l, right = r, backward = true}
+    for left, right in pairs(split_matchpairs()) do
+      opts.matchpairs[left] = {left = left, right = right, backward = false}
+      opts.matchpairs[right] = {left = left, right = right, backward = true}
     end
     return nil
   else
@@ -72,33 +63,46 @@ _2amodule_locals_2a["update-matchpairs"] = update_matchpairs
 local function create_autocmds()
   if not augroup_exists(opts.augroup_name) then
     local group = nvim.create_augroup(opts.augroup_name, {})
-    local function autocmd(events, callback, adds)
-      local options = {group = group, callback = callback}
-      if adds then
-        options = vim.tbl_extend("error", options, adds)
-        return nil
+    local function autocmd(events, callback, conf)
+      local options0 = {group = group, callback = callback}
+      if conf then
+        return a["merge!"](options0, conf)
       else
         return nil
       end
     end
+    local function _6_()
+      return hl.update(true)
+    end
+    autocmd("InsertEnter", _6_)
     local function _7_()
-      return hl["pcall-update"]()
+      return hl.update()
     end
-    autocmd({"CursorMoved", "CursorMovedI", "WinEnter"}, _7_)
+    autocmd({"VimEnter", "WinEnter"}, _7_)
     local function _8_()
-      return hl["pcall-update"](true)
+      return hl.update()
     end
-    autocmd("InsertEnter", _8_)
+    autocmd({"CursorMoved", "CursorMovedI"}, _8_)
     local function _9_()
       return hl["update-on-tick"]()
     end
     autocmd({"TextChanged", "TextChangedI"}, _9_)
     local function _10_()
-      return hl.remove()
+      return hl.hide()
     end
     autocmd({"WinLeave", "BufLeave"}, _10_)
-    autocmd({"WinEnter", "BufWinEnter", "FileType"}, update_matchpairs)
-    return autocmd("OptionSet", update_matchpairs, {pattern = "matchpairs"})
+    local function _11_()
+      return update_matchpairs()
+    end
+    autocmd({"WinEnter", "BufWinEnter", "FileType"}, _11_)
+    local function _12_()
+      return update_matchpairs()
+    end
+    autocmd("OptionSet", _12_, {pattern = "matchpairs"})
+    local function _13_(_241)
+      return hl["clear-extmarks"](_241.buf)
+    end
+    return autocmd({"BufDelete", "BufUnload"}, _13_)
   else
     return nil
   end
@@ -112,29 +116,42 @@ local function delete_autocmds()
   end
 end
 _2amodule_locals_2a["delete-autocmds"] = delete_autocmds
+local function disable_builtin()
+  vim.g.loaded_matchparen = 1
+  if command_exists("NoMatchParen") then
+    return nvim.command("NoMatchParen")
+  else
+    return nil
+  end
+end
+_2amodule_locals_2a["disable-builtin"] = disable_builtin
 local function enable()
   create_autocmds()
   update_matchpairs()
-  return hl["pcall-update"]()
+  return hl.update()
 end
 _2amodule_locals_2a["enable"] = enable
 local function disable()
   delete_autocmds()
-  return hl.remove()
+  return hl.hide()
 end
 _2amodule_locals_2a["disable"] = disable
+local function create_namespace()
+  opts["namespace"] = nvim.create_namespace(opts.augroup_name)
+  return nil
+end
+_2amodule_locals_2a["create-namespace"] = create_namespace
 local function create_commands()
-  nvim.add_user_command("MatchParenEnable", enable, {})
-  return nvim.add_user_command("MatchParenDisable", disable, {})
+  nvim.create_user_command("MatchParenEnable", enable, {})
+  return nvim.create_user_command("MatchParenDisable", disable, {})
 end
 _2amodule_locals_2a["create-commands"] = create_commands
 local function setup(config)
   disable_builtin()
-  defaults.update(config)
-  create_commands()
+  a["merge!"](opts, config)
   create_namespace()
   update_matchpairs()
-  do end (config)["extmarks"] = {current = 0, match = 0}
+  create_commands()
   if opts.on_startup then
     return create_autocmds()
   else
