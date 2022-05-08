@@ -83,7 +83,7 @@ local function get_trees()
     end
   end, true)
 
-return trees
+  return trees
 end
 
 ---Returns true when `node` type is string
