@@ -1,12 +1,14 @@
 (module matchparen.utils
   {autoload {a matchparen.aniseed.core
-             nvim matchparen.aniseed.nvim}})
+             nvim matchparen.nvim}})
 
 (def- f vim.fn)
+(def- buf nvim.buf)
+(def- win nvim.win)
 
-(defn inside-closed-fold? [line-nr]
+(defn inside-closed-fold? [line]
   "True if `line` is inside closed fold."
-  (not= -1 (f.foldclosed (a.inc line-nr))))
+  (not= -1 (f.foldclosed (a.inc line))))
 
 (defn insert-mode? []
   "True in insert or Replace modes."
@@ -21,43 +23,31 @@
 
 (defn string-contains-any? [str table-of-strings]
   "True when `str` contains any pattern from the `table-of-strings`."
-  (each [_ pattern (ipairs table-of-strings)]
-    (if (string-contains? str pattern)
-      (lua "return true")))
-  false)
+  (a.some #(string-contains? str $) table-of-strings))
 
 (defn get-cursor-pos []
   "Return seq table with line and column of the cursor position."
-  (let [[line col] (nvim.win_get_cursor 0)]
+  (let [[line col] (win.get_cursor 0)]
     [(a.dec line) col]))
 
 ;; TODO: make it find pattern under the cursor
 (defn find-forward [text pattern init]
-  "Return first index of the match if any, also
+  "Returns first index of the match if any, also
   if `pattern` in a capture return it too"
-  (let [(index _ capture)
-        (string.find text pattern
-                     (if init (a.inc init)))]
+  (let [i (if init (a.inc init))
+        (index _ capture) (string.find text pattern i)]
     (values index capture)))
 
 (defn find-backward [reversed-text pattern init]
-  "Return last index of the match of reversed text if any,
+  "Returns last index of the match of reversed text if any,
   also if `pattern` in a capture return it too"
   (let [len (a.inc (length reversed-text))
-        (index capture) (find-forward
-                          reversed-text
-                          pattern
-                          (if init
-                            (- len init)))]
+        i (if init (- len init))
+        (index capture) (find-forward reversed-text pattern i)]
     (if index
       (values (- len index) capture))))
 
 (defn get-lines [line count]
-  "Return text of the `line` in a current buffer."
-  (nvim.buf_get_lines 0 line (+ line count) false))
-
-(defn get-reversed-line [line]
-  "Return reversed text of the `line` in a current buffer."
-  (let [text (get-line line)]
-    (if text
-      (string.reverse text))))
+  "Returns array of `count` lines of text
+  from the current buffer beginning from `start`."
+  (buf.get_lines 0 line (+ line count) false))

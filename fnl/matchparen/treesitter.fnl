@@ -1,6 +1,6 @@
 (module matchparen.treesitter
   {autoload {a matchparen.aniseed.core
-             nvim matchparen.aniseed.nvim
+             nvim matchparen.nvim
              opts matchparen.defaults
              utils matchparen.utils}})
 
@@ -10,38 +10,40 @@
                "comment"])
 (def highlighter nil)
 
-(defn- in-node-range? [node line col]
-  "True when `line` and `col` position in the `node` range."
+(defn- in-node-range? [node pos]
+  "True when `pos` position in the `node` range."
   (local (startline startcol endline endcol) (node:range))
-  (if (<= startline line endline)
-      (if (= line startline endline) (and (<= startcol col)
-                                          (< col endcol))
-          (= line startline) (<= startcol col)
-          (= line endline) (< col endcol)
+  (if (<= startline pos.line endline)
+      (if (= pos.line startline endline) (and (<= startcol pos.col)
+                                              (< pos.col endcol))
+          (= pos.line startline) (<= startcol pos.col)
+          (= pos.line endline) (< pos.col endcol)
           true)
       false))
+
+(defn- line-nodes [tree line]
+  (tree.query:iter_captures tree.root
+                            highlighter.bufnr
+                            line
+                            (a.inc line)))
 
 (defn- cache-nodes [line]
   "Caches `line` skip nodes."
   (tset cache.skip-nodes line [])
   (each [_ tree (ipairs cache.trees)]
-    (local iter (tree.query:iter_captures tree.root
-                                          highlighter.bufnr
-                                          line
-                                          (a.inc line)))
-    (each [id node iter]
-      (when (vim.tbl_contains ts-skip (. tree.query.captures id))
-        (table.insert (. cache.skip-nodes line) node)))))
+    (icollect [id node (line-nodes tree line)
+               :into (. cache.skip-nodes line)]
+      (let [capture (. tree.query.captures id)]
+        (when (vim.tbl_contains ts-skip capture)
+          node)))))
 
-(defn- get-skip-node [line col parent]
-  (when (not (. cache.skip-nodes line))
-    (pcall cache-nodes line))
-  (var skip-node nil)
-  (each [_ node (ipairs (. cache.skip-nodes line))
-         :until skip-node]
-    (when (in-node-range? node line col)
-      (set skip-node node)))
-  skip-node)
+(defn- get-skip-node [pos]
+  "Returns treesitter node at `pos` position
+  if it is in `ts-skip` captures list."
+  (when (not (. cache.skip-nodes pos.line))
+    (pcall cache-nodes pos.line))
+  (a.some #(in-node-range? $ pos)
+          (. cache.skip-nodes pos.line)))
 
 (defn- get-trees []
   "Returns all compliant treesitter trees."
@@ -67,10 +69,10 @@
   "True when `node` is of type comment."
   (utils.string-contains? (node:type) "comment"))
 
-(defn- in-skip-region? [line col parent]
-  (if (utils.inside-closed-fold line)
+(defn- in-skip-region? [pos]
+  (if (utils.inside-closed-fold pos.line)
       false
-      (not= nil (get-skip-node line col))))
+      (not= nil (get-skip-node pos))))
 
 (defn- get-sibling-position [backward?]
   (if backward?
@@ -78,9 +80,10 @@
       "next_sibling"))
 
 (defn- get-sibling-node [node sibling-pos]
-  ((. node sibling-pos) node))
+  (let [get-sibling (. node sibling-pos)]
+    (get-sibling node)))
 
-(defn- skip-by-node? [node backward]
+(defn- skip-by-node [node backward?]
   (local get-sibling (if backward?
                          "prev_sibling"
                          "next_sibling"))
@@ -89,18 +92,29 @@
       0
       (while node))))
 
-
-(defn- limit-by-node [node backward?]
-  (fn [line col]
-    (if (not col)
+(defn- fix-string-range? [node pos]
+  "Returns true when fix to highlight is required."
+  ;; upstream bug that happens in insert mode, causing
+  ;; treesitter node:type() return 'string' right after the string
+  (if (and node
+           (string-node? node)
+           (utils.insert-mode?)
+           (not (in-node-range? node {:line pos.line
+                                      :col (a.inc pos.col)})))
       false
-      (let [sibling-pos (get-sibling-position
-                          backward?)]
-        (stop-search? node line col sibling-pos)))))
+      true))
 
 (defn get-highlighter []
   "Return highlighter for a current buffer."
   (->> (nvim.get_current_buf)
        (. vim.treesitter.highlighter.active)))
 
-;; TODO: skip-and-stop
+(defn skip-by-region [pos backward?]
+  "Return skip function accepted by `search.match-pos`."
+  (set cache.trees (get-trees))
+  (set cache.skip-nodes {})
+  (let [skip-node (get-skip-node pos)
+        fix (fix-string-range? skip-node pos)]
+    (if (and skip-node fix) ; inside string or comment
+        (skip-by-node skip-node backward?)
+        #(if (in-skip-region? $) 1 0))))

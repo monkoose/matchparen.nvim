@@ -1,31 +1,24 @@
 (module matchparen.search
   {autoload {a matchparen.aniseed.core
-             nvim matchparen.aniseed.nvim
+             nvim matchparen.nvim
+             opts matchparen.defaults
              utils matchparen.utils}})
 
-(def- opts
-  (. (require "matchparen.defaults") :options))
-
-(defn- *match-forward [lines pattern line col]
+(defn- forward-matches [pattern line col count]
+  (local lines (utils.get-lines line count))
   (var i 1)
-  (local get-text (fn [] (. lines i)))
-  (var text (get-text))
-  (var index col)
+  (var text (. lines i))
+  (var index (a.inc col))
   (var capture nil)
   (fn []
     (while text
-      (set (index capture)
-           (utils.find-forward text
-                               pattern
-                               index))
+      (set (index capture) (utils.find-forward text pattern index))
       (if index
-        (let [match_line (+ line
-                            (a.dec i))
-              match_col (a.dec index)]
-          (lua "return match_line, match_col, capture"))
-        (do
-          (set i (a.inc i))
-          (set text (get-text)))))))
+          (let [match-line (a.dec (+ line i))]
+            (values match-line (a.dec index) capture))
+          (do
+            (set i (a.inc i))
+            (set text (. lines i)))))))
 
 (defn- find-match [pattern line col skip?]
   (let [col+1 (a.inc col)

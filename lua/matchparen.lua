@@ -11,15 +11,13 @@ do
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
 local autoload = (require("aniseed.autoload")).autoload
-local a, hl, nvim, options = autoload("matchparen.aniseed.core"), autoload("matchparen.highlight"), autoload("matchparen.aniseed.nvim"), autoload("matchparen.options")
+local a, hl, nvim, opts = autoload("matchparen.aniseed.core"), autoload("matchparen.highlight"), autoload("matchparen.nvim"), autoload("matchparen.defaults")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["hl"] = hl
 _2amodule_locals_2a["nvim"] = nvim
-_2amodule_locals_2a["options"] = options
+_2amodule_locals_2a["opts"] = opts
 local f = vim.fn
 _2amodule_locals_2a["f"] = f
-local opts = options.opts
-_2amodule_locals_2a["opts"] = opts
 local function augroup_exists(name)
   return (0 ~= f.exists(("#" .. name)))
 end
@@ -30,12 +28,8 @@ end
 _2amodule_locals_2a["command-exists"] = command_exists
 local function split_matchpairs()
   local tbl_12_auto = {}
-  for _, pair in ipairs((vim.opt.matchpairs):get()) do
-    local _1_, _2_ = nil, nil
-    do
-      local left, right = pair:match("(.+):(.+)")
-      _1_, _2_ = left, right
-    end
+  for _, pair in ipairs((vim.opt_local.matchpairs):get()) do
+    local _1_, _2_ = pair:match("(.+):(.+)")
     if ((nil ~= _1_) and (nil ~= _2_)) then
       local k_13_auto = _1_
       local v_14_auto = _2_
@@ -47,8 +41,8 @@ local function split_matchpairs()
 end
 _2amodule_locals_2a["split-matchpairs"] = split_matchpairs
 local function update_matchpairs()
-  if (opts["cached-matchpairs"] ~= vim.o.matchpairs) then
-    opts["cached-matchpairs"] = vim.o.matchpairs
+  if (opts["cached-matchpairs"] ~= vim.bo.matchpairs) then
+    opts["cached-matchpairs"] = vim.bo.matchpairs
     opts["matchpairs"] = {}
     for left, right in pairs(split_matchpairs()) do
       opts.matchpairs[left] = {left = left, right = right, backward = false}
@@ -63,14 +57,11 @@ _2amodule_locals_2a["update-matchpairs"] = update_matchpairs
 local function create_autocmds()
   if not augroup_exists(opts.augroup_name) then
     local group = nvim.create_augroup(opts.augroup_name, {})
-    local function autocmd(events, callback, conf)
-      local options0 = {group = group, callback = callback}
-      if conf then
-        return a["merge!"](options0, conf)
-      else
-        return nil
-      end
+    local autocmd
+    local function _5_(event, callback, conf)
+      return nvim.create_autocmd(event, a["merge!"]({group = group, callback = callback}, conf))
     end
+    autocmd = _5_
     local function _6_()
       return hl.update(true)
     end

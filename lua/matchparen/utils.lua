@@ -10,14 +10,18 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("matchparen.aniseed.autoload")).autoload
-local a, nvim = autoload("matchparen.aniseed.core"), autoload("matchparen.aniseed.nvim")
+local autoload = (require("aniseed.autoload")).autoload
+local a, nvim = autoload("matchparen.aniseed.core"), autoload("matchparen.nvim")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["nvim"] = nvim
 local f = vim.fn
 _2amodule_locals_2a["f"] = f
-local function inside_closed_fold_3f(line_nr)
-  return (-1 ~= f.foldclosed(a.inc(line_nr)))
+local buf = nvim.buf
+_2amodule_locals_2a["buf"] = buf
+local win = nvim.win
+_2amodule_locals_2a["win"] = win
+local function inside_closed_fold_3f(line)
+  return (-1 ~= f.foldclosed(a.inc(line)))
 end
 _2amodule_2a["inside-closed-fold?"] = inside_closed_fold_3f
 local function insert_mode_3f()
@@ -30,46 +34,39 @@ local function string_contains_3f(str, pattern)
 end
 _2amodule_2a["string-contains?"] = string_contains_3f
 local function string_contains_any_3f(str, table_of_strings)
-  for _, pattern in ipairs(table_of_strings) do
-    if string_contains_3f(str, pattern) then
-      return true
-    else
-    end
+  local function _1_(_241)
+    return string_contains_3f(str, _241)
   end
-  return false
+  return a.some(_1_, table_of_strings)
 end
 _2amodule_2a["string-contains-any?"] = string_contains_any_3f
 local function get_cursor_pos()
-  local _let_2_ = nvim.win_get_cursor(0)
+  local _let_2_ = win.get_cursor(0)
   local line = _let_2_[1]
   local col = _let_2_[2]
   return {a.dec(line), col}
 end
 _2amodule_2a["get-cursor-pos"] = get_cursor_pos
 local function find_forward(text, pattern, init)
-  local index, _, capture = nil, nil, nil
-  local function _3_()
-    if init then
-      return a.inc(init)
-    else
-      return nil
-    end
+  local i
+  if init then
+    i = a.inc(init)
+  else
+    i = nil
   end
-  index, _, capture = string.find(text, pattern, _3_())
+  local index, _, capture = string.find(text, pattern, i)
   return index, capture
 end
 _2amodule_2a["find-forward"] = find_forward
 local function find_backward(reversed_text, pattern, init)
   local len = a.inc(#reversed_text)
-  local index, capture = nil, nil
-  local function _4_()
-    if init then
-      return (len - init)
-    else
-      return nil
-    end
+  local i
+  if init then
+    i = (len - init)
+  else
+    i = nil
   end
-  index, capture = find_forward(reversed_text, pattern, _4_())
+  local index, capture = find_forward(reversed_text, pattern, i)
   if index then
     return (len - index), capture
   else
@@ -78,16 +75,7 @@ local function find_backward(reversed_text, pattern, init)
 end
 _2amodule_2a["find-backward"] = find_backward
 local function get_lines(line, count)
-  return nvim.buf_get_lines(0, line, (line + count), false)
+  return buf.get_lines(0, line, (line + count), false)
 end
 _2amodule_2a["get-lines"] = get_lines
-local function get_reversed_line(line)
-  local text = __fnl_global__get_2dline(line)
-  if text then
-    return string.reverse(text)
-  else
-    return nil
-  end
-end
-_2amodule_2a["get-reversed-line"] = get_reversed_line
 return _2amodule_2a

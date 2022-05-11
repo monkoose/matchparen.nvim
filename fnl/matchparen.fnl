@@ -1,5 +1,5 @@
 (module matchparen
-  {autoload {nvim matchparen.aniseed.nvim
+  {autoload {nvim matchparen.nvim
              a matchparen.aniseed.core
              opts matchparen.defaults
              hl matchparen.highlight}})
@@ -17,15 +17,13 @@
 (defn- split-matchpairs []
   "Creates table with opening brackets as keys
   and closing brackets as values."
-  (collect [_ pair (ipairs (vim.opt.matchpairs:get))]
-    (let [(left right) (pair:match "(.+):(.+)")]
-      (values left right))))
+  (collect [_ pair (ipairs (vim.opt_local.matchpairs:get))]
+    (pair:match "(.+):(.+)")))
 
 (defn- update-matchpairs []
   "Sets new value of table of matchpairs only when required."
-  (when (not= opts.cached-matchpairs
-              vim.o.matchpairs)
-    (tset opts :cached-matchpairs vim.o.matchpairs)
+  (when (not= opts.cached-matchpairs vim.bo.matchpairs)
+    (tset opts :cached-matchpairs vim.bo.matchpairs)
     (tset opts :matchpairs {})
     (each [left right (pairs (split-matchpairs))]
       (tset opts.matchpairs left  {: left : right :backward false})
@@ -35,21 +33,20 @@
   "Creates augroup and contained autocmds which are
   ruquired for the plugin to work."
   (when (not (augroup-exists opts.augroup_name))
-    (local group (nvim.create_augroup opts.augroup_name {}))
-    ;; autocmd function
-    (fn autocmd [events callback conf]
-      (local options {: group : callback})
-      (when conf
-        (a.merge! options conf)))
-    ;; autocmds
-    (autocmd :InsertEnter #(hl.update true))
-    (autocmd [:VimEnter :WinEnter] #(hl.update))
-    (autocmd [:CursorMoved :CursorMovedI] #(hl.update))
-    (autocmd [:TextChanged :TextChangedI] #(hl.update-on-tick))
-    (autocmd [:WinLeave :BufLeave] #(hl.hide))
-    (autocmd [:WinEnter :BufWinEnter :FileType] #(update-matchpairs))
-    (autocmd :OptionSet #(update-matchpairs) {:pattern "matchpairs"})
-    (autocmd [:BufDelete :BufUnload] #(hl.clear-extmarks $1.buf))))
+    (let [group (nvim.create_augroup opts.augroup_name {})
+          autocmd (fn [event callback conf]
+                    (->> conf
+                         (a.merge! {: group : callback})
+                         (nvim.create_autocmd event)))]
+      ;; autocmds
+      (autocmd :InsertEnter #(hl.update true))
+      (autocmd [:VimEnter :WinEnter] #(hl.update))
+      (autocmd [:CursorMoved :CursorMovedI] #(hl.update))
+      (autocmd [:TextChanged :TextChangedI] #(hl.update-on-tick))
+      (autocmd [:WinLeave :BufLeave] #(hl.hide))
+      (autocmd [:WinEnter :BufWinEnter :FileType] #(update-matchpairs))
+      (autocmd :OptionSet #(update-matchpairs) {:pattern "matchpairs"})
+      (autocmd [:BufDelete :BufUnload] #(hl.clear-extmarks $1.buf)))))
 
 (defn- delete-autocmds []
   "Deletes plugin's augroup and clears all it's autocmds."

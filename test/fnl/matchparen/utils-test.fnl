@@ -1,8 +1,9 @@
 (module matchparen.utils-test
-  {autoload {nvim matchparen.aniseed.nvim
+  {autoload {nvim matchparen.nvim
              utils matchparen.utils}})
 
 ; (def- f vim.fn)
+(def- win nvim.win)
 (vim.cmd "edit test/test.lua")
 
 (deftest inside-closed-fold
@@ -47,7 +48,7 @@
 
 (deftest get-cursor-pos
   ;; nvim_win_set_cursor line is 1-based
-  (nvim.win_set_cursor 0 [2 2])
+  (win.set_cursor 0 [2 2])
   (t.pr= [1 2] (utils.get-cursor-pos)))
 
 (deftest find-forward-backward
