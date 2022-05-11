@@ -10,8 +10,8 @@ do
   _2amodule_2a["aniseed/locals"] = {}
   _2amodule_locals_2a = (_2amodule_2a)["aniseed/locals"]
 end
-local autoload = (require("matchparen.aniseed.autoload")).autoload
-local a, opts, utils = autoload("matchparen.aniseed.core"), autoload("matchparen.options.opts"), autoload("matchparen.utils")
+local autoload = (require("aniseed.autoload")).autoload
+local a, opts, utils = autoload("matchparen.aniseed.core"), autoload("matchparen.defaults"), autoload("matchparen.utils")
 do end (_2amodule_locals_2a)["a"] = a
 _2amodule_locals_2a["opts"] = opts
 _2amodule_locals_2a["utils"] = utils
@@ -23,63 +23,52 @@ local function syntax_on_3f()
   return ((vim.g.syntax_on == 1) and (vim.bo.syntax ~= ""))
 end
 _2amodule_locals_2a["syntax-on?"] = syntax_on_3f
-local function get_synname(syn_id)
-  return string.lower(f.synIDattr(syn_id, "name"))
+local function last_three_synids(pos)
+  local synids = f.synstack(a.inc(pos.line), a.inc(pos.col))
+  local len = #synids
+  return {synids[len], synids[(len - 1)], synids[(len - 2)]}
 end
-_2amodule_locals_2a["get-synname"] = get_synname
-local function last_three_synnames(line, col)
-  local syn_ids = f.synstack(a.inc(line), a.inc(col))
-  local len = #syn_ids
-  local last_three = {syn_ids[len], syn_ids[(len - 1)], syn_ids[(len - 2)]}
-  local index = 0
-  local function _1_()
-    index = a.inc(index)
-    if (index <= #last_three) then
-      return get_synname(last_three[index])
-    else
-      return nil
-    end
-  end
-  return _1_
+_2amodule_locals_2a["last-three-synids"] = last_three_synids
+local function synname(synid)
+  return string.lower(f.synIDattr(synid, "name"))
 end
-_2amodule_locals_2a["last-three-synnames"] = last_three_synnames
-local function in_syntax_skip_3f(line, col)
-  local result = false
-  for synname in last_three_synnames(line, col) do
-    if result then break end
-    result = utils["string-contains-any?"](synname, syntax_skip)
-  end
-  return result
+_2amodule_locals_2a["synname"] = synname
+local function belong_to_skip_3f(synid)
+  return utils["string-contains-any?"](synname(synid), syntax_skip)
+end
+_2amodule_locals_2a["belong-to-skip?"] = belong_to_skip_3f
+local function in_syntax_skip_3f(pos)
+  return a.some(last_three_synids(pos), belong_to_skip_3f)
 end
 _2amodule_locals_2a["in-syntax-skip?"] = in_syntax_skip_3f
-local function in_skip_region_3f(line, col)
+local function in_skip_region_3f(pos)
   if utils["inside-closed-fold?"]() then
     return false
   else
-    return in_syntax_skip_3f(line, col)
+    return in_syntax_skip_3f(pos)
   end
 end
 _2amodule_locals_2a["in-skip-region?"] = in_skip_region_3f
-local function skip_by_region(line, col)
+local function skip_by_region(pos)
   if syntax_on_3f then
-    if in_skip_region_3f(line, col) then
-      local function _4_(_241, _242)
-        if in_skip_region_3f(_241, _242) then
+    if in_skip_region_3f(pos) then
+      local function _2_(_241)
+        if in_skip_region_3f(_241) then
           return 0
         else
           return 1
+        end
+      end
+      return _2_
+    else
+      local function _4_(_241)
+        if in_skip_region_3f(_241) then
+          return 1
+        else
+          return 0
         end
       end
       return _4_
-    else
-      local function _6_(_241, _242)
-        if __fnl_global__skip_2dregion_3f(_241, _242) then
-          return 1
-        else
-          return 0
-        end
-      end
-      return _6_
     end
   else
     return nil

@@ -3,7 +3,6 @@
              opts matchparen.defaults
              utils matchparen.utils}})
 
-; (def- opts (. (require "matchparen.options") :options))
 (def- f vim.fn)
 
 (def- syntax-skip
@@ -20,44 +19,44 @@
   (and (= vim.g.syntax_on 1)
        (not= vim.bo.syntax "")))
 
-(defn- get-synname [syn-id]
+(defn- last-three-synids [pos]
+  "Returns array with last 3 syntax ids
+  under the `line` and `col` position."
+  (let [synids (f.synstack (a.inc pos.line)
+                           (a.inc pos.col))
+        len (length synids)]
+    [(. synids len)
+     (. synids (- len 1))
+     (. synids (- len 2))]))
+
+(defn- synname [synid]
   "Returns name of the syntax id group."
-  (string.lower (f.synIDattr syn-id "name")))
+  (-> synid
+      (f.synIDattr "name")
+      (string.lower)))
 
-(defn- last-three-synnames [line col]
-  "Returns iterator with last three syntax group names
-  under the `line` and `col` in the current buffer."
-  ;; last three synnames should be more than enough
-  ;; to determine syntax group
-  (let [syn-ids (f.synstack (a.inc line)
-                            (a.inc col))
-        len (length syn-ids)
-        last-three [(. syn-ids len)
-                    (. syn-ids (- len 1))
-                    (. syn-ids (- len 2))]]
-    (var index 0)
-    (fn []
-      (set index (a.inc index))
-      (if (<= index (length last-three))
-          (get-synname (. last-three index))))))
+(defn- belong-to-skip? [synid]
+  "Returns true when synid's name contained in `syntax-skip`."
+  (-> synid
+      (synname)
+      (utils.string-contains-any? syntax-skip)))
 
-(defn- in-syntax-skip? [line col]
+(defn- in-syntax-skip? [pos]
   "Returns true when `line`, `col` position is inside
   any of `syntax-skip` groups."
-  (var result false)
-  (each [synname (last-three-synnames line col) :until result]
-    (set result (utils.string-contains-any? synname syntax-skip)))
-  result)
+  (-> pos
+      (last-three-synids)
+      (a.some belong-to-skip?)))
 
-(defn- in-skip-region? [line col]
+(defn- in-skip-region? [pos]
   "Returns true when `line`, `col` position is inside skip region."
   (if (utils.inside-closed-fold?)
       false
-      (in-syntax-skip? line col)))
+      (in-syntax-skip? pos)))
 
-(defn skip-by-region [line col]
+(defn skip-by-region [pos]
   "Return skip function accepted by `search.match-pos`."
   (when syntax-on?
-    (if (in-skip-region? line col)
-        #(if (in-skip-region? $1 $2) 0 1)
-        #(if (skip-region? $1 $2) 1 0))))
+    (if (in-skip-region? pos)
+        #(if (in-skip-region? $) 0 1)
+        #(if (in-skip-region? $) 1 0))))
