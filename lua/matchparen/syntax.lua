@@ -25,30 +25,23 @@ local function get_synname(synid)
   return string.lower(fn.synIDattr(synid, 'name'))
 end
 
----Iterator with the last three syntax group names
+---Returns table with last three syntax ids
 ---under the `line` `col` position in the current buffer
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return function
-local function last3_synnames(line, col)
+---@return integer[]
+local function last3_synids(line, col)
   local synstack = fn.synstack(line + 1, col + 1)
   local len = #synstack
-  -- last three synnames should be more than enough to determine
+  -- last three ids should be more than enough to determine
   -- if syntax under the cursor belongs to some syntax group
   -- at least for such groups like comment and string
-  local last3 = {
+  -- which don't have a lot of nested groups
+  return {
     synstack[len],
     synstack[len - 1],
     synstack[len - 2],
   }
-  local i = 0
-
-  return function()
-    i = i + 1
-    if i <= #last3 then
-      return get_synname(last3[i])
-    end
-  end
 end
 
 ---Returns true when the cursor is inside any of `syntax_skip` groups
@@ -60,7 +53,8 @@ local function is_syntax_skip_region(line, col)
     return false
   end
 
-  for synname in last3_synnames(line, col) do
+  for _, synid in ipairs(last3_synids(line, col)) do
+    local synname = get_synname(synid)
     if utils.str_contains_any(synname, syntax_skip) then
       return true
     end
