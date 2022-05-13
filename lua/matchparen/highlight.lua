@@ -5,11 +5,12 @@ local nvim = require('matchparen.missinvim')
 
 local buf = nvim.buf
 local hl = {}
+local namespace = nvim.create_namespace(opts.augroup_name)
 
 ---Creates new extmark and return it's id
 ---@return integer
 local function create_extmark()
-  return buf.set_extmark(0, opts.namespace, 0, 0, {})
+  return buf.set_extmark(0, namespace, 0, 0, {})
 end
 
 -- Create required extmarks for each buffer
@@ -35,14 +36,14 @@ end
 ---@param col integer 0-based column number
 ---@param id integer extmark id
 local function set_extmark(line, col, id)
-  buf.set_extmark(0, opts.namespace, line, col,
+  buf.set_extmark(0, namespace, line, col,
     { end_col = col + 1, hl_group = opts.hl_group, id = id })
 end
 
 ---Sets extmark with `id` to 0 length and nil hl_group
 ---@param id integer extmark id
 local function hide_extmark(id)
-  buf.set_extmark(0, opts.namespace, 0, 0, { id = id })
+  buf.set_extmark(0, namespace, 0, 0, { id = id })
 end
 
 ---Highlights matching brackets
