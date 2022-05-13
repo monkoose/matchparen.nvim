@@ -119,26 +119,21 @@ end
 ---@param node userdata treesitter node
 ---@param backward boolean direction of the search
 ---@return integer
-local function skip_by_node(node, backward)
+local function stop_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
 
   return function(l, c)
-    if not c then
-      return 0
-    end
-
     while node do
+      if is_in_node_range(node, l, c) then return end
+
       -- limit the search to the current node only
-      if is_in_node_range(node, l, c) then
-        return 0
+      if not is_node_comment(node) then
+        return { stop = true }
       end
       -- increase the search limit for connected comments
-      if not is_node_comment(node) then
-        return -1
-      end
       node = node[get_sibling](node)
       if not (node and is_node_comment(node)) then
-        return -1
+        return { stop = true }
       end
     end
   end
@@ -170,10 +165,14 @@ function ts.skip_by_region(line, col, backward)
   end
 
   if skip_node then  -- inside string or comment
-    return skip_by_node(skip_node, backward)
+    return stop_by_node(skip_node, backward)
   else
     return function(l, c)
-      return is_ts_skip_region(l, c) and 1 or 0
+      if is_ts_skip_region(l, c) then
+        return { skip = true }
+      else
+        return { skip = false }
+      end
     end
   end
 end

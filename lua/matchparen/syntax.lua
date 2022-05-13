@@ -71,11 +71,19 @@ function syntax.skip_by_region(line, col)
 
   if is_syntax_skip_region(line, col) then
     return function(l, c)
-      return is_syntax_skip_region(l, c) and 0 or 1
+      if is_syntax_skip_region(l, c) then
+        return { skip = false }
+      else
+        return { skip = true }
+      end
     end
   else
     return function(l, c)
-      return is_syntax_skip_region(l, c) and 1 or 0
+      if is_syntax_skip_region(l, c) then
+        return { skip = true }
+      else
+        return { skip = false }
+      end
     end
   end
 end

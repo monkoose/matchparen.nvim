@@ -75,23 +75,18 @@ end
 ---@return number|nil, number
 function search.match(pattern, line, col, backward, count, skip)
   skip = skip or function() end
-  local ok, to_skip
   local matches = backward and backward_matches or forward_matches
 
   for l, c, capture in matches(pattern, line, col, count) do
     -- pcall because some skip functions can be errorness
     -- like `synstack()` for syntax
-    ok, to_skip = pcall(skip, l, c, capture)
+    local ok, to = pcall(skip, l, c, capture)
     if not ok then return end
 
-    -- skip functions should return:
-    --  0 - don't skip current match (match is found)
-    --  1 - skip current match (continue to another match)
-    -- -1 - stop searching without match
-    if to_skip == 0 then
-      return l, c
-    elseif to_skip == -1 then
+    if to.stop then
       return
+    elseif not to.skip then
+      return l, c
     end
   end
 end
@@ -110,12 +105,12 @@ local function skip_same_bracket(left, right, backward)
       count = count + 1
     else
       if count == 0 then
-        return 0
+        return { skip = false }
       else
         count = count - 1
       end
     end
-    return 1
+    return { skip = true }
   end
 end
 
@@ -136,7 +131,11 @@ function search.pair(left, right, line, col, backward, skip)
   if skip then
     skip_fn = function(l, c, bracket)
       local s = skip(l, c)
-      return s ~= 0 and s or skip_bracket(bracket)
+      if s.stop or s.skip then
+        return s
+      else
+        return skip_bracket(bracket)
+      end
     end
   else
     skip_fn = function(_, _, bracket)
