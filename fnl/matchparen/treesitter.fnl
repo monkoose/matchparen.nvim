@@ -74,23 +74,29 @@
       false
       (not= nil (get-skip-node pos))))
 
-(defn- get-sibling-position [backward?]
-  (if backward?
-      "prev_sibling"
-      "next_sibling"))
-
-(defn- get-sibling-node [node sibling-pos]
-  (let [get-sibling (. node sibling-pos)]
+(defn- get-sibling-node [node sibling-direction]
+  (let [get-sibling (. node sibling-direction)]
     (get-sibling node)))
 
-(defn- skip-by-node [node backward?]
-  (local get-sibling (if backward?
-                         "prev_sibling"
-                         "next_sibling"))
-  (fn [l c]
-    (if (not c)
+(defn- skip-by-node* [pos node sibling-direction]
+  (if (in-node-range? node pos)
       0
-      (while node))))
+      (not (comment-node? node))
+      -1
+      (let [sibling (get-sibling node sibling-direction)]
+        (if (and sibling
+                 (comment-node? sibling))
+            (skip-by-node* pos sibling sibling-direction)
+            -1))))
+
+(defn- skip-by-node [node backward?]
+  (let [sibling-direction (if backward?
+                              "prev_sibling"
+                              "next_sibling")]
+    (fn [pos]
+      (if pos.col
+          (skip-by-node* pos node sibling-direction)
+          0))))
 
 (defn- fix-string-range? [node pos]
   "Returns true when fix to highlight is required."

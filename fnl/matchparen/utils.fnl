@@ -28,7 +28,8 @@
 (defn get-cursor-pos []
   "Return seq table with line and column of the cursor position."
   (let [[line col] (win.get_cursor 0)]
-    [(a.dec line) col]))
+    {:line (a.dec line)
+     :col col}))
 
 ;; TODO: make it find pattern under the cursor
 (defn find-forward [text pattern init]
