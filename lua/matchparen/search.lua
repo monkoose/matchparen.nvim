@@ -1,7 +1,6 @@
 local syntax = require('matchparen.syntax')
 local ts = require('matchparen.treesitter')
 local utils = require('matchparen.utils')
-local opts = require('matchparen.options').opts
 local win = require('matchparen.missinvim').win
 
 local search = {}
@@ -155,10 +154,10 @@ end
 ---@return integer|nil, integer
 function search.match_pos(mp, line, col)
   local skip
-  opts.cache.hl = ts.get_highlighter()
+  ts.highlighter = ts.get_highlighter()
 
   -- try treesitter highlighting or fallback to regex syntax
-  if opts.cache.hl then
+  if ts.highlighter then
     skip = ts.skip_by_region(line, col, mp.backward)
   else
     skip = syntax.skip_by_region(line, col)

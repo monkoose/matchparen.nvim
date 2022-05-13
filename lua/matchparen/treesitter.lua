@@ -1,8 +1,7 @@
-local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 local nvim = require('matchparen.missinvim')
 
-local ts = {}
+local ts = { highlighter = nil }
 
 local cache = {
   trees = {},
@@ -45,7 +44,7 @@ end
 local function cache_nodes(line)
   cache.skip_nodes[line] = {}
   for _, tree in ipairs(cache.trees) do
-    local iter = tree.query:iter_captures(tree.root, opts.cache.hl.bufnr,
+    local iter = tree.query:iter_captures(tree.root, ts.highlighter.bufnr,
       line, line + 1)
     for id, node in iter do
       if vim.tbl_contains(treesitter_skip, tree.query.captures[id]) then
@@ -76,11 +75,11 @@ end
 ---@return table
 local function get_trees()
   local trees = {}
-  opts.cache.hl.tree:for_each_tree(function(tstree, tree)
+  ts.highlighter.tree:for_each_tree(function(tstree, tree)
     if not tstree then return end
 
     local root = tstree:root()
-    local query = opts.cache.hl:get_query(tree:lang()):query()
+    local query = ts.highlighter:get_query(tree:lang()):query()
 
     -- Some injected languages may not have highlight queries.
     if query then

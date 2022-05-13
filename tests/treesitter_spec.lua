@@ -1,5 +1,4 @@
 local ts = require('matchparen.treesitter')
-local opts = require('matchparen.options').opts
 
 describe('get_highlighter', function()
   it("should return nil if buffer hasn't ts hihglighter", function()
@@ -19,7 +18,7 @@ end)
 
 describe('skip_by_region', function()
   vim.cmd('TSBufEnable highlight')
-  opts.cache.hl = ts.get_highlighter()
+  ts.highlighter = ts.get_highlighter()
   local skip
 
   it('should return correct function if cursor is in a skip node', function()
