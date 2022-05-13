@@ -28,11 +28,11 @@ end
 ---Updates `matchpairs` opt only if it was changed,
 ---can be changed by buffer local option
 local function update_matchpairs()
-  if opts.cache.matchpairs == vim.bo.matchpairs then
+  if opts.cached_matchpairs == vim.bo.matchpairs then
     return
   end
 
-  opts.cache.matchpairs = vim.bo.matchpairs
+  opts.cached_matchpairs = vim.bo.matchpairs
   opts.matchpairs = {}
   for l, r in pairs(split_matchpairs()) do
     opts.matchpairs[l] = { left = l, right = r, backward = false }
