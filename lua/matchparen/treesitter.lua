@@ -118,7 +118,7 @@ end
 ---Determines whether a search should stop if outside of the `node`
 ---@param node userdata treesitter node
 ---@param backward boolean direction of the search
----@return integer
+---@return function
 local function stop_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
 
