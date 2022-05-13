@@ -138,6 +138,8 @@ local function stop_by_node(node, backward)
         return { stop = true }
       end
     end
+
+    return { skip = false }
   end
 end
 

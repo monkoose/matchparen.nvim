@@ -74,7 +74,7 @@ end
 ---@param skip function
 ---@return number|nil, number
 function search.match(pattern, line, col, backward, count, skip)
-  skip = skip or function() end
+  skip = skip or function() return { skip = false } end
   local matches = backward and backward_matches or forward_matches
 
   for l, c, capture in matches(pattern, line, col, count) do
