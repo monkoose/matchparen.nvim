@@ -124,7 +124,9 @@ local function stop_by_node(node, backward)
 
   return function(l, c)
     while node do
-      if is_in_node_range(node, l, c) then return end
+      if is_in_node_range(node, l, c) then
+        return { skip = false }
+      end
 
       -- limit the search to the current node only
       if not is_node_comment(node) then
