@@ -7,10 +7,18 @@ local buf = nvim.buf
 local hl = {}
 local namespace = nvim.create_namespace(opts.augroup_name)
 
+---Wrapper for nvim_buf_set_extmark()
+---@param line integer 0-based line number
+---@param col integer 0-based column number
+---@param config table
+local function set_extmark(line, col, config)
+  return buf.set_extmark(0, namespace, line, col, config)
+end
+
 ---Creates new extmark and return it's id
 ---@return integer
 local function create_extmark()
-  return buf.set_extmark(0, namespace, 0, 0, {})
+  return set_extmark(0, 0, {})
 end
 
 -- Create required extmarks for each buffer
@@ -35,15 +43,18 @@ end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param id integer extmark id
-local function set_extmark(line, col, id)
-  buf.set_extmark(0, namespace, line, col,
-    { end_col = col + 1, hl_group = opts.hl_group, id = id })
+local function move_extmark(line, col, id)
+  set_extmark(line, col, {
+    end_col = col + 1,
+    hl_group = opts.hl_group,
+    id = id
+  })
 end
 
 ---Sets extmark with `id` to 0 length and nil hl_group
 ---@param id integer extmark id
 local function hide_extmark(id)
-  buf.set_extmark(0, namespace, 0, 0, { id = id })
+  set_extmark(0, 0, { id = id })
 end
 
 ---Highlights matching brackets
@@ -54,8 +65,8 @@ local function highlight_brackets(cur, match)
     extmarks.hidden = false
   end
   local bufnr = nvim.get_current_buf()
-  set_extmark(cur.line, cur.col, extmarks[bufnr].cursor)
-  set_extmark(match.line, match.col, extmarks[bufnr].match)
+  move_extmark(cur.line, cur.col, extmarks[bufnr].cursor)
+  move_extmark(match.line, match.col, extmarks[bufnr].match)
 end
 
 ---Removes brackets highlighting
