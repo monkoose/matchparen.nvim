@@ -9,6 +9,11 @@ local cache = {
   skip_nodes = {},
 }
 
+local treesitter_skip = {
+  'string',
+  'comment',
+}
+
 ---Determines whether (line, col) position is in node range
 ---@param node userdata node defining the range
 ---@param line integer 0-based line number
@@ -43,7 +48,7 @@ local function cache_nodes(line)
     local iter = tree.query:iter_captures(tree.root, opts.cache.hl.bufnr,
       line, line + 1)
     for id, node in iter do
-      if vim.tbl_contains(opts.treesitter_skip, tree.query.captures[id]) then
+      if vim.tbl_contains(treesitter_skip, tree.query.captures[id]) then
         table.insert(cache.skip_nodes[line], node)
       end
     end
@@ -100,7 +105,7 @@ local function is_node_comment(node)
   return utils.str_contains(node:type(), 'comment')
 end
 
----Returns true when the cursor is inside any of opts.treesitter_skip captures
+---Returns true when the cursor is inside any of `treesitter_skip` captures
 ---@param line integer 0-based line
 ---@param col integer 0-based column
 ---@return boolean
