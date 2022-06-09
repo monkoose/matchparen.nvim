@@ -1,18 +1,16 @@
 local opts = require('matchparen.options').opts
 local utils = require('matchparen.utils')
 local search = require('matchparen.search')
-local nvim = require('matchparen.missinvim')
 
-local buf = nvim.buf
 local hl = {}
-local namespace = nvim.create_namespace(opts.augroup_name)
+local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param config table
 local function set_extmark(line, col, config)
-  return buf.set_extmark(0, namespace, line, col, config)
+  return vim.api.nvim_buf_set_extmark(0, namespace, line, col, config)
 end
 
 ---Creates new extmark and return it's id
@@ -64,7 +62,7 @@ local function highlight_brackets(cur, match)
   if extmarks.hidden then
     extmarks.hidden = false
   end
-  local bufnr = nvim.get_current_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
   move_extmark(cur.line, cur.col, extmarks[bufnr].cursor)
   move_extmark(match.line, match.col, extmarks[bufnr].match)
 end
@@ -73,7 +71,7 @@ end
 function hl.hide()
   if not extmarks.hidden then
     extmarks.hidden = true
-    local bufnr = nvim.get_current_buf()
+    local bufnr = vim.api.nvim_get_current_buf()
     hide_extmark(extmarks[bufnr].cursor)
     hide_extmark(extmarks[bufnr].match)
   end
@@ -84,7 +82,7 @@ end
 ---@param in_insert boolean
 ---@return table|nil, integer
 local function get_bracket(col, in_insert)
-  local text = nvim.get_current_line()
+  local text = vim.api.nvim_get_current_line()
   in_insert = in_insert or utils.is_in_insert_mode()
 
   if col > 0 and in_insert then
@@ -103,7 +101,7 @@ end
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param in_insert boolean
 function hl.update(in_insert)
-  vim.g.matchparen_tick = buf.get_changedtick(0)
+  vim.g.matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
   local line, col = utils.get_cursor_pos()
   if utils.is_inside_fold(line) then
     hl.hide()
@@ -130,7 +128,7 @@ end
 ---currently used only for TextChanged and TextChangedI autocmds
 ---so they do not repeat `update()` function after CursorMoved autocmds
 function hl.update_on_tick()
-  if vim.g.matchparen_tick ~= buf.get_changedtick(0) then
+  if vim.g.matchparen_tick ~= vim.api.nvim_buf_get_changedtick(0) then
     hl.update(false)
   end
 end

@@ -1,13 +1,7 @@
 local utils = require('matchparen.utils')
-local nvim = require('matchparen.missinvim')
 
 local ts = { highlighter = nil }
-
-local cache = {
-  trees = {},
-  skip_nodes = {},
-}
-
+local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
   'string',
   'comment',
@@ -146,7 +140,7 @@ end
 ---Returns treesitter highlighter for current buffer or nil
 ---@return table
 function ts.get_highlighter()
-  local bufnr = nvim.get_current_buf()
+  local bufnr = vim.api.nvim_get_current_buf()
   return vim.treesitter.highlighter.active[bufnr]
 end
 

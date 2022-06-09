@@ -1,8 +1,5 @@
 local utils = require('matchparen.utils')
 local stub = require('luassert.stub')
-local nvim = require('matchparen.missinvim')
-
-local win = nvim.win
 
 describe('str_contains', function()
   local text = 'Hello, world!'
@@ -52,7 +49,7 @@ describe('find_backward', function()
 end)
 
 describe('is_in_insert_mode', function()
-  local cur_mode = stub(nvim, 'get_mode')
+  local cur_mode = stub(vim.api, 'nvim_get_mode')
 
   it('should return true in insert or replace modes', function()
     cur_mode.returns({ mode = 'i'})
@@ -83,7 +80,7 @@ describe('Functional', function()
   end)
 
   describe('get_cursor_pos', function()
-    win.set_cursor(0, { 2, 4 })
+    vim.api.nvim_win_set_cursor(0, { 2, 4 })
     it('should return 0-based line, column', function()
       assert.same({1, 4}, {utils.get_cursor_pos()})
     end)
@@ -93,7 +90,7 @@ describe('Functional', function()
     it('should return false outside of closed fold', function()
       assert.is_false(utils.is_inside_fold(utils.get_cursor_pos()))
     end)
-    nvim.feedkeys('zfj', 'nx', false)
+    vim.api.nvim_feedkeys('zfj', 'nx', false)
     it('should return true when cursor is in closed fold', function()
       assert.is_true(utils.is_inside_fold(utils.get_cursor_pos()))
     end)

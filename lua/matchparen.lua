@@ -1,6 +1,5 @@
 local options = require('matchparen.options')
 local hl = require('matchparen.highlight')
-local nvim = require('matchparen.missinvim')
 
 local fn = vim.fn
 local opts = options.opts
@@ -45,13 +44,13 @@ end
 local function create_autocmds()
   if augroup_exists(opts.augroup_name) then return end
 
-  local group = nvim.create_augroup(opts.augroup_name, {})
+  local group = vim.api.nvim_create_augroup(opts.augroup_name, {})
   local autocmd = function(event, callback, conf)
     local config = { group = group, callback = callback }
     if conf then
       config = vim.tbl_extend('error', config, conf)
     end
-    nvim.create_autocmd(event, config)
+    vim.api.nvim_create_autocmd(event, config)
   end
 
   autocmd('InsertEnter', function() hl.update(true) end, {
@@ -84,7 +83,7 @@ end
 ---Delets plugins augroup and clears all it's autocmds
 local function delete_autocmds()
   if augroup_exists(opts.augroup_name) then
-    nvim.del_augroup_by_name(opts.augroup_name)
+    vim.api.nvim_del_augroup_by_name(opts.augroup_name)
   end
 end
 
@@ -92,7 +91,7 @@ end
 local function disable_builtin()
   vim.g.loaded_matchparen = 1
   if fn.exists(':NoMatchParen') ~= 0 then
-    nvim.command('NoMatchParen')
+    vim.api.nvim_command('NoMatchParen')
   end
 end
 
@@ -111,8 +110,8 @@ end
 
 ---Creates plugin's custom commands
 local function create_commands()
-  nvim.create_user_command('MatchParenEnable', enable, {})
-  nvim.create_user_command('MatchParenDisable', disable, {})
+  vim.api.nvim_create_user_command('MatchParenEnable', enable, {})
+  vim.api.nvim_create_user_command('MatchParenDisable', disable, {})
 end
 
 ---Initializes the plugin

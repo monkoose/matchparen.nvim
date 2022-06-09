@@ -7,8 +7,9 @@ local syntax_skip = {
   'comment',
   'character',
   'singlequote',
-  'escape',
-  'symbol',
+  'doublequote',
+  -- 'escape',
+  -- 'symbol',
 }
 
 ---Returns true when built in syntax is on and

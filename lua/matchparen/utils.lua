@@ -1,7 +1,3 @@
-local nvim = require('matchparen.missinvim')
-
-local win = nvim.win
-local buf = nvim.buf
 local fn = vim.fn
 local utils = {}
 
@@ -15,7 +11,7 @@ end
 ---Returns true when current mode is insert or Replace
 ---@return boolean
 function utils.is_in_insert_mode()
-  local mode = nvim.get_mode().mode
+  local mode = vim.api.nvim_get_mode().mode
   return mode == 'i' or mode == 'R'
 end
 
@@ -43,7 +39,7 @@ end
 ---Returns 0-based current line and column
 ---@return integer, integer
 function utils.get_cursor_pos()
-  local line, column = unpack(win.get_cursor(0))
+  local line, column = unpack(vim.api.nvim_win_get_cursor(0))
   return line - 1, column
 end
 
@@ -78,7 +74,7 @@ end
 ---@param count integer number of lines to get
 ---@return string[]
 function utils.get_lines(start, count)
-  return buf.get_lines(0, start, start + count, false)
+  return vim.api.nvim_buf_get_lines(0, start, start + count, false)
 end
 
 return utils

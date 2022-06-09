@@ -1,7 +1,6 @@
 local syntax = require('matchparen.syntax')
 local ts = require('matchparen.treesitter')
 local utils = require('matchparen.utils')
-local win = require('matchparen.missinvim').win
 
 local search = {}
 
@@ -124,7 +123,7 @@ end
 ---@return integer|nil, integer
 function search.pair(left, right, line, col, backward, skip)
   local pattern = '([' .. right .. left .. '])'
-  local max = win.get_height(0)
+  local max = vim.api.nvim_win_get_height(0)
   local skip_bracket = skip_same_bracket(left, right, backward)
 
   local skip_fn
