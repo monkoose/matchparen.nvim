@@ -14,6 +14,7 @@ local function forward_matches(pattern, line, col, count)
   local lines = utils.get_lines(line, count)
   local i = 1
   local text = lines[i]
+  ---@type integer|nil
   local index = col + 1
   local capture
 
@@ -43,6 +44,7 @@ local function backward_matches(pattern, line, col, count)
   local lines = utils.get_lines(start, line - start + 1)
   local i = #lines
   local text = lines[i]
+  ---@type integer|nil
   local index = col + 1
   local capture
   local r_text
@@ -71,7 +73,7 @@ end
 ---@param backward boolean direction of the search
 ---@param count integer number of lines to search
 ---@param skip function
----@return number|nil, number
+---@return number|nil, number|nil
 function search.match(pattern, line, col, backward, count, skip)
   skip = skip or function() return { skip = false } end
   local matches = backward and backward_matches or forward_matches
@@ -119,8 +121,8 @@ end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward boolean direction of the search
----@param skip function
----@return integer|nil, integer
+---@param skip function|nil
+---@return integer|nil, integer|nil
 function search.pair(left, right, line, col, backward, skip)
   local pattern = '([' .. right .. left .. '])'
   local max = vim.api.nvim_win_get_height(0)
@@ -149,7 +151,7 @@ end
 ---@param mp table
 ---@param line integer line of `bracket`
 ---@param col integer column of `bracket`
----@return integer|nil, integer
+---@return integer|nil, integer|nil
 function search.match_pos(mp, line, col)
   local skip
   ts.highlighter = ts.get_highlighter()

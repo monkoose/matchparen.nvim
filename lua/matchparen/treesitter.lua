@@ -111,7 +111,7 @@ end
 
 ---Determines whether a search should stop if outside of the `node`
 ---@param node userdata treesitter node
----@param backward boolean direction of the search
+---@param backward boolean|nil direction of the search
 ---@return function
 local function stop_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
@@ -148,7 +148,7 @@ end
 ---based on treesitter node under the `line` and `col`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@param backward boolean direction of the search
+---@param backward boolean|nil direction of the search
 ---@return function
 function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
@@ -158,7 +158,7 @@ function ts.skip_by_region(line, col, backward)
   -- that still shows that char after the string belongs to this string
   if skip_node and is_node_string(skip_node) and utils.is_in_insert_mode() then
     if not is_in_node_range(skip_node, line, col + 1) then
-      skip_node = false
+      skip_node = nil
     end
   end
 

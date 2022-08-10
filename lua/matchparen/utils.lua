@@ -47,7 +47,7 @@ end
 ---is in a capture) in the `text` or nil
 ---@param text string
 ---@param pattern string
----@param init integer same as in string.find
+---@param init integer|nil same as in string.find
 ---@return integer|nil, string
 function utils.find_forward(text, pattern, init)
   local index, _, bracket = string.find(text, pattern, init and init + 1)
@@ -57,8 +57,8 @@ end
 ---Returns first backward index and full match substring in the `text` or nil
 ---@param reversed_text string
 ---@param pattern string
----@param init integer same as in string.find
----@return integer|nil, string
+---@param init integer|nil same as in string.find
+---@return integer|nil, string|nil
 function utils.find_backward(reversed_text, pattern, init)
   local length = #reversed_text + 1
   local index, bracket = utils.find_forward(reversed_text,

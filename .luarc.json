@@ -5,5 +5,7 @@
         "describe",
         "it",
         "pending"
-    ]
+    ],
+    "Lua.diagnostics.ignoredFiles": "Disable",
+    "Lua.workspace.ignoreDir": [ "tests/example.lua" ]
 }

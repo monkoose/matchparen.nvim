@@ -80,7 +80,7 @@ local function create_autocmds()
   })
 end
 
----Delets plugins augroup and clears all it's autocmds
+---Deletes plugin's augroup and clears all it's autocmds
 local function delete_autocmds()
   if augroup_exists(opts.augroup_name) then
     vim.api.nvim_del_augroup_by_name(opts.augroup_name)
