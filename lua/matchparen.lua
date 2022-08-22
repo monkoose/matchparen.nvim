@@ -56,16 +56,13 @@ local function create_autocmds()
   autocmd('InsertEnter', function() hl.update(true) end, {
     desc = "Highlight matching pairs",
   })
-  autocmd({ 'WinEnter', 'VimEnter' }, function() hl.update(false) end, {
-    desc = "Highlight matching pairs",
-  })
-  autocmd({ 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end, {
+  autocmd({ 'WinEnter', 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end, {
     desc = "Highlight matching pairs",
   })
   autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end, {
     desc = "Update highlight only when tick has changed after CursorMoved autocmd",
   })
-  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.hide() end, {
+  autocmd({ 'WinLeave', 'BufLeave' }, function() hl.remove() end, {
     desc = "Hide matching pairs highlight",
   })
   autocmd({ 'WinEnter', 'BufWinEnter', 'FileType' }, function() update_matchpairs() end, {
@@ -74,9 +71,6 @@ local function create_autocmds()
   autocmd('OptionSet', function() update_matchpairs() end, {
     pattern = 'matchpairs',
     desc = "Update cache of matchpairs option",
-  })
-  autocmd({ 'BufDelete', 'BufUnload' }, function(t) hl.clear_extmarks(t.buf) end, {
-    desc = "Make some cleanup",
   })
 end
 
@@ -105,7 +99,7 @@ end
 ---Disables the plugin
 local function disable()
   delete_autocmds()
-  hl.hide()
+  hl.remove()
 end
 
 ---Creates plugin's custom commands
