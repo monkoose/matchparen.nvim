@@ -111,8 +111,8 @@ end
 
 ---Determines whether a search should stop if outside of the `node`
 ---@param node userdata treesitter node
----@param backward boolean|nil direction of the search
----@return function
+---@param backward boolean? direction of the search
+---@return fun(line: integer, column: integer): table
 local function stop_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
 
@@ -148,8 +148,8 @@ end
 ---based on treesitter node under the `line` and `col`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@param backward boolean|nil direction of the search
----@return function
+---@param backward boolean? direction of the search
+---@return fun(line: integer, column: integer): table
 function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
   cache.skip_nodes = {}

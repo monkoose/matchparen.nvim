@@ -14,8 +14,7 @@ local function forward_matches(pattern, line, col, count)
   local lines = utils.get_lines(line, count)
   local i = 1
   local text = lines[i]
-  ---@type integer|nil
-  local index = col + 1
+  local index = col + 1  ---@type integer?
   local capture
 
   return function()
@@ -44,8 +43,7 @@ local function backward_matches(pattern, line, col, count)
   local lines = utils.get_lines(start, line - start + 1)
   local i = #lines
   local text = lines[i]
-  ---@type integer|nil
-  local index = col + 1
+  local index = col + 1  ---@type integer?
   local capture
   local r_text
 
@@ -121,7 +119,7 @@ end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward boolean direction of the search
----@param skip function|nil
+---@param skip function?
 ---@return integer|nil, integer|nil
 function search.pair(left, right, line, col, backward, skip)
   local pattern = '([' .. right .. left .. '])'

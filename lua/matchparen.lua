@@ -17,7 +17,8 @@ end
 ---@return table
 local function split_matchpairs()
   local t = {}
-  for _, pair in ipairs(vim.opt_local.matchpairs:get()) do
+  local matchpairs_option = vim.opt_local.matchpairs:get() ---@type string[]
+  for _, pair in ipairs(matchpairs_option) do
     local left, right = pair:match('(.+):(.+)')
     t[left] = right
   end
