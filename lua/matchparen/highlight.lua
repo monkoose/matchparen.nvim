@@ -72,7 +72,7 @@ function hl.update(in_insert)
   local matchline, matchcol = search.match_pos(match_bracket, line, col)
   hl.remove()
   if matchline then
-    hl_add(line, col, matchline, matchcol)
+    hl_add(line, col, matchline, matchcol or 0)
   end
 end
 
