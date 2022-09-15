@@ -7,32 +7,6 @@ local treesitter_skip = {
   'comment',
 }
 
----Determines whether (line, col) position is in node range
----@param node userdata node defining the range
----@param line integer 0-based line number
----@param col integer 0-based column number
----@return boolean
----
----copied from nvim-tresitter plugin
----https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
-local function is_in_node_range(node, line, col)
-  local start_line, start_col, end_line, end_col = node:range()
-
-  if not (line >= start_line and line <= end_line) then
-    return false
-  end
-
-  if line == start_line and line == end_line then
-    return col >= start_col and col < end_col
-  elseif line == start_line then
-    return col >= start_col
-  elseif line == end_line then
-    return col < end_col
-  else
-    return true
-  end
-end
-
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
 local function cache_nodes(line)
@@ -59,7 +33,7 @@ local function get_skip_node(line, col)
   end
 
   for _, node in ipairs(cache.skip_nodes[line]) do
-    if is_in_node_range(node, line, col) then
+    if vim.treesitter.is_in_node_range(node, line, col) then
       return node
     end
   end
@@ -118,7 +92,7 @@ local function stop_by_node(node, backward)
 
   return function(l, c)
     while node do
-      if is_in_node_range(node, l, c) then
+      if vim.treesitter.is_in_node_range(node, l, c) then
         return { skip = false }
       end
 
@@ -157,7 +131,7 @@ function ts.skip_by_region(line, col, backward)
   -- FiXME: requires only to fix annoying bug for treesitter strings
   -- that still shows that char after the string belongs to this string
   if skip_node and is_node_string(skip_node) and utils.is_in_insert_mode() then
-    if not is_in_node_range(skip_node, line, col + 1) then
+    if not vim.treesitter.is_in_node_range(skip_node, line, col + 1) then
       skip_node = nil
     end
   end
