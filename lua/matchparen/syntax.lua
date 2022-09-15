@@ -16,7 +16,7 @@ local syntax_skip = {
 ---current buffer has syntax for its filetype
 ---@return boolean
 local function is_syntax_on()
-  return vim.g.syntax_on == 1 and vim.bo.syntax ~= ''
+  return vim.g.syntax_on == 1 and vim.b.current_syntax
 end
 
 ---Returns name of the syntax id group
