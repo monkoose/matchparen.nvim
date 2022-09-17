@@ -86,7 +86,7 @@ end
 local function disable_builtin()
   vim.g.loaded_matchparen = 1
   if fn.exists(':NoMatchParen') ~= 0 then
-    vim.api.nvim_command('NoMatchParen')
+    vim.cmd('NoMatchParen')
   end
   delete_autocmds()
 end
