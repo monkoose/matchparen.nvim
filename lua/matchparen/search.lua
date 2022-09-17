@@ -12,6 +12,7 @@ local search = {}
 ---@return function
 local function forward_matches(pattern, line, col, count)
   local lines = utils.get_lines(line, count)
+  local offset = line - 1
   local i = 1
   local text = lines[i]
   local index = col + 1  ---@type integer?
@@ -22,8 +23,7 @@ local function forward_matches(pattern, line, col, count)
       index, capture = utils.find_forward(text, pattern, index)
 
       if index then
-        local match_line = line + i - 1
-        return match_line, index - 1, capture
+        return offset + i, index - 1, capture
       end
 
       i = i + 1
@@ -41,24 +41,22 @@ end
 local function backward_matches(pattern, line, col, count)
   local start = math.max(0, line - count)
   local lines = utils.get_lines(start, line - start + 1)
+  local offset = line - #lines
   local i = #lines
-  local text = lines[i]
   local index = col + 1  ---@type integer?
   local capture
-  local r_text
+  local reversed_text = lines[i] and string.reverse(lines[i])
 
   return function()
-    while text do
-      r_text = string.reverse(text)
-      index, capture = utils.find_backward(r_text, pattern, index)
+    while reversed_text do
+      index, capture = utils.find_backward(reversed_text, pattern, index)
 
       if index then
-        local match_line = line - #lines + i
-        return match_line, index - 1, capture
+        return offset + i, index - 1, capture
       end
 
       i = i - 1
-      text = lines[i]
+      reversed_text = lines[i] and string.reverse(lines[i])
     end
   end
 end
