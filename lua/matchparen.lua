@@ -88,6 +88,7 @@ local function disable_builtin()
   if fn.exists(':NoMatchParen') ~= 0 then
     vim.api.nvim_command('NoMatchParen')
   end
+  delete_autocmds()
 end
 
 ---Enables the plugin
