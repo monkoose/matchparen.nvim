@@ -12,11 +12,10 @@ local syntax_skip = {
   -- 'symbol',
 }
 
----Returns true when built in syntax is on and
----current buffer has syntax for its filetype
+---Returns true when buffer has no syntax highlighting
 ---@return boolean
-local function is_syntax_on()
-  return vim.g.syntax_on == 1 and vim.b.current_syntax
+local function is_syntax_off()
+  return vim.b.current_syntax == nil
 end
 
 ---Returns name of the syntax id group
@@ -68,7 +67,7 @@ end
 ---@param col integer 0-based column number
 ---@return function|nil
 function syntax.skip_by_region(line, col)
-  if not is_syntax_on() then return end
+  if is_syntax_off() then return end
 
   if is_syntax_skip_region(line, col) then
     return function(l, c)
