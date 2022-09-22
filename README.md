@@ -31,6 +31,18 @@ For [packer.nvim](https://github.com/wbthomason/packer.nvim)
 use 'monkoose/matchparen.nvim'
 ```
 
+This plugin tries it best to disable built-in plugin before enabling itself,
+but if you use `packer` (and it's `config` option to setup `matchparen.nvim`)
+or use some kind of lazy loading, then you can check if built-in plugin was
+loaded with trying to write and autocomplete such command line`:DoMatchParen`.
+If it is present then you may want to explicitly disable built-in matchparen
+plugin with setting global variable to 1 somewhere in you config outside of
+`packer` config option.
+```lua
+vim.g.loaded_matchparen = 1
+```
+It would improve startuptime a little bit and will not create unnecessary commands.
+
 ### Usage
 
 Initialize the plugin with this line somewhere in your config
