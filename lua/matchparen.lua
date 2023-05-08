@@ -57,12 +57,13 @@ local function create_autocmds()
   autocmd('InsertEnter', function() hl.update(true) end, {
     desc = "Highlight matching pairs",
   })
-  autocmd({ 'WinEnter', 'CursorMoved', 'CursorMovedI' }, function() hl.update(false) end, {
-    desc = "Highlight matching pairs",
-  })
-  autocmd({ 'TextChanged', 'TextChangedI' }, function() hl.update_on_tick() end, {
-    desc = "Update highlight only when tick has changed after CursorMoved autocmd",
-  })
+  autocmd({
+    'WinEnter',
+    'CursorMoved',
+    'CursorMovedI',
+    'TextChanged',
+    'TextChangedI',
+  }, function() hl.update(false) end, { desc = "Highlight matching pairs" })
   autocmd({ 'WinLeave', 'BufLeave' }, function() hl.remove() end, {
     desc = "Hide matching pairs highlight",
   })

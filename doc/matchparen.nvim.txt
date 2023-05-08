@@ -40,21 +40,32 @@ or inside init.lua >
     require('matchparen').setup()
 
 `setup()` function accepts table with following keys
-    on_startup~
-        Boolean. If `true` the plugin will highlight brackets on neovim start.
-    hl_group~
-        String. Highlight group.
-    augroup_name~
-        String. Name for augroup that created by the plugin. In most
-        situations you don't need to change it, only if for some reason you
-        already have augroup with the same name, to prevent it deleted by the
-        plugin.
+    `on_startup`~
+        Boolean.
+        If `true` the plugin will highlight brackets on neovim startup.
+    `hl_group`~
+        String.
+        Highlight group of the matched brackets.
+    `augroup_name`~
+        String.
+        Name for augroup that created by the plugin. In most situations
+        you don't need to change it, only if for some reason you already
+        have augroup with the same name, to prevent it deleted by the plugin.
+    `debounce_time`~
+        Positive integer or nil.
+        Debounce time in milliseconds for rehighlighting of brackets.
+        In theory this option should improve responsiveness of the editor in
+        some seldom situations and remove rehighlighting of the same brackets
+        multiple times because of intersection of the autocommands.
+        If you want to completely disable debouncing and rehighlight brackets
+        instantly set it's value to `nil`.
 
 Defaults are >
     require('matchparen').setup({
         on_startup = true,
         hl_group = 'MatchParen',
         augroup_name = 'matchparen',
+        debounce_time = 200,
     })
 
 ==============================================================================

@@ -3,6 +3,7 @@ local defaults = {
   on_startup = true,
   hl_group = 'MatchParen',
   augroup_name = 'matchparen',
+  debounce_time = 200,
 }
 
 local options = defaults

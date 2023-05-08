@@ -5,7 +5,7 @@ local search = require('matchparen.search')
 local hl = {}
 local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
 local extmarks = { current = 0, match = 0 }
-local matchparen_tick
+local timer = vim.loop.new_timer()
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
@@ -55,7 +55,10 @@ end
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param in_insert boolean
 function hl.update(in_insert)
-  matchparen_tick = vim.api.nvim_buf_get_changedtick(0)
+  if opts.debounce_time then
+    timer:stop()
+  end
+
   local line, col = utils.get_cursor_pos()
   if utils.is_inside_fold(line) then
     hl.remove()
@@ -69,19 +72,20 @@ function hl.update(in_insert)
     return
   end
 
-  local matchline, matchcol = search.match_pos(match_bracket, line, col)
-  hl.remove()
-  if matchline then
-    hl_add(line, col, matchline, matchcol or 0)
+  local highlight_brackets = function()
+    local matchline, matchcol = search.match_pos(match_bracket, line, col)
+    hl.remove()
+    if matchline then
+      hl_add(line, col, matchline, matchcol or 0)
+    end
   end
-end
 
----Updates highlighting only if changedtick is changed
----currently used only for TextChanged and TextChangedI autocmds
----so they do not repeat `update()` function after CursorMoved autocmds
-function hl.update_on_tick()
-  if matchparen_tick ~= vim.api.nvim_buf_get_changedtick(0) then
-    hl.update(false)
+  if opts.debounce_time then
+    timer:start(opts.debounce_time, 0, function()
+      vim.schedule(highlight_brackets)
+    end)
+  else
+    highlight_brackets()
   end
 end
 
