@@ -115,7 +115,7 @@ end
 ---@param config table
 function mp.setup(config)
   disable_builtin()
-  options.update(config)
+  options:update(config)
   update_matchpairs()
   create_commands()
 
