@@ -6,23 +6,21 @@ local defaults = {
   debounce_time = 200,
 }
 
-local options = defaults
+local options = { opts = defaults }
 
----Updates `options` table with values from `new`
----@param new table
-local function update_options(new)
+---Updates `options.opts` table with values from `new`
+---@param new? table
+function options.update(new)
   if not new then return end
 
+  local defaults_keys = vim.tbl_keys(defaults)
   for option, value in pairs(new) do
-    if vim.tbl_contains(defaults, option) then
-      options[option] = value
+    if vim.tbl_contains(defaults_keys, option) then
+      options.opts[option] = value
     end
   end
 end
 
-return {
-  opts = options,
-  update = update_options
-}
+return options
 
 -- vim:sw=2:et
