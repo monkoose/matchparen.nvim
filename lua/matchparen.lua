@@ -120,6 +120,7 @@ function mp.setup(config)
 
   if opts.on_startup then
     create_autocmds()
+    hl.update(false)
   end
 end
 
