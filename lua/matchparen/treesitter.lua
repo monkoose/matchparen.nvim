@@ -1,37 +1,12 @@
 local utils = require('matchparen.utils')
 
+local is_in_node_range = vim.treesitter.is_in_node_range
 local ts = { highlighter = nil }
 local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
   'string',
   'comment',
 }
-
----Determines whether (line, col) position is in node range
----@param node userdata node defining the range
----@param line integer 0-based line number
----@param col integer 0-based column number
----@return boolean
----
----copied from nvim-tresitter plugin
----https://github.com/nvim-treesitter/nvim-treesitter/blob/master/lua/nvim-treesitter/ts_utils.lua
-local function is_in_node_range(node, line, col)
-  local start_line, start_col, end_line, end_col = node:range()
-
-  if not (line >= start_line and line <= end_line) then
-    return false
-  end
-
-  if line == start_line and line == end_line then
-    return col >= start_col and col < end_col
-  elseif line == start_line then
-    return col >= start_col
-  elseif line == end_line then
-    return col < end_col
-  else
-    return true
-  end
-end
 
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
@@ -111,7 +86,7 @@ end
 
 ---Determines whether a search should stop if outside of the `node`
 ---@param node userdata treesitter node
----@param backward boolean? direction of the search
+---@param backward? boolean direction of the search
 ---@return fun(line: integer, column: integer): table
 local function stop_by_node(node, backward)
   local get_sibling = backward and 'prev_sibling' or 'next_sibling'
@@ -138,7 +113,7 @@ local function stop_by_node(node, backward)
 end
 
 ---Returns treesitter highlighter for current buffer or nil
----@return table
+---@return table|nil
 function ts.get_highlighter()
   local bufnr = vim.api.nvim_get_current_buf()
   return vim.treesitter.highlighter.active[bufnr]
@@ -148,7 +123,7 @@ end
 ---based on treesitter node under the `line` and `col`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@param backward boolean? direction of the search
+---@param backward? boolean direction of the search
 ---@return fun(line: integer, column: integer): table
 function ts.skip_by_region(line, col, backward)
   cache.trees = get_trees()
