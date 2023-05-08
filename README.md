@@ -1,8 +1,9 @@
 ## Matchparen.nvim
 ### alternative to default neovim matchparen plugin
 
-**main** branch requires neovim v0.7 or higher.
+**main** branch requires neovim v0.8 or higher.
 
+Last version that uses neovim v0.7 is [dc511ea](https://github.com/monkoose/matchparen.nvim/commit/dc511ea561bb34c99d0fad9a6fd08bb0e4187a5e).
 Last version that uses neovim v0.6 is [8df2b17](https://github.com/monkoose/matchparen.nvim/commit/8df2b177cd92c0fa7e4d4a7c1812612d9a59651d).
 
 **BE AWARE:** highlighting should work as expected, but jumping to highlighted
