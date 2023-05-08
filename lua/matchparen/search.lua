@@ -117,7 +117,7 @@ end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward boolean direction of the search
----@param skip function?
+---@param skip? function
 ---@return integer|nil, integer|nil
 function search.pair(left, right, line, col, backward, skip)
   local pattern = '([' .. right .. left .. '])'

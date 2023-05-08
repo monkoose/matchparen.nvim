@@ -6,6 +6,8 @@ describe('get_highlighter', function()
   end)
 
   vim.cmd('e tests/example.lua')
+  vim.cmd.source(vim.fn.stdpath('data') .. '/lazy/nvim-treesitter/plugin/nvim-treesitter.lua')
+  vim.cmd('TSBufEnable highlight')
   it('should return highlighter table', function()
     assert.is_table(ts.get_highlighter())
     assert.truthy(ts.get_highlighter().bufnr)
