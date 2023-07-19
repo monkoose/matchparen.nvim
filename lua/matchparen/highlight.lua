@@ -5,7 +5,13 @@ local search = require('matchparen.search')
 local hl = {}
 local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
 local extmarks = { current = 0, match = 0 }
+
 local timer = vim.loop.new_timer()
+-- On failing creating a timer, just silently don't use debounce
+if not timer then
+  opts.debounce_time = nil
+  timer = {}
+end
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number

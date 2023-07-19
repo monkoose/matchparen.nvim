@@ -7,5 +7,10 @@
         "pending"
     ],
     "Lua.diagnostics.ignoredFiles": "Disable",
-    "Lua.workspace.ignoreDir": [ "tests/example.lua" ]
+    "Lua.workspace.ignoreDir": [ "tests/example.lua" ],
+    "workspace.library": [
+        "/home/monkoose/.local/share/nvim/lazy/neodev.nvim/types/nightly",
+        "/home/monkoose/.local/share/nvim/lazy/matchparen.nvim/lua"
+    ],
+    "workspace.checkThirdParty": false
 }

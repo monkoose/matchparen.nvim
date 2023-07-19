@@ -15,6 +15,7 @@ local syntax_skip = {
 ---Returns true when buffer has no syntax highlighting
 ---@return boolean
 local function is_syntax_off()
+---@diagnostic disable-next-line: undefined-field
   return vim.b.current_syntax == nil
 end
 
