@@ -87,8 +87,14 @@ function hl.update(in_insert)
   end
 
   if opts.debounce_time then
+    local current = vim.api.nvim_get_current_buf()
+
     timer:start(opts.debounce_time, 0, function()
-      vim.schedule(highlight_brackets)
+      vim.schedule(function()
+        if current == vim.api.nvim_get_current_buf() then
+          highlight_brackets()
+        end
+      end)
     end)
   else
     highlight_brackets()
