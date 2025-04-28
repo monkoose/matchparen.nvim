@@ -6,10 +6,11 @@ local hl = {}
 local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
 local extmarks = { current = 0, match = 0 }
 
-local timer = vim.loop.new_timer()
+local timer = vim.uv.new_timer()
 -- On failing creating a timer, just silently don't use debounce
 if not timer then
    opts.debounce_time = nil
+   ---@diagnostic disable-next-line: missing-fields
    timer = {}
 end
 
