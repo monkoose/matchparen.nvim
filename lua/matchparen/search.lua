@@ -4,7 +4,7 @@ local utils = require("matchparen.utils")
 
 local search = {}
 
----Returns clojure for finding `pattern` on the `line` and below
+---Returns closure for finding `pattern` on the `line` and below
 ---@param pattern string
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
@@ -30,7 +30,7 @@ local function forward_matches(pattern, line, col, count)
    end
 end
 
----Returns clojure for finding `pattern` on the `line` and above
+---Returns closure for finding `pattern` on the `line` and above
 ---@param pattern string
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
@@ -86,7 +86,7 @@ function search.match(pattern, line, col, backward, count, skip)
    end
 end
 
----Returns clojure for finding balanced bracket
+---Returns closure for finding balanced bracket
 ---@param left string opening bracket
 ---@param right string closing bracket
 ---@param backward boolean direction of the search
