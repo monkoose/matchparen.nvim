@@ -28,7 +28,7 @@ end
 ---Returns treesitter node at `line` and `col` position if it is in `captures` list
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return userdata|nil node
+---@return TSNode|nil
 local function get_skip_node(line, col)
    if not cache.skip_nodes[line] then
       -- pcall for https://github.com/monkoose/matchparen.nvim/issues/14
@@ -81,7 +81,7 @@ local function is_ts_skip_region(line, col)
 end
 
 ---Determines whether a search should stop if outside of the `node`
----@param node userdata treesitter node
+---@param node TSNode treesitter node
 ---@param backward? boolean direction of the search
 ---@return fun(line: integer, column: integer): table
 local function stop_by_node(node, backward)
