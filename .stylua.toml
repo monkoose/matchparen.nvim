@@ -1,0 +1,4 @@
+column_width = 100
+indent_type = "Spaces"
+indent_width = 3
+collapse_simple_statement = "ConditionalOnly"
