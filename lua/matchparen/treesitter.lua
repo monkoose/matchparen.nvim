@@ -1,12 +1,15 @@
 local utils = require("matchparen.utils")
 
 local is_in_node_range = vim.treesitter.is_in_node_range
-local ts = { highlighter = nil }
+local ts = {}
 local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
    "string",
    "comment",
 }
+
+---@type vim.treesitter.highlighter
+ts.highlighter = nil
 
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
