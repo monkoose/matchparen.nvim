@@ -1,16 +1,16 @@
 {
-    "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
-    "Lua.diagnostics.globals": [
-        "vim",
-        "describe",
-        "it",
-        "pending"
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "LuaJIT",
+  "workspace": {
+    "library": [
+      "lua",
+      "$VIMRUNTIME/lua",
+      "${3rd}/busted/library",
+      "${3rd}/luassert/library",
+      "${3rd}/luv/library"
     ],
-    "Lua.diagnostics.ignoredFiles": "Disable",
-    "Lua.workspace.ignoreDir": [ "tests/example.lua" ],
-    "workspace.library": [
-        "/home/monkoose/.local/share/nvim/lazy/neodev.nvim/types/nightly",
-        "/home/monkoose/.local/share/nvim/lazy/matchparen.nvim/lua"
-    ],
-    "workspace.checkThirdParty": false
+    "checkThirdParty": false
+  },
+  "Lua.diagnostics.ignoredFiles": "Disable",
+  "Lua.workspace.ignoreDir": [ "tests/example.lua" ]
 }
