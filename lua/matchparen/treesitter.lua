@@ -8,7 +8,7 @@ local treesitter_skip = {
    "comment",
 }
 
----@type vim.treesitter.highlighter
+---@type vim.treesitter.highlighter|nil
 ts.highlighter = nil
 
 ---Caches `line` skip nodes
@@ -103,7 +103,7 @@ local function stop_by_node(node, backward)
 end
 
 ---Returns treesitter highlighter for current buffer or nil
----@return table|nil
+---@return vim.treesitter.highlighter|nil
 function ts.get_highlighter()
    local bufnr = vim.api.nvim_get_current_buf()
    return vim.treesitter.highlighter.active[bufnr]
