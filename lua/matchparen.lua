@@ -65,6 +65,7 @@ local function create_autocmds()
       hl.update(false)
    end, { desc = "Highlight matching pairs" })
    autocmd({ "WinLeave", "BufLeave" }, function()
+      hl.timer:stop()
       hl.remove()
    end, {
       desc = "Hide matching pairs highlight",

@@ -1,8 +1,11 @@
 local syntax = require("matchparen.syntax")
 local ts = require("matchparen.treesitter")
 local utils = require("matchparen.utils")
+local opts = require("matchparen.options").opts
 
-local search = {}
+local search = { in_insert = false }
+
+---@alias pos { line: integer, col: integer }
 
 ---Returns closure for finding `pattern` on the `line` and below
 ---@param pattern string
@@ -158,6 +161,41 @@ function search.match_pos(mp, line, col)
    end
 
    return search.pair(mp.left, mp.right, line, col, mp.backward, skip)
+end
+
+---Returns matched bracket option and its column or nil
+---@param col integer 0-based column number
+---@return table|nil, integer
+local function get_bracket(col)
+   local text = vim.api.nvim_get_current_line()
+   search.in_insert = search.in_insert or utils.is_in_insert_mode()
+
+   if col > 0 and search.in_insert then
+      local before_char = text:sub(col, col)
+      if opts.matchpairs[before_char] then return opts.matchpairs[before_char], col - 1 end
+   end
+
+   local inc_col = col + 1
+   local cursor_char = text:sub(inc_col, inc_col)
+   return opts.matchpairs[cursor_char], col
+end
+
+---Returns matched pair data or nil if there is no match
+---@return { current: pos, match: pos }|nil
+function search.find_pair()
+   local line, col = utils.get_cursor_pos()
+   if utils.is_inside_fold(line) then return nil end
+
+   local match_bracket, bracket_col = get_bracket(col)
+   if not match_bracket then return nil end
+
+   local matchline, matchcol = search.match_pos(match_bracket, line, bracket_col)
+   if not matchline then return nil end
+
+   return {
+      current = { line = line, col = bracket_col },
+      match = { line = matchline, col = matchcol or 0 },
+   }
 end
 
 return search

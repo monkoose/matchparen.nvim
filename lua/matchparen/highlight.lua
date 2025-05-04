@@ -1,18 +1,14 @@
 local opts = require("matchparen.options").opts
-local utils = require("matchparen.utils")
 local search = require("matchparen.search")
 
 local hl = {}
 local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
 local extmarks = { current = 0, match = 0 }
 
-local timer = vim.uv.new_timer()
+---@diagnostic disable-next-line: assign-type-mismatch
+hl.timer = vim.uv.new_timer() ---@type uv.uv_timer_t
 -- On failing creating a timer, just silently don't use debounce
-if not timer then
-   opts.debounce_time = nil
-   ---@diagnostic disable-next-line: missing-fields
-   timer = {}
-end
+if not hl.timer then opts.debounce_time = nil end
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
@@ -28,13 +24,10 @@ local function set_extmark(line, col)
 end
 
 ---Add brackets highlight
----@param curline integer 0-based line number
----@param curcol integer 0-based column number
----@param matchline integer 0-based line number
----@param matchcol integer 0-based column number
-local function hl_add(curline, curcol, matchline, matchcol)
-   extmarks.current = set_extmark(curline, curcol)
-   extmarks.match = set_extmark(matchline, matchcol)
+---@param brackets {current: pos, match: pos}
+local function hl_add(brackets)
+   extmarks.current = set_extmark(brackets.current.line, brackets.current.col)
+   extmarks.match = set_extmark(brackets.match.line, brackets.match.col)
 end
 
 ---Removes brackets highlight by deleting buffer extmarks
@@ -43,55 +36,24 @@ function hl.remove()
    vim.api.nvim_buf_del_extmark(0, namespace, extmarks.match)
 end
 
----Returns matched bracket option and its column or nil
----@param col integer 0-based column number
----@param in_insert boolean
----@return table|nil, integer
-local function get_bracket(col, in_insert)
-   local text = vim.api.nvim_get_current_line()
-   in_insert = in_insert or utils.is_in_insert_mode()
-
-   if col > 0 and in_insert then
-      local before_char = text:sub(col, col)
-      if opts.matchpairs[before_char] then return opts.matchpairs[before_char], col - 1 end
-   end
-
-   local inc_col = col + 1
-   local cursor_char = text:sub(inc_col, inc_col)
-   return opts.matchpairs[cursor_char], col
+---Highlights new brackets pair if any
+local function highlight_brackets()
+   local brackets = search.find_pair()
+   hl.remove()
+   if brackets then hl_add(brackets) end
 end
 
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param in_insert boolean
 function hl.update(in_insert)
-   if opts.debounce_time then timer:stop() end
-
-   local line, col = utils.get_cursor_pos()
-   if utils.is_inside_fold(line) then
-      hl.remove()
-      return
-   end
-
-   local match_bracket
-   match_bracket, col = get_bracket(col, in_insert)
-   if not match_bracket then
-      hl.remove()
-      return
-   end
-
-   local highlight_brackets = function()
-      local matchline, matchcol = search.match_pos(match_bracket, line, col)
-      hl.remove()
-      if matchline then hl_add(line, col, matchline, matchcol or 0) end
-   end
+   search.in_insert = in_insert
 
    if opts.debounce_time then
-      local current = vim.api.nvim_get_current_buf()
-
-      timer:start(opts.debounce_time, 0, function()
+      hl.timer:stop()
+      hl.timer:start(opts.debounce_time, 0, function()
          vim.schedule(function()
-            if current == vim.api.nvim_get_current_buf() then highlight_brackets() end
+            highlight_brackets()
          end)
       end)
    else
