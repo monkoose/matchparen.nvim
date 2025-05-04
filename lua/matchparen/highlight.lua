@@ -43,6 +43,13 @@ local function highlight_brackets()
    if brackets then hl_add(brackets) end
 end
 
+---Shedules highlighting of brackets to use as timer callback
+local function debounced_highlight_brackets()
+   vim.schedule(function()
+      highlight_brackets()
+   end)
+end
+
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param in_insert boolean
@@ -51,11 +58,7 @@ function hl.update(in_insert)
 
    if opts.debounce_time then
       hl.timer:stop()
-      hl.timer:start(opts.debounce_time, 0, function()
-         vim.schedule(function()
-            highlight_brackets()
-         end)
-      end)
+      hl.timer:start(opts.debounce_time, 0, debounced_highlight_brackets)
    else
       highlight_brackets()
    end
