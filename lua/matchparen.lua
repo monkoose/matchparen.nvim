@@ -39,41 +39,62 @@ local function create_autocmds()
    if augroup then return end
 
    augroup = api.nvim_create_augroup("matchparen.nvim", {})
-   local autocmd = function(event, callback, conf)
-      local config = { group = augroup, callback = callback }
-      if conf then config = vim.tbl_extend("error", config, conf) end
-      api.nvim_create_autocmd(event, config)
+
+   ---@param ev string|string[]
+   ---@param ot vim.api.keyset.create_autocmd
+   local function autocmd(ev, ot)
+      ot.group = augroup
+      api.nvim_create_autocmd(ev, ot)
    end
 
-   autocmd("InsertEnter", function()
-      hl.update(true)
-   end, {
+   autocmd("InsertEnter", {
+      callback = function()
+         opts.in_insert = true
+         hl.update()
+      end,
       desc = "Highlight matching pairs",
    })
+
+   autocmd("ModeChanged", {
+      pattern = "i*:[^i]*",
+      callback = function()
+         opts.in_insert = false
+      end,
+   })
+
    autocmd({
       "WinEnter",
       "CursorMoved",
       "CursorMovedI",
       "TextChanged",
-      "TextChangedI",
-   }, function()
-      hl.update(false)
-   end, { desc = "Highlight matching pairs" })
-   autocmd({ "WinLeave", "BufLeave" }, function()
-      hl.timer:stop()
-      hl.remove()
-   end, {
+      -- "TextChangedI",
+   }, {
+      callback = function()
+         hl.update()
+      end,
+      desc = "Highlight matching pairs",
+   })
+
+   autocmd({ "WinLeave", "BufLeave" }, {
+      callback = function()
+         hl.timer:stop()
+         hl.remove()
+      end,
       desc = "Hide matching pairs highlight",
    })
-   autocmd({ "WinEnter", "BufWinEnter", "FileType" }, function()
-      update_matchpairs()
-   end, {
+
+   autocmd({ "WinEnter", "BufWinEnter", "FileType" }, {
+      callback = function()
+         update_matchpairs()
+      end,
       desc = "Update cache of matchpairs option",
    })
-   autocmd("OptionSet", function()
-      update_matchpairs()
-   end, {
+
+   autocmd("OptionSet", {
       pattern = "matchpairs",
+      callback = function()
+         update_matchpairs()
+      end,
       desc = "Update cache of matchpairs option",
    })
 end
@@ -87,15 +108,17 @@ end
 ---Disables built in matchparen plugin
 local function disable_builtin()
    vim.g.loaded_matchparen = 1
-   if fn.exists(":NoMatchParen") ~= 0 then vim.cmd("NoMatchParen") end
-   delete_autocmds()
+   if fn.exists(":NoMatchParen") ~= 0 then
+      vim.cmd("NoMatchParen")
+      pcall(api.nvim_del_augroup_by_name, "matchparen")
+   end
 end
 
 ---Enables the plugin
 local function enable()
    create_autocmds()
    update_matchpairs()
-   hl.update(false)
+   hl.update()
 end
 
 ---Disables the plugin
@@ -120,7 +143,7 @@ function mp.setup(config)
 
    if opts.on_startup then
       create_autocmds()
-      hl.update(false)
+      hl.update()
    end
 end
 

@@ -3,7 +3,7 @@ local ts = require("matchparen.treesitter")
 local utils = require("matchparen.utils")
 local opts = require("matchparen.options").opts
 
-local search = { in_insert = false }
+local search = {}
 
 ---@alias pos { line: integer, col: integer }
 
@@ -168,9 +168,8 @@ end
 ---@return table|nil, integer
 local function get_bracket(col)
    local text = vim.api.nvim_get_current_line()
-   search.in_insert = search.in_insert or utils.is_in_insert_mode()
 
-   if col > 0 and search.in_insert then
+   if col > 0 and opts.in_insert then
       local before_char = text:sub(col, col)
       if opts.matchpairs[before_char] then return opts.matchpairs[before_char], col - 1 end
    end

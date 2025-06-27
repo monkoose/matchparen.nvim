@@ -1,4 +1,5 @@
 local utils = require("matchparen.utils")
+local opts = require("matchparen.options").opts
 
 ---@alias matchparen.TSTree { root: TSNode, query: vim.treesitter.Query }
 
@@ -124,7 +125,7 @@ function ts.skip_by_region(line, col, backward)
    local skip_node = get_skip_node(line, col)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string
-   if skip_node and is_node_string(skip_node) and utils.is_in_insert_mode() then
+   if skip_node and is_node_string(skip_node) and opts.in_insert then
       if not is_in_node_range(skip_node, line, col + 1) then skip_node = nil end
    end
 

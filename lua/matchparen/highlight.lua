@@ -54,10 +54,7 @@ end
 
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
----@param in_insert boolean
-function hl.update(in_insert)
-   search.in_insert = in_insert
-
+function hl.update()
    if opts.debounce_time then
       hl.timer:stop()
       hl.timer:start(opts.debounce_time, 0, debounced_highlight_brackets)
