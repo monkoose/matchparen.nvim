@@ -1,8 +1,10 @@
 local opts = require("matchparen.options").opts
 local search = require("matchparen.search")
 
+local api = vim.api
+
 local hl = {}
-local namespace = vim.api.nvim_create_namespace(opts.augroup_name)
+local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks = { current = 0, match = 0 }
 
 ---@diagnostic disable-next-line: assign-type-mismatch
@@ -14,7 +16,7 @@ if not hl.timer then opts.debounce_time = nil end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 local function set_extmark(line, col)
-   return vim.api.nvim_buf_set_extmark(
+   return api.nvim_buf_set_extmark(
       0,
       namespace,
       line,
@@ -32,8 +34,8 @@ end
 
 ---Removes brackets highlight by deleting buffer extmarks
 function hl.remove()
-   vim.api.nvim_buf_del_extmark(0, namespace, extmarks.current)
-   vim.api.nvim_buf_del_extmark(0, namespace, extmarks.match)
+   api.nvim_buf_del_extmark(0, namespace, extmarks.current)
+   api.nvim_buf_del_extmark(0, namespace, extmarks.match)
 end
 
 ---Highlights new brackets pair if any

@@ -16,7 +16,8 @@ INTRODUCTION                                    *matchparen.nvim-introduction*
 
 |matchparen.nvim| is alternative to |matchparen| plugin shipped with neovim.
 It is faster, fixes some annoying bugs and properly limit highlighting of
-brackets inside comments and strings in treesitter parsed buffers.
+brackets inside comments and strings in the buffers with enabled treesitter
+highlighting.
 
 ==============================================================================
 USAGE                                                  *matchparen.nvim-usage*
@@ -31,14 +32,6 @@ To temporary disable plugin >
 ==============================================================================
 CONFIGURATION                                  *matchparen.nvim-configuration*
 
-To configure the plugin you need to setup it inside init.vim >
-    lua <<EOF
-        require('matchparen').setup()
-    EOF
-
-or inside init.lua >
-    require('matchparen').setup()
-
 `setup()` function accepts table with following keys
     `on_startup`~
         Boolean.
@@ -46,11 +39,6 @@ or inside init.lua >
     `hl_group`~
         String.
         Highlight group of the matched brackets.
-    `augroup_name`~
-        String.
-        Name for augroup that created by the plugin. In most situations
-        you don't need to change it, only if for some reason you already
-        have augroup with the same name, to prevent it deleted by the plugin.
     `debounce_time`~
         Positive integer or nil.
         Debounce time in milliseconds for rehighlighting of brackets.
@@ -64,7 +52,6 @@ Defaults are >
     require('matchparen').setup({
         on_startup = true,
         hl_group = 'MatchParen',
-        augroup_name = 'matchparen',
         debounce_time = 60,
     })
 

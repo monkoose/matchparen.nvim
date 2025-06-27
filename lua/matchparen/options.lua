@@ -2,7 +2,6 @@ local defaults = {
    -- public
    on_startup = true,
    hl_group = "MatchParen",
-   augroup_name = "matchparen",
    debounce_time = 60,
 }
 
