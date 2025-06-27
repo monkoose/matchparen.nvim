@@ -6,26 +6,28 @@ local fn = vim.fn
 local opts = options.opts
 local mp = {}
 local augroup
+local cached_matchpairs
 
 ---Returns table created by splitting vim `matchpairs` option
 ---with opening brackets as keys and closing brackets as values
 ---@return table
 local function split_matchpairs()
-   local t = {}
-   local matchpairs_option = vim.opt_local.matchpairs:get() ---@type string[]
+   local result = {}
+   local matchpairs_option = vim.split(cached_matchpairs, ",")
    for _, pair in ipairs(matchpairs_option) do
       local left, right = pair:match("(.+):(.+)")
-      t[left] = right
+      result[left] = right
    end
-   return t
+   return result
 end
 
 ---Updates `matchpairs` opt only if it was changed,
 ---can be changed by buffer local option
 local function update_matchpairs()
-   if opts.cached_matchpairs == vim.bo.matchpairs then return end
+   local buf_matchpairs = vim.bo.matchpairs
+   if cached_matchpairs == buf_matchpairs then return end
 
-   opts.cached_matchpairs = vim.bo.matchpairs
+   cached_matchpairs = buf_matchpairs
    opts.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
       opts.matchpairs[l] = { left = l, right = r, backward = false }
@@ -49,8 +51,11 @@ local function create_autocmds()
 
    autocmd("InsertEnter", {
       callback = function()
-         opts.in_insert = true
-         hl.update()
+         -- only for actual insert mode
+         if vim.v.insertmode == "i" then
+            opts.in_insert = true
+            hl.update()
+         end
       end,
       desc = "Highlight matching pairs",
    })
