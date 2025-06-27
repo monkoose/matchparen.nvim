@@ -1,7 +1,10 @@
 local utils = require("matchparen.utils")
 
+---@alias matchparen.TSTree { root: TSNode, query: vim.treesitter.Query }
+
 local is_in_node_range = vim.treesitter.is_in_node_range
 local ts = {}
+---@type { trees: matchparen.TSTree[], skip_nodes: TSNode[][] }
 local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
    "string",
@@ -41,7 +44,7 @@ local function get_skip_node(line, col)
 end
 
 ---Returns all treesitter trees which have root nodes and highlight queries
----@return table
+---@return matchparen.TSTree[]
 local function get_trees()
    local trees = {}
    ts.highlighter.tree:for_each_tree(function(tree, langtree)
