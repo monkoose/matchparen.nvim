@@ -61,24 +61,24 @@ end
 ---Returns skip function for `search.match_pos()`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return function|nil
+---@return SkipFunction|nil
 function syntax.skip_by_region(line, col)
    if is_syntax_off() then return end
 
    if is_syntax_skip_region(line, col) then
       return function(l, c)
          if is_syntax_skip_region(l, c) then
-            return { skip = false }
+            return false, false
          else
-            return { skip = true }
+            return true, false
          end
       end
    else
       return function(l, c)
          if is_syntax_skip_region(l, c) then
-            return { skip = true }
+            return true, false
          else
-            return { skip = false }
+            return false, false
          end
       end
    end

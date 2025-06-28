@@ -87,22 +87,22 @@ end
 ---Determines whether a search should stop if outside of the `node`
 ---@param node TSNode treesitter node
 ---@param backward? boolean direction of the search
----@return fun(line: integer, column: integer): table
+---@return fun(line: integer, col: integer): boolean, boolean
 local function stop_by_node(node, backward)
    local get_sibling = backward and "prev_sibling" or "next_sibling"
 
    return function(l, c)
       while node do
-         if is_in_node_range(node, l, c) then return { skip = false } end
+         if is_in_node_range(node, l, c) then return false, false end
 
          -- limit the search to the current node only
-         if not is_node_comment(node) then return { stop = true } end
+         if not is_node_comment(node) then return false, true end
          -- increase the search limit for connected comments
          node = node[get_sibling](node)
-         if not (node and is_node_comment(node)) then return { stop = true } end
+         if not (node and is_node_comment(node)) then return false, true end
       end
 
-      return { skip = false }
+      return false, false
    end
 end
 
@@ -114,11 +114,11 @@ function ts.get_highlighter()
 end
 
 ---Returns `skip` function for `match_pos`
----based on treesitter node under the `line` and `col`
+---based on treesitter node under the `line` and `col`.
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward? boolean direction of the search
----@return fun(line: integer, column: integer): table
+---@return SkipFunction
 function ts.skip_by_region(line, col, backward)
    cache.trees = get_trees()
    cache.skip_nodes = {}
@@ -134,9 +134,9 @@ function ts.skip_by_region(line, col, backward)
    else
       return function(l, c)
          if is_ts_skip_region(l, c) then
-            return { skip = true }
+            return true, false
          else
-            return { skip = false }
+            return false, false
          end
       end
    end

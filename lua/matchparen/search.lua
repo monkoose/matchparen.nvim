@@ -3,9 +3,12 @@ local ts = require("matchparen.treesitter")
 local utils = require("matchparen.utils")
 local opts = require("matchparen.options").opts
 
-local search = {}
+---Determines what to do for the postion `line`, `col`.
+---First return value answers if the position is to be skipped (continue search).
+---Second return value answers if the search should be stopped (break search).
+---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean
 
----@alias pos { line: integer, col: integer }
+local search = {}
 
 ---Returns closure for finding `pattern` on the `line` and below
 ---@param pattern string
@@ -74,21 +77,18 @@ end
 ---@param col integer 0-based column number
 ---@param backward boolean direction of the search
 ---@param count integer number of lines to search
----@param skip function
+---@param skip_fn SkipFunction
 ---@return number|nil, number|nil
-function search.match(pattern, line, col, backward, count, skip)
-   skip = skip or function()
-      return { skip = false }
-   end
+function search.match(pattern, line, col, backward, count, skip_fn)
    local matches = backward and backward_matches or forward_matches
 
    for l, c, capture in matches(pattern, line, col, count) do
       -- pcall because some skip functions can be errorness
       -- like `synstack()` for syntax
-      local ok, to = pcall(skip, l, c, capture)
-      if not ok or to.stop then
+      local ok, skip, stop = pcall(skip_fn, l, c, capture)
+      if not ok or stop then
          return
-      elseif not to.skip then
+      elseif not skip then
          return l, c
       end
    end
@@ -98,7 +98,7 @@ end
 ---@param left string opening bracket
 ---@param right string closing bracket
 ---@param backward boolean direction of the search
----@return function
+---@return fun(bracket: string): boolean, boolean
 local function skip_same_bracket(left, right, backward)
    local count = 0
    local same_bracket = backward and right or left
@@ -108,12 +108,12 @@ local function skip_same_bracket(left, right, backward)
          count = count + 1
       else
          if count == 0 then
-            return { skip = false }
+            return false, false
          else
             count = count - 1
          end
       end
-      return { skip = true }
+      return true, false
    end
 end
 
@@ -123,30 +123,30 @@ end
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward boolean direction of the search
----@param skip? function
+---@param skip_fn? SkipFunction
 ---@return integer|nil, integer|nil
-function search.pair(left, right, line, col, backward, skip)
+function search.pair(left, right, line, col, backward, skip_fn)
    local pattern = "([" .. right .. left .. "])"
    local max = vim.api.nvim_win_get_height(0)
    local skip_bracket = skip_same_bracket(left, right, backward)
 
-   local skip_fn
-   if skip then
-      skip_fn = function(l, c, bracket)
-         local s = skip(l, c)
-         if s.stop or s.skip then
-            return s
+   local _skip_fn
+   if skip_fn then
+      _skip_fn = function(l, c, bracket)
+         local skip, stop = skip_fn(l, c)
+         if skip or stop then
+            return skip, stop
          else
             return skip_bracket(bracket)
          end
       end
    else
-      skip_fn = function(_, _, bracket)
+      _skip_fn = function(_, _, bracket)
          return skip_bracket(bracket)
       end
    end
 
-   return search.match(pattern, line, col, backward, max, skip_fn)
+   return search.match(pattern, line, col, backward, max, _skip_fn)
 end
 
 ---Returns matched bracket position
