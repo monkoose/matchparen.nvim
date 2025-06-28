@@ -1,5 +1,4 @@
 local options = require("matchparen.options")
-local hl = require("matchparen.highlight")
 
 local api = vim.api
 local fn = vim.fn
@@ -41,6 +40,7 @@ local function create_autocmds()
    if augroup then return end
 
    augroup = api.nvim_create_augroup("matchparen.nvim", {})
+   local hl = require("matchparen.highlight")
 
    ---@param ev string|string[]
    ---@param ot vim.api.keyset.create_autocmd
@@ -123,13 +123,13 @@ end
 local function enable()
    create_autocmds()
    update_matchpairs()
-   hl.update()
+   require("matchparen.highlight").update()
 end
 
 ---Disables the plugin
 local function disable()
    delete_autocmds()
-   hl.remove()
+   require("matchparen.highlight").remove()
 end
 
 ---Creates plugin's custom commands
@@ -139,16 +139,16 @@ local function create_commands()
 end
 
 ---Initializes the plugin
----@param config table
+---@param config MatchParenOptions
 function mp.setup(config)
    disable_builtin()
    options:update(config)
    update_matchpairs()
    create_commands()
 
-   if opts.on_startup then
+   if opts.enabled then
       create_autocmds()
-      hl.update()
+      require("matchparen.highlight").update()
    end
 end
 

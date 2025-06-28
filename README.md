@@ -1,23 +1,24 @@
 ## Matchparen.nvim
-### alternative to default neovim matchparen plugin
+### An alternative to the default neovim matchparen plugin
 
-**BE AWARE:** highlighting should work as expected, but jumping to highlighted
-bracket with `%` or text objects as `i(`, `a[` etc not implemented yet, so it
-could work improperly when there are some unmatched brackets in strings or
-comments inside highlighted brackets. With default plugin you will have the
-same behavior.
+matchparen.nvim fixes several bugs in the default plugin, including:
+- Wrong highlights of matched characters in comments and strings in files with TreeSitter syntax highlighting
+- Highlighting is properly disabled for plugins like [hop.nvim](https://github.com/phaazon/hop.nvim)
+- Doesn't recolor characters in floating windows
+- And some other
 
-It fixes some bugs of the default plugin like:
-- wrong highlights of matched characters in comments and strings in files with TreeSitter syntax highlighting
-- highlighting is properly disabled for such plugins like [hop.nvim](https://github.com/phaazon/hop.nvim)
-- doesn't recolor characters of floating windows
-- and others
+It is also much faster in some situations and doesn't cause cursor movement lag.
 
-It is also much faster (5-10 times in my synthetic tests).
+**Note:** Highlighting should work as expected, but jumping to highlighted
+brackets with `%` or text objects like `i(`, `a[`, etc. is not implemented yet, so it
+could work improperly when there are unmatched brackets in strings or
+comments inside highlighted brackets. You will have the same behavior with the default plugin.
 
-### Installation
+---
 
-Here’s an example for 💤[lazy](https://github.com/folke/lazy.nvim) plugin
+### 📦 Installation
+
+Here's an example for the 💤[lazy](https://github.com/folke/lazy.nvim) plugin
 manager. If you're using a different plugin manager, please refer to its
 documentation for installation instructions.
 
@@ -47,26 +48,41 @@ require("lazy").setup({
     }
 })
 ```
-
-If you are using some other plugin manager, you can disable the built-in
+If you are using another plugin manager, you can disable the built-in
 matchparen plugin with `vim.g.loaded_matchparen = 1` somewhere in your neovim
 config.
 
-### Usage
+---
 
-There are two commands to temporary disable or enable the plugin
+### ⚒️ Configuration
+
+```lua
+require('matchparen').setup({
+    -- Set to `false` to disable at matchpren at startup
+    -- Enable matchparen manually with `:MatchParenEnable`
+    enabled = true,
+    -- Highlight group of the matched brackets
+    -- Change it to any other or adjust colors of "MathParen" highlight group
+    -- in your colorscheme to your liking
+    hl_group = 'MatchParen',
+    -- Debounce time in milliseconds for rehighlighting brackets
+    -- Set to 0 to disable debouncing
+    debounce_time = 60,
+})
+```
+
+---
+
+### 🚀 Usage
+
+There are two commands to temporarily disable or enable the plugin:
 ```
 :MatchParenDisable
 :MatchParenEnable
 ```
 
-### Configuration
+---
 
-```lua
-require('matchparen').setup({
-    on_startup = true, -- Should it be enabled by default
-    hl_group = 'MatchParen', -- highlight group of the matched brackets
-    debounce_time = 60, -- debounce time in milliseconds for rehighlighting of brackets.
-})
-```
-Read `:h matchparen.nvim-configuration` for more descriptive explanation of the options.
+### 🌟 License
+
+MIT license

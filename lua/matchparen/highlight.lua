@@ -9,8 +9,8 @@ local extmarks = { current = 0, match = 0 }
 
 ---@diagnostic disable-next-line: assign-type-mismatch
 hl.timer = vim.uv.new_timer() ---@type uv.uv_timer_t
--- On failing creating a timer, just silently don't use debounce
-if not hl.timer then opts.debounce_time = nil end
+-- On failing creating a timer, just silently disable debouncing
+if not hl.timer then opts.debounce_time = 0 end
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
@@ -58,11 +58,13 @@ end
 
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
-function hl.update()
-   if opts.debounce_time then
+if opts.debounce_time and opts.debounce_time > 0 then
+   function hl.update()
       hl.timer:stop()
       hl.timer:start(opts.debounce_time, 0, debounced_highlight_brackets)
-   else
+   end
+else
+   function hl.update()
       highlight_brackets()
    end
 end

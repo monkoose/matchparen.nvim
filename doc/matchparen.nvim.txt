@@ -23,7 +23,7 @@ highlighting.
 USAGE                                                  *matchparen.nvim-usage*
 
                                          *:MatchParenEnable* *:MatchParenDisable*
-To enable highlighting if it was previously disabled or `on_startup = false` >
+To enable highlighting if it was previously disabled or `enabled = false` >
     :MatchParenEnable
 
 To temporary disable plugin >
@@ -33,24 +33,24 @@ To temporary disable plugin >
 CONFIGURATION                                  *matchparen.nvim-configuration*
 
 `setup()` function accepts table with following keys
-    `on_startup`~
+    `enabled`~
         Boolean.
-        If `true` the plugin will highlight brackets on neovim startup.
+        If `true` the plugin will highlight brackets at neovim startup.
     `hl_group`~
         String.
         Highlight group of the matched brackets.
     `debounce_time`~
-        Positive integer or nil.
-        Debounce time in milliseconds for rehighlighting of brackets.
+        Positive integer or 0.
+        Debounce time in milliseconds for rehighlighting brackets.
         In theory this option should improve responsiveness of the editor in
         some seldom situations and remove rehighlighting of the same brackets
         multiple times because of intersection of the autocommands.
         If you want to completely disable debouncing and rehighlight brackets
-        instantly set it's value to `nil`.
+        instantly set it's value to `0`.
 
 Defaults are >
     require('matchparen').setup({
-        on_startup = true,
+        enabled = true,
         hl_group = 'MatchParen',
         debounce_time = 60,
     })
