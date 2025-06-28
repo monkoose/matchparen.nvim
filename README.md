@@ -9,10 +9,11 @@ matchparen.nvim fixes several bugs in the default plugin, including:
 
 It is also much faster in some situations and doesn't cause cursor movement lag.
 
-**Note:** Highlighting should work as expected, but jumping to highlighted
-brackets with `%` or text objects like `i(`, `a[`, etc. is not implemented yet, so it
-could work improperly when there are unmatched brackets in strings or
-comments inside highlighted brackets. You will have the same behavior with the default plugin.
+> [!IMPORTANT]
+> Highlighting should work as expected, but jumping to highlighted
+> brackets with `%` or text objects like `i(`, `a[`, etc. is not implemented yet, so it
+> could work improperly when there are unmatched brackets in strings or
+> comments inside highlighted brackets. You will have the same behavior with the default plugin.
 
 ---
 
@@ -48,6 +49,7 @@ require("lazy").setup({
     }
 })
 ```
+
 If you are using another plugin manager, you can disable the built-in
 matchparen plugin with `vim.g.loaded_matchparen = 1` somewhere in your neovim
 config.
