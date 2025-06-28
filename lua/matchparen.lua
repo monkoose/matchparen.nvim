@@ -12,7 +12,8 @@ local cached_matchpairs
 ---@return table
 local function split_matchpairs()
    local result = {}
-   local matchpairs_option = vim.split(cached_matchpairs, ",")
+   cached_matchpairs = ""
+   local matchpairs_option = vim.split(cached_matchpairs, ",", { trimempty = true })
    for _, pair in ipairs(matchpairs_option) do
       local left, right = pair:match("(.+):(.+)")
       result[left] = right
