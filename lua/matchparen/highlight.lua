@@ -26,10 +26,13 @@ local function set_extmark(line, col)
 end
 
 ---Add brackets highlight
----@param brackets {current: pos, match: pos}
-local function hl_add(brackets)
-   extmarks.current = set_extmark(brackets.current.line, brackets.current.col)
-   extmarks.match = set_extmark(brackets.match.line, brackets.match.col)
+---@param line integer 0-based line number
+---@param col integer 0-based column number
+---@param matchline integer 0-based line number
+---@param matchcol integer 0-based column number
+local function hl_add(line, col, matchline, matchcol)
+   extmarks.current = set_extmark(line, col)
+   extmarks.match = set_extmark(matchline, matchcol)
 end
 
 ---Removes brackets highlight by deleting buffer extmarks
@@ -40,9 +43,10 @@ end
 
 ---Highlights new brackets pair if any
 local function highlight_brackets()
-   local brackets = search.find_pair()
+   local line, col, matchline, matchcol = search.find_pair()
    hl.remove()
-   if brackets then hl_add(brackets) end
+   ---@diagnostic disable-next-line: param-type-mismatch
+   if line then hl_add(line, col, matchline, matchcol) end
 end
 
 ---Shedules highlighting of brackets to use as timer callback

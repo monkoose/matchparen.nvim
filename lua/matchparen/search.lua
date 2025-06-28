@@ -33,6 +33,13 @@ local function forward_matches(pattern, line, col, count)
    end
 end
 
+---@param lines string[]
+---@param i integer
+---@return string
+local function reverse_line(lines, i)
+   return lines[i] and lines[i]:reverse()
+end
+
 ---Returns closure for finding `pattern` on the `line` and above
 ---@param pattern string
 ---@param line integer 0-based line number
@@ -46,7 +53,7 @@ local function backward_matches(pattern, line, col, count)
    local i = #lines
    local index = col + 1 ---@type integer?
    local capture
-   local reversed_text = lines[i] and string.reverse(lines[i])
+   local reversed_text = reverse_line(lines, i)
 
    return function()
       while reversed_text do
@@ -55,7 +62,7 @@ local function backward_matches(pattern, line, col, count)
          if index then return offset + i, index - 1, capture end
 
          i = i - 1
-         reversed_text = lines[i] and string.reverse(lines[i])
+         reversed_text = reverse_line(lines, i)
       end
    end
 end
@@ -79,9 +86,7 @@ function search.match(pattern, line, col, backward, count, skip)
       -- pcall because some skip functions can be errorness
       -- like `synstack()` for syntax
       local ok, to = pcall(skip, l, c, capture)
-      if not ok then return end
-
-      if to.stop then
+      if not ok or to.stop then
          return
       elseif not to.skip then
          return l, c
@@ -180,21 +185,18 @@ local function get_bracket(col)
 end
 
 ---Returns matched pair data or nil if there is no match
----@return { current: pos, match: pos }|nil
+---@return integer?, integer?, integer?, integer?
 function search.find_pair()
    local line, col = utils.get_cursor_pos()
-   if utils.is_inside_fold(line) then return nil end
+   if utils.is_inside_fold(line) then return end
 
    local match_bracket, bracket_col = get_bracket(col)
-   if not match_bracket then return nil end
+   if not match_bracket then return end
 
    local matchline, matchcol = search.match_pos(match_bracket, line, bracket_col)
-   if not matchline then return nil end
+   if not matchline then return end
 
-   return {
-      current = { line = line, col = bracket_col },
-      match = { line = matchline, col = matchcol or 0 },
-   }
+   return line, bracket_col, matchline, matchcol
 end
 
 return search
