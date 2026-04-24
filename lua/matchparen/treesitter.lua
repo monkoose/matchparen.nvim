@@ -1,10 +1,11 @@
-local utils = require("matchparen.utils")
 local opts = require("matchparen.options").opts
+
+local ts = vim.treesitter
+local api = vim.api
 
 ---@alias matchparen.TSTree { root: TSNode, query: vim.treesitter.Query }
 
-local is_in_node_range = vim.treesitter.is_in_node_range
-local ts = {}
+local M = {}
 ---@type { trees: matchparen.TSTree[], skip_nodes: TSNode[][] }
 local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
@@ -13,14 +14,14 @@ local treesitter_skip = {
 }
 
 ---@type vim.treesitter.highlighter|nil
-ts.highlighter = nil
+M.highlighter = nil
 
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
 local function cache_nodes(line)
    cache.skip_nodes[line] = {}
    for _, tree in ipairs(cache.trees) do
-      local iter = tree.query:iter_captures(tree.root, ts.highlighter.bufnr, line, line + 1)
+      local iter = tree.query:iter_captures(tree.root, M.highlighter.bufnr, line, line + 1)
       for id, node in iter do
          if vim.tbl_contains(treesitter_skip, tree.query.captures[id]) then
             table.insert(cache.skip_nodes[line], node)
@@ -40,7 +41,7 @@ local function get_skip_node(line, col)
    end
 
    for _, node in ipairs(cache.skip_nodes[line]) do
-      if is_in_node_range(node, line, col) then return node end
+      if ts.is_in_node_range(node, line, col) then return node end
    end
 end
 
@@ -48,11 +49,11 @@ end
 ---@return matchparen.TSTree[]
 local function get_trees()
    local trees = {}
-   ts.highlighter.tree:for_each_tree(function(tree, langtree)
+   M.highlighter.tree:for_each_tree(function(tree, langtree)
       if not tree then return end
 
       local root = tree:root()
-      local query = ts.highlighter:get_query(langtree:lang()):query()
+      local query = M.highlighter:get_query(langtree:lang()):query()
 
       -- Some injected languages may not have highlight queries.
       if query then table.insert(trees, { root = root, query = query }) end
@@ -61,27 +62,26 @@ local function get_trees()
    return trees
 end
 
+---Returns true if `str` constains `pattern`, false otherwise
+---@param str string
+---@param pattern string
+---@return boolean
+local function str_contains(str, pattern)
+   return str:find(pattern, 1, true) ~= nil
+end
+
 ---Returns true when `node` type is string
 ---@param node TSNode
 ---@return boolean
 local function is_node_string(node)
-   return utils.str_contains(node:type(), "string")
+   return str_contains(node:type(), "string")
 end
 
 ---Returns true when `node` type is comment
 ---@param node TSNode
 ---@return boolean
 local function is_node_comment(node)
-   return utils.str_contains(node:type(), "comment")
-end
-
----Returns true when the cursor is inside any of `treesitter_skip` captures
----@param line integer 0-based line
----@param col integer 0-based column
----@return boolean
-local function is_ts_skip_region(line, col)
-   if utils.is_inside_fold(line) then return false end
-   return get_skip_node(line, col) ~= nil
+   return str_contains(node:type(), "comment")
 end
 
 ---Determines whether a search should stop if outside of the `node`
@@ -93,7 +93,7 @@ local function stop_by_node(node, backward)
 
    return function(l, c)
       while node do
-         if is_in_node_range(node, l, c) then return false, false end
+         if ts.is_in_node_range(node, l, c) then return false, false end
 
          -- limit the search to the current node only
          if not is_node_comment(node) then return false, true end
@@ -108,9 +108,9 @@ end
 
 ---Returns treesitter highlighter for current buffer or nil
 ---@return vim.treesitter.highlighter|nil
-function ts.get_highlighter()
-   local bufnr = vim.api.nvim_get_current_buf()
-   return vim.treesitter.highlighter.active[bufnr]
+function M.get_highlighter()
+   local bufnr = api.nvim_get_current_buf()
+   return ts.highlighter.active[bufnr]
 end
 
 ---Returns `skip` function for `match_pos`
@@ -119,21 +119,21 @@ end
 ---@param col integer 0-based column number
 ---@param backward? boolean direction of the search
 ---@return SkipFunction
-function ts.skip_by_region(line, col, backward)
+function M.skip_by_region(line, col, backward)
    cache.trees = get_trees()
    cache.skip_nodes = {}
    local skip_node = get_skip_node(line, col)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string
    if skip_node and is_node_string(skip_node) and opts.in_insert then
-      if not is_in_node_range(skip_node, line, col + 1) then skip_node = nil end
+      if not ts.is_in_node_range(skip_node, line, col + 1) then skip_node = nil end
    end
 
    if skip_node then -- inside string or comment
       return stop_by_node(skip_node, backward)
    else
       return function(l, c)
-         if is_ts_skip_region(l, c) then
+         if get_skip_node(l, c) ~= nil then
             return true, false
          else
             return false, false
@@ -142,4 +142,4 @@ function ts.skip_by_region(line, col, backward)
    end
 end
 
-return ts
+return M

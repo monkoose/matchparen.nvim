@@ -3,14 +3,14 @@ local search = require("matchparen.search")
 
 local api = vim.api
 
-local hl = {}
+local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks = { current = 0, match = 0 }
 
 ---@diagnostic disable-next-line: assign-type-mismatch
-hl.timer = vim.uv.new_timer() ---@type uv.uv_timer_t
+M.timer = vim.uv.new_timer() ---@type uv.uv_timer_t
 -- On failing creating a timer, just silently disable debouncing
-if not hl.timer then opts.debounce_time = 0 end
+if not M.timer then opts.debounce_time = 0 end
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
@@ -36,15 +36,15 @@ local function hl_add(line, col, matchline, matchcol)
 end
 
 ---Removes brackets highlight by deleting buffer extmarks
-function hl.remove()
+function M.remove()
    api.nvim_buf_del_extmark(0, namespace, extmarks.current)
    api.nvim_buf_del_extmark(0, namespace, extmarks.match)
 end
 
 ---Highlights new brackets pair if any
 local function highlight_brackets()
-   local line, col, matchline, matchcol = search.find_pair()
-   hl.remove()
+   local line, col, matchline, matchcol = search.pair()
+   M.remove()
    ---@diagnostic disable-next-line: param-type-mismatch
    if line then hl_add(line, col, matchline, matchcol) end
 end
@@ -59,14 +59,14 @@ end
 ---Updates the highlight of brackets by first removing previous highlight
 ---and then if there is matching brackets pair at the new cursor position highlight them
 if opts.debounce_time and opts.debounce_time > 0 then
-   function hl.update()
-      hl.timer:stop()
-      hl.timer:start(opts.debounce_time, 0, debounced_highlight_brackets)
+   function M.update()
+      M.timer:stop()
+      M.timer:start(opts.debounce_time, 0, debounced_highlight_brackets)
    end
 else
-   function hl.update()
+   function M.update()
       highlight_brackets()
    end
 end
 
-return hl
+return M

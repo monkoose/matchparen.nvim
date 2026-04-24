@@ -2,10 +2,12 @@
 ---@field enabled boolean # Determines whether the plugin should be enabled at neovim startup
 ---@field hl_group string
 ---@field debounce_time integer # Debounce time in milliseconds for rehighlighting brackets. `0` disables debouncing.
+---@field skip_folds boolean # Determines whether the plugin should skip closed folds
 local defaults = {
    enabled = true,
    hl_group = "MatchParen",
    debounce_time = 60,
+   skip_folds = true,
 }
 
 ---@class MatchParenOptions : MatchParenDefaultOptions

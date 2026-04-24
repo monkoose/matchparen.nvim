@@ -1,7 +1,6 @@
-local utils = require("matchparen.utils")
-
 local fn = vim.fn
-local syntax = {}
+
+local M = {}
 local syntax_skip = {
    "string",
    "comment",
@@ -44,16 +43,25 @@ local function last3_synids(line, col)
    }
 end
 
+---Returns true when `str` contains any element from the `tbl`
+---@param str string
+---@param tbl string[]
+---@return boolean
+local function str_contains_any(str, tbl)
+   for _, pattern in ipairs(tbl) do
+      if str:find(pattern, 1, true) then return true end
+   end
+   return false
+end
+
 ---Returns true when the cursor is inside any of `syntax_skip` groups
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@return boolean
 local function is_syntax_skip_region(line, col)
-   if utils.is_inside_fold(line) then return false end
-
    for _, synid in ipairs(last3_synids(line, col)) do
       local synname = get_synname(synid)
-      if utils.str_contains_any(synname, syntax_skip) then return true end
+      if str_contains_any(synname, syntax_skip) then return true end
    end
    return false
 end
@@ -61,9 +69,13 @@ end
 ---Returns skip function for `search.match_pos()`
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return SkipFunction|nil
-function syntax.skip_by_region(line, col)
-   if is_syntax_off() then return end
+---@return SkipFunction
+function M.skip_by_region(line, col)
+   if is_syntax_off() then
+      return function(_, _)
+         return false, false
+      end
+   end
 
    if is_syntax_skip_region(line, col) then
       return function(l, c)
@@ -84,4 +96,4 @@ function syntax.skip_by_region(line, col)
    end
 end
 
-return syntax
+return M
