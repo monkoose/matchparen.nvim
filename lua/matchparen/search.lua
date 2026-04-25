@@ -49,28 +49,52 @@ end
 ---@param count integer number of lines to process
 ---@return function
 local function forward_matches(pattern, line, col, count)
-   local lines = get_lines(line, count)
-   local offset = line - 1
-   local i = 1
-   local text = lines[i]
+   local curr_line = line
+   local visible_count = 0
    local index = col + 1 ---@type integer?
-   local capture
+   local lines = get_lines(curr_line, count)
+   local idx = 1
+   local text = lines[idx]
 
    return function()
       while text do
+         local capture
          index, capture = find_forward(text, pattern, index)
+         if index then return curr_line, index - 1, capture end
 
-         if index then return offset + i, index - 1, capture end
+         visible_count = visible_count + 1
+         curr_line = curr_line + 1
+         idx = idx + 1
 
-         i = i + 1
-         text = lines[i]
+         if opts.skip_folds then
+            local fold_end = fn.foldclosedend(curr_line + 1)
+            while fold_end ~= -1 do
+               local skipped = fold_end - curr_line
+               curr_line = fold_end
+               visible_count = visible_count + 1
+               idx = idx + skipped
+               fold_end = fn.foldclosedend(curr_line + 1)
+            end
+         else
+            local fold_start = fn.foldclosed(curr_line + 1)
+            if fold_start ~= -1 and fold_start ~= curr_line + 1 then
+               visible_count = visible_count - 1
+            end
+         end
+
+         text = lines[idx]
+         if not text and visible_count < count then
+            lines = get_lines(curr_line, count - visible_count)
+            idx = 1
+            text = lines[idx]
+         end
       end
    end
 end
 
 ---@param lines string[]
 ---@param i integer
----@return string
+---@return string?
 local function reverse_line(lines, i)
    return lines[i] and lines[i]:reverse()
 end
@@ -82,22 +106,52 @@ end
 ---@param count integer number of lines to process
 ---@return function
 local function backward_matches(pattern, line, col, count)
-   local start = math.max(0, line - count)
-   local lines = get_lines(start, line - start + 1)
-   local offset = line - #lines
-   local i = #lines
+   local curr_line = line
+   local visible_count = 0
    local index = col + 1 ---@type integer?
-   local capture
-   local reversed_text = reverse_line(lines, i)
+
+   local fetch_start = math.max(0, curr_line - count + 1)
+   local lines = get_lines(fetch_start, curr_line - fetch_start + 1)
+   local idx = #lines
+   local reversed_text = reverse_line(lines, idx)
 
    return function()
       while reversed_text do
+         local capture
          index, capture = find_backward(reversed_text, pattern, index)
+         if index then return curr_line, index - 1, capture end
 
-         if index then return offset + i, index - 1, capture end
+         visible_count = visible_count + 1
+         curr_line = curr_line - 1
+         idx = idx - 1
 
-         i = i - 1
-         reversed_text = reverse_line(lines, i)
+         if opts.skip_folds then
+            local fold_start = fn.foldclosed(curr_line + 1)
+            while fold_start ~= -1 do
+               local target = fold_start - 2
+               local skipped = curr_line - target
+               curr_line = target
+               visible_count = visible_count + 1
+               idx = idx - skipped
+               fold_start = fn.foldclosed(curr_line + 1)
+            end
+         else
+            local fold_end = fn.foldclosedend(curr_line + 1)
+            if fold_end ~= -1 and fold_end ~= curr_line + 1 then
+               visible_count = visible_count - 1
+            end
+         end
+
+         if curr_line < 0 then return end
+
+         reversed_text = reverse_line(lines, idx)
+         if not reversed_text and visible_count < count then
+            local fetch_count = count - visible_count
+            fetch_start = math.max(0, curr_line - fetch_count + 1)
+            lines = get_lines(fetch_start, curr_line - fetch_start + 1)
+            idx = #lines
+            reversed_text = reverse_line(lines, idx)
+         end
       end
    end
 end
