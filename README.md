@@ -52,7 +52,9 @@ require("lazy").setup({
 
 If you are using another plugin manager, you can disable the built-in
 matchparen plugin with `vim.g.loaded_matchparen = 1` somewhere in your neovim
-config.
+config. The plugin will set this variable and disable built-in matchparen plugin after setup too,
+but to save some startup time it's beteer to disable it manually,
+because loading of the user plugins happens after built-in plugins.
 
 ---
 
@@ -60,16 +62,21 @@ config.
 
 ```lua
 require('matchparen').setup({
-    -- Set to `false` to disable at matchpren at startup
-    -- Enable matchparen manually with `:MatchParenEnable`
+    -- Set to `false` to disable at matchpren at startup.
+    -- Enable matchparen manually with `:MatchParenEnable`.
     enabled = true,
-    -- Highlight group of the matched brackets
+    -- Highlight group of the matched brackets.
     -- Change it to any other or adjust colors of "MathParen" highlight group
-    -- in your colorscheme to your liking
+    -- in your colorscheme to your liking.
     hl_group = 'MatchParen',
-    -- Debounce time in milliseconds for rehighlighting brackets
-    -- Set to 0 to disable debouncing
+    -- Debounce time in milliseconds for rehighlighting brackets.
+    -- Set to 0 to disable debouncing.
     debounce_time = 60,
+    -- Determines whether to skip searching for the brackets inside the closed folds.
+    -- Generally, it should be left as default, because it's much faster and
+    -- usually folds contain only the matched brackets, but if you often use some
+    -- custom folds, you can set it to `false`.
+    skip_folds = true,
 })
 ```
 

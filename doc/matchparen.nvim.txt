@@ -47,12 +47,20 @@ CONFIGURATION                                  *matchparen.nvim-configuration*
         multiple times because of intersection of the autocommands.
         If you want to completely disable debouncing and rehighlight brackets
         instantly set it's value to `0`.
+    `skip_folds`~
+        Boolean.
+        If `true` the plugin will skip searching for the brackets in the
+        closed folds.
+        Generally, it should be left as default, because it's much faster and
+        usually folds contain only the matched brackets, but if you often
+        use some custom folds, you can set it to `false`.
 
 Defaults are >
     require('matchparen').setup({
         enabled = true,
         hl_group = 'MatchParen',
         debounce_time = 60,
+        skip_folds = true,
     })
 
 ==============================================================================
