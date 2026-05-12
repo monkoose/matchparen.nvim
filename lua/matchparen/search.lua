@@ -4,6 +4,7 @@ local opts = require("matchparen.options").opts
 
 local api = vim.api
 local fn = vim.fn
+local uv = vim.uv
 
 ---Determines what to do for the postion `line`, `col`.
 ---First return value answers if the position is to be skipped (continue search).
@@ -11,6 +12,8 @@ local fn = vim.fn
 ---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean
 
 local M = {}
+-- 150ms in nanoseconds
+local TIME_LIMIT = 150000000
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
@@ -55,9 +58,10 @@ local function forward_matches(pattern, line, col, count)
    local lines = get_lines(curr_line, count)
    local idx = 1
    local text = lines[idx]
+   local start_time = uv.hrtime()
 
    return function()
-      while text do
+      while text and uv.hrtime() - start_time < TIME_LIMIT do
          local capture
          index, capture = find_forward(text, pattern, index)
          if index then return curr_line, index - 1, capture end
@@ -114,9 +118,10 @@ local function backward_matches(pattern, line, col, count)
    local lines = get_lines(fetch_start, curr_line - fetch_start + 1)
    local idx = #lines
    local reversed_text = reverse_line(lines, idx)
+   local start_time = uv.hrtime()
 
    return function()
-      while reversed_text do
+      while reversed_text and uv.hrtime() - start_time < TIME_LIMIT do
          local capture
          index, capture = find_backward(reversed_text, pattern, index)
          if index then return curr_line, index - 1, capture end
