@@ -23,7 +23,7 @@ end
 ---Updates `matchpairs` opt only if it was changed,
 ---can be changed by buffer local option
 local function update_matchpairs()
-   local buf_matchpairs = vim.bo.matchpairs
+   local buf_matchpairs = api.nvim_get_option_value("matchpairs", { scope = "local" })
    if cached_matchpairs == buf_matchpairs then return end
 
    cached_matchpairs = buf_matchpairs
