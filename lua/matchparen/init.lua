@@ -116,6 +116,11 @@ local function disable_builtin()
    if fn.exists(":NoMatchParen") ~= 0 then
       vim.cmd("NoMatchParen")
       pcall(api.nvim_del_augroup_by_name, "matchparen")
+      pcall(api.nvim_del_user_command, "NoMatchParen")
+      pcall(api.nvim_del_user_command, "DoMatchParen")
+      vim.g.matchparen_timeout = nil
+      vim.g.matchparen_insert_timeout = nil
+      vim.g.matchparen_disable_cursor_hl = nil
    end
 end
 
