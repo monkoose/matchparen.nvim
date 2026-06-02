@@ -73,7 +73,7 @@ end
 ---@return SkipFunction
 function M.skip_by_region(line, col)
    if is_syntax_off() then
-      return function(_, _)
+      return function()
          return false, false
       end
    end

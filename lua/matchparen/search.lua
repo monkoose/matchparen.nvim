@@ -4,7 +4,6 @@ local opts = require("matchparen.options").opts
 
 local api = vim.api
 local fn = vim.fn
-local uv = vim.uv
 
 ---Determines what to do for the postion `line`, `col`.
 ---First return value answers if the position is to be skipped (continue search).
@@ -12,14 +11,13 @@ local uv = vim.uv
 ---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean
 
 local M = {}
--- 150ms in nanoseconds
-local TIME_LIMIT = 150000000
+local active_id = 0
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
 ---@param text string
 ---@param pattern string
----@param init integer? same as in string.find
+---@param init? integer same as in string.find
 ---@return integer|nil, string|nil
 local function find_forward(text, pattern, init)
    local index, _, bracket = text:find(pattern, init and init + 1)
@@ -29,7 +27,7 @@ end
 ---Returns first backward index and full match substring in the `text` or nil
 ---@param reversed_text string
 ---@param pattern string
----@param init integer? same as in string.find
+---@param init? integer same as in string.find
 ---@return integer|nil, string|nil
 local function find_backward(reversed_text, pattern, init)
    local length = #reversed_text + 1
@@ -45,12 +43,13 @@ local function get_lines(start, count)
    return api.nvim_buf_get_lines(0, start, start + count, false)
 end
 
----Returns closure for finding `pattern` on the `line` and below
+---Returns coroutine for finding `pattern` on the `line` and below
+---Yields after each position check (match found or line advance)
 ---@param pattern string
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param count integer number of lines to process
----@return function
+---@return thread
 local function forward_matches(pattern, line, col, count)
    local curr_line = line
    local visible_count = 0
@@ -58,57 +57,61 @@ local function forward_matches(pattern, line, col, count)
    local lines = get_lines(curr_line, count)
    local idx = 1
    local text = lines[idx]
-   local start_time = uv.hrtime()
 
-   return function()
-      while text and uv.hrtime() - start_time < TIME_LIMIT do
+   return coroutine.create(function()
+      while text do
          local capture
          index, capture = find_forward(text, pattern, index)
-         if index then return curr_line, index - 1, capture end
-
-         visible_count = visible_count + 1
-         curr_line = curr_line + 1
-         idx = idx + 1
-
-         if opts.skip_folds then
-            local fold_end = fn.foldclosedend(curr_line + 1)
-            while fold_end ~= -1 do
-               local skipped = fold_end - curr_line
-               curr_line = fold_end
-               visible_count = visible_count + 1
-               idx = idx + skipped
-               fold_end = fn.foldclosedend(curr_line + 1)
-            end
+         if index then
+            coroutine.yield(curr_line, index - 1, capture)
          else
-            local fold_start = fn.foldclosed(curr_line + 1)
-            if fold_start ~= -1 and fold_start ~= curr_line + 1 then
-               visible_count = visible_count - 1
-            end
-         end
+            visible_count = visible_count + 1
+            curr_line = curr_line + 1
+            idx = idx + 1
 
-         text = lines[idx]
-         if not text and visible_count < count then
-            lines = get_lines(curr_line, count - visible_count)
-            idx = 1
+            if opts.skip_folds then
+               local fold_end = fn.foldclosedend(curr_line + 1)
+               while fold_end ~= -1 do
+                  local skipped = fold_end - curr_line
+                  curr_line = fold_end
+                  visible_count = visible_count + 1
+                  idx = idx + skipped
+                  fold_end = fn.foldclosedend(curr_line + 1)
+               end
+            else
+               local fold_start = fn.foldclosed(curr_line + 1)
+               if fold_start ~= -1 and fold_start ~= curr_line + 1 then
+                  visible_count = visible_count - 1
+               end
+            end
+
             text = lines[idx]
+            if not text and visible_count < count then
+               lines = get_lines(curr_line, count - visible_count)
+               idx = 1
+               text = lines[idx]
+            end
+
+            coroutine.yield()
          end
       end
-   end
+   end)
 end
 
 ---@param lines string[]
 ---@param i integer
----@return string?
+---@return string|nil
 local function reverse_line(lines, i)
    return lines[i] and lines[i]:reverse()
 end
 
----Returns closure for finding `pattern` on the `line` and above
+---Returns coroutine for finding `pattern` on the `line` and above
+---Yields after each position check (match found or line advance)
 ---@param pattern string
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param count integer number of lines to process
----@return function
+---@return thread
 local function backward_matches(pattern, line, col, count)
    local curr_line = line
    local visible_count = 0
@@ -118,47 +121,50 @@ local function backward_matches(pattern, line, col, count)
    local lines = get_lines(fetch_start, curr_line - fetch_start + 1)
    local idx = #lines
    local reversed_text = reverse_line(lines, idx)
-   local start_time = uv.hrtime()
 
-   return function()
-      while reversed_text and uv.hrtime() - start_time < TIME_LIMIT do
+   return coroutine.create(function()
+      while reversed_text do
          local capture
          index, capture = find_backward(reversed_text, pattern, index)
-         if index then return curr_line, index - 1, capture end
-
-         visible_count = visible_count + 1
-         curr_line = curr_line - 1
-         idx = idx - 1
-
-         if opts.skip_folds then
-            local fold_start = fn.foldclosed(curr_line + 1)
-            while fold_start ~= -1 do
-               local target = fold_start - 2
-               local skipped = curr_line - target
-               curr_line = target
-               visible_count = visible_count + 1
-               idx = idx - skipped
-               fold_start = fn.foldclosed(curr_line + 1)
-            end
+         if index then
+            coroutine.yield(curr_line, index - 1, capture)
          else
-            local fold_end = fn.foldclosedend(curr_line + 1)
-            if fold_end ~= -1 and fold_end ~= curr_line + 1 then
-               visible_count = visible_count - 1
+            visible_count = visible_count + 1
+            curr_line = curr_line - 1
+            idx = idx - 1
+
+            if opts.skip_folds then
+               local fold_start = fn.foldclosed(curr_line + 1)
+               while fold_start ~= -1 do
+                  local target = fold_start - 2
+                  local skipped = curr_line - target
+                  curr_line = target
+                  visible_count = visible_count + 1
+                  idx = idx - skipped
+                  fold_start = fn.foldclosed(curr_line + 1)
+               end
+            else
+               local fold_end = fn.foldclosedend(curr_line + 1)
+               if fold_end ~= -1 and fold_end ~= curr_line + 1 then
+                  visible_count = visible_count - 1
+               end
             end
-         end
 
-         if curr_line < 0 then return end
+            if curr_line < 0 then return end
 
-         reversed_text = reverse_line(lines, idx)
-         if not reversed_text and visible_count < count then
-            local fetch_count = count - visible_count
-            fetch_start = math.max(0, curr_line - fetch_count + 1)
-            lines = get_lines(fetch_start, curr_line - fetch_start + 1)
-            idx = #lines
             reversed_text = reverse_line(lines, idx)
+            if not reversed_text and visible_count < count then
+               local fetch_count = count - visible_count
+               fetch_start = math.max(0, curr_line - fetch_count + 1)
+               lines = get_lines(fetch_start, curr_line - fetch_start + 1)
+               idx = #lines
+               reversed_text = reverse_line(lines, idx)
+            end
+
+            coroutine.yield()
          end
       end
-   end
+   end)
 end
 
 ---Returns closure for finding balanced bracket
@@ -184,41 +190,18 @@ local function skip_same_bracket(left, right, backward)
    end
 end
 
----Returns matched bracket position
----@param mp table
----@param line integer line of `bracket`
----@param col integer column of `bracket`
----@return integer|nil, integer|nil
-local function find_match_pos(mp, line, col)
-   ts.highlighter = ts.get_highlighter()
+---Returns 0-based current line and column
+---@return integer, integer
+local function get_cursor_pos()
+   local pos = api.nvim_win_get_cursor(0)
+   return pos[1] - 1, pos[2]
+end
 
-   local pattern = "([" .. mp.right .. mp.left .. "])"
-   local max = api.nvim_win_get_height(0)
-   local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
-
-   local skip_region_fn = ts.highlighter and ts.skip_by_region(line, col, mp.backward)
-      or syntax.skip_by_region(line, col)
-
-   local skip_fn = function(l, c, bracket)
-      local skip, stop = skip_region_fn(l, c)
-      if skip or stop then
-         return skip, stop
-      else
-         return skip_bracket_fn(bracket)
-      end
-   end
-
-   local matches_iter = mp.backward and backward_matches or forward_matches
-   for l, c, capture in matches_iter(pattern, line, col, max) do
-      -- pcall because some skip functions can be errorness
-      -- like `synstack()` for syntax
-      local ok, skip, stop = pcall(skip_fn, l, c, capture)
-      if not ok or stop then
-         return
-      elseif not skip then
-         return l, c
-      end
-   end
+---Returns true if line is inside closed fold
+---@param line integer 0-based line number
+---@return boolean
+local function is_inside_fold(line)
+   return fn.foldclosed(line + 1) ~= -1
 end
 
 ---Returns matched bracket option and its column or nil
@@ -237,33 +220,71 @@ local function get_bracket(col)
    return opts.matchpairs[cursor_char], col
 end
 
----Returns 0-based current line and column
----@return integer, integer
-local function get_cursor_pos()
-   local pos = api.nvim_win_get_cursor(0)
-   return pos[1] - 1, pos[2]
+---Schedules the next step of an active search.
+---Each vim.schedule callback checks that the global active_id
+---still matches its own id, and that the cursor hasn't moved.
+---@param co thread
+---@param line integer 0-based cursor bracket line
+---@param col integer 0-based cursor bracket column
+---@param id integer
+---@param skip_fn SkipFunction
+---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
+local function resume_step(co, line, col, id, skip_fn, callback)
+   if active_id ~= id then return end
+
+   local ok, found_line, found_col, capture = coroutine.resume(co)
+   if not ok then return end
+
+   if found_line then
+      local skip, stop
+      ok, skip, stop = pcall(skip_fn, found_line, found_col, capture)
+      if not ok or stop then
+         return
+      elseif not skip then
+         if active_id == id then callback(line, col, found_line, found_col) end
+         return
+      end
+   end
+
+   vim.schedule(function()
+      resume_step(co, line, col, id, skip_fn, callback)
+   end)
 end
 
----Returns true if line is inside closed fold
----@param line integer 0-based line number
----@return boolean
-local function is_inside_fold(line)
-   return fn.foldclosed(line + 1) ~= -1
-end
+---Starts an asynchronous search for the matching bracket at the cursor.
+---The callback is called only when a match is found.
+---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
+function M.pair(callback)
+   -- increment to invalidate stale scheduled calls from previous searches
+   local id = active_id + 1
+   active_id = id
 
----Returns matched pair data or nil if there is no match
----@return integer?, integer?, integer?, integer?
-function M.pair()
    local line, col = get_cursor_pos()
    if is_inside_fold(line) then return end
 
-   local match_bracket, bracket_col = get_bracket(col)
-   if not match_bracket then return end
+   local mp
+   mp, col = get_bracket(col)
+   if not mp then return end
 
-   local matchline, matchcol = find_match_pos(match_bracket, line, bracket_col)
-   if not matchline then return end
+   ts.highlighter = ts.get_highlighter()
 
-   return line, bracket_col, matchline, matchcol
+   local max = api.nvim_win_get_height(0)
+   local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
+   local skip_region_fn = ts.highlighter and ts.skip_by_region(line, col, mp.backward)
+      or syntax.skip_by_region(line, col)
+
+   local skip_fn = function(l, c, bracket)
+      local skip, stop = skip_region_fn(l, c)
+      if skip or stop then return skip, stop end
+      return skip_bracket_fn(bracket)
+   end
+
+   local matches = mp.backward and backward_matches or forward_matches
+   local co = matches(mp.pattern, line, col, max)
+
+   vim.schedule(function()
+      resume_step(co, line, col, id, skip_fn, callback)
+   end)
 end
 
 return M

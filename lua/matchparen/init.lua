@@ -29,8 +29,9 @@ local function update_matchpairs()
    cached_matchpairs = buf_matchpairs
    opts.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
-      opts.matchpairs[l] = { left = l, right = r, backward = false }
-      opts.matchpairs[r] = { left = l, right = r, backward = true }
+      local pattern = "([" .. l .. r .. "])"
+      opts.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
+      opts.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
    end
 end
 
@@ -67,8 +68,19 @@ local function create_autocmds()
       end,
    })
 
+   autocmd("BufWinEnter", {
+      callback = function()
+         api.nvim_create_autocmd("SafeState", {
+            once = true,
+            callback = function()
+               hl.update()
+            end,
+         })
+      end,
+      desc = "Highlight matching pairs on SafeState",
+   })
+
    autocmd({
-      "WinEnter",
       "CursorMoved",
       "CursorMovedI",
       "TextChanged",
@@ -82,7 +94,6 @@ local function create_autocmds()
 
    autocmd({ "WinLeave", "BufLeave" }, {
       callback = function()
-         hl.timer:stop()
          hl.remove()
       end,
       desc = "Hide matching pairs highlight",

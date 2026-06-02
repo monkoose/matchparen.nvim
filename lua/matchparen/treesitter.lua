@@ -87,7 +87,7 @@ end
 ---Determines whether a search should stop if outside of the `node`
 ---@param node TSNode treesitter node
 ---@param backward? boolean direction of the search
----@return fun(line: integer, col: integer): boolean, boolean
+---@return SkipFunction
 local function stop_by_node(node, backward)
    local get_sibling = backward and "prev_sibling" or "next_sibling"
 
