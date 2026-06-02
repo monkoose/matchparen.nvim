@@ -11,7 +11,7 @@ local fn = vim.fn
 ---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean
 
 local M = {}
-local active_id = 0
+local active_co ---@type thread?
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
@@ -226,11 +226,10 @@ end
 ---@param co thread
 ---@param line integer 0-based cursor bracket line
 ---@param col integer 0-based cursor bracket column
----@param id integer
 ---@param skip_fn SkipFunction
 ---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
-local function resume_step(co, line, col, id, skip_fn, callback)
-   if active_id ~= id then return end
+local function resume_step(co, line, col, skip_fn, callback)
+   if active_co ~= co then return end
 
    local ok, found_line, found_col, capture = coroutine.resume(co)
    if not ok then return end
@@ -241,13 +240,13 @@ local function resume_step(co, line, col, id, skip_fn, callback)
       if not ok or stop then
          return
       elseif not skip then
-         if active_id == id then callback(line, col, found_line, found_col) end
+         if active_co == co then callback(line, col, found_line, found_col) end
          return
       end
    end
 
    vim.schedule(function()
-      resume_step(co, line, col, id, skip_fn, callback)
+      resume_step(co, line, col, skip_fn, callback)
    end)
 end
 
@@ -256,8 +255,7 @@ end
 ---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
 function M.pair(callback)
    -- increment to invalidate stale scheduled calls from previous searches
-   local id = active_id + 1
-   active_id = id
+   active_co = nil
 
    local line, col = get_cursor_pos()
    if is_inside_fold(line) then return end
@@ -281,9 +279,10 @@ function M.pair(callback)
 
    local matches = mp.backward and backward_matches or forward_matches
    local co = matches(mp.pattern, line, col, max)
+   active_co = co
 
    vim.schedule(function()
-      resume_step(co, line, col, id, skip_fn, callback)
+      resume_step(co, line, col, skip_fn, callback)
    end)
 end
 
