@@ -6,6 +6,7 @@ local api = vim.api
 local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks = { current = 0, match = 0 }
+local active_buf = 0
 
 ---Wrapper for nvim_buf_set_extmark()
 ---@param line integer 0-based line number
@@ -26,8 +27,10 @@ end
 ---@param matchline integer 0-based line number
 ---@param matchcol integer 0-based column number
 local function hl_add(line, col, matchline, matchcol)
-   extmarks.current = set_extmark(line, col)
-   extmarks.match = set_extmark(matchline, matchcol)
+   if active_buf == api.nvim_get_current_buf() then
+      extmarks.current = set_extmark(line, col)
+      extmarks.match = set_extmark(matchline, matchcol)
+   end
 end
 
 ---Removes brackets highlight by deleting buffer extmarks
@@ -40,6 +43,7 @@ end
 ---and then if there is matching brackets pair at the new cursor position highlight them
 function M.update()
    M.remove()
+   active_buf = api.nvim_get_current_buf()
    search.pair(hl_add)
 end
 
