@@ -81,7 +81,6 @@ local function create_autocmds()
    })
 
    autocmd({
-      "TermEnter",
       "TermLeave",
       "CursorMoved",
       "CursorMovedI",
@@ -94,7 +93,7 @@ local function create_autocmds()
       desc = "Highlight matching pairs",
    })
 
-   autocmd({ "WinLeave", "BufLeave" }, {
+   autocmd({ "WinLeave", "BufLeave", "TermEnter" }, {
       callback = function()
          hl.remove()
       end,

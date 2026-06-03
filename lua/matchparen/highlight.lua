@@ -12,9 +12,11 @@ local fn = vim.fn
 
 local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
-local extmarks = { current = 0, match = 0 }
+---@type { current?: integer, match?: integer }
+local extmarks = {}
 local active_buf = 0
 local active_co ---@type thread?
+local remove_timer = assert(vim.uv.new_timer())
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
@@ -333,9 +335,13 @@ end
 
 ---Removes brackets highlight by deleting buffer extmarks
 function M.remove()
-   if api.nvim_buf_get_extmark_by_id(0, namespace, extmarks.current, {})[1] then
+   if
+      extmarks.current and api.nvim_buf_get_extmark_by_id(0, namespace, extmarks.current, {})[1]
+   then
       api.nvim_buf_del_extmark(0, namespace, extmarks.current)
       api.nvim_buf_del_extmark(0, namespace, extmarks.match)
+      extmarks.match = nil
+      extmarks.current = nil
    end
 end
 
@@ -343,8 +349,13 @@ end
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param bufnr? integer buffer number
 function M.update(bufnr)
+   if extmarks.current and not remove_timer:is_active() then
+      remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
+   end
+
    active_buf = bufnr or api.nvim_get_current_buf()
    searchpair(function(line, col, matchline, matchcol)
+      remove_timer:stop()
       if line then
          hl_add(line, col, matchline, matchcol)
       else
