@@ -300,9 +300,9 @@ local function searchpair(callback)
    local co = matches(mp.pattern, line, col, max)
    active_co = co
 
-   -- vim.schedule(function()
-   resume_step(co, line, col, skip_fn, callback)
-   -- end)
+   vim.schedule(function()
+      resume_step(co, line, col, skip_fn, callback)
+   end)
 end
 
 ---Wrapper for nvim_buf_set_extmark()
