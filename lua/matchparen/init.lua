@@ -51,11 +51,11 @@ local function create_autocmds()
    end
 
    autocmd("InsertEnter", {
-      callback = function()
+      callback = function(ev)
          -- only for actual insert mode
          if vim.v.insertmode == "i" then
             opts.in_insert = true
-            hl.update()
+            hl.update(ev.buf)
          end
       end,
       desc = "Highlight matching pairs",
@@ -72,8 +72,8 @@ local function create_autocmds()
       callback = function()
          api.nvim_create_autocmd("SafeState", {
             once = true,
-            callback = function()
-               hl.update()
+            callback = function(ev)
+               hl.update(ev.buf)
             end,
          })
       end,
@@ -81,13 +81,15 @@ local function create_autocmds()
    })
 
    autocmd({
+      "TermEnter",
+      "TermLeave",
       "CursorMoved",
       "CursorMovedI",
       "TextChanged",
       -- "TextChangedI",
    }, {
-      callback = function()
-         hl.update()
+      callback = function(ev)
+         hl.update(ev.buf)
       end,
       desc = "Highlight matching pairs",
    })
