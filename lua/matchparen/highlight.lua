@@ -6,9 +6,9 @@ local api = vim.api
 local fn = vim.fn
 
 ---Determines what to do for the postion `line`, `col`.
----First return value answers if the position is to be skipped (continue search).
----Second return value answers if the search should be stopped (break search).
----@alias SkipFunction fun(line: integer, col: integer): boolean, boolean
+---First return value answers if the position is to be skipped (continue the search).
+---Second optional return value answers if the search should be stopped (break the search).
+---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean|nil
 
 local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
@@ -176,7 +176,7 @@ end
 ---@param left string opening bracket
 ---@param right string closing bracket
 ---@param backward boolean direction of the search
----@return fun(bracket: string): boolean, boolean
+---@return fun(bracket: string): boolean
 local function skip_same_bracket(left, right, backward)
    local count = 0
    local same_bracket = backward and right or left
@@ -186,12 +186,12 @@ local function skip_same_bracket(left, right, backward)
          count = count + 1
       else
          if count == 0 then
-            return false, false
+            return false
          else
             count = count - 1
          end
       end
-      return true, false
+      return true
    end
 end
 

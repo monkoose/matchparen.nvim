@@ -74,24 +74,24 @@ end
 function M.skip_by_region(line, col)
    if is_syntax_off() then
       return function()
-         return false, false
+         return false
       end
    end
 
    if is_syntax_skip_region(line, col) then
       return function(l, c)
          if is_syntax_skip_region(l, c) then
-            return false, false
+            return false
          else
-            return true, false
+            return true
          end
       end
    else
       return function(l, c)
          if is_syntax_skip_region(l, c) then
-            return true, false
+            return true
          else
-            return false, false
+            return false
          end
       end
    end
