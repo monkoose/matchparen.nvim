@@ -225,15 +225,13 @@ local function get_bracket(col)
    return opts.matchpairs[cursor_char], col
 end
 
----Schedules the next step of an active search.
----Each vim.schedule callback checks that the global active_id
----still matches its own id, and that the cursor hasn't moved.
+---Schedules the search for the matching bracket
 ---@param co thread
 ---@param line integer 0-based cursor bracket line
 ---@param col integer 0-based cursor bracket column
 ---@param skip_fn SkipFunction
 ---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
-local function resume_step(co, line, col, skip_fn, callback)
+local function next_bracket(co, line, col, skip_fn, callback)
    if active_co ~= co then return end
 
    local co_ok, found_line, found_col, capture = coroutine.resume(co)
@@ -263,7 +261,7 @@ local function resume_step(co, line, col, skip_fn, callback)
          callback()
          return
       end
-      resume_step(co, line, col, skip_fn, callback)
+      next_bracket(co, line, col, skip_fn, callback)
    end)
 end
 
@@ -303,7 +301,7 @@ local function searchpair(callback)
    active_co = co
 
    vim.schedule(function()
-      resume_step(co, line, col, skip_fn, callback)
+      next_bracket(co, line, col, skip_fn, callback)
    end)
 end
 
