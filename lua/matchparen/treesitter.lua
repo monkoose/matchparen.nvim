@@ -122,6 +122,7 @@ end
 function M.skip_by_region(line, col, backward)
    cache.trees = get_trees()
    cache.skip_nodes = {}
+
    local skip_node = get_skip_node(line, col)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string
