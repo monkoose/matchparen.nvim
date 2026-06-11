@@ -87,7 +87,7 @@ end
 ---Determines whether a search should stop if outside of the `node`
 ---@param node TSNode treesitter node
 ---@param backward? boolean direction of the search
----@return fun(line: integer, col: integer): boolean, boolean
+---@return SkipFunction
 local function stop_by_node(node, backward)
    local get_sibling = backward and "prev_sibling" or "next_sibling"
 
@@ -122,6 +122,7 @@ end
 function M.skip_by_region(line, col, backward)
    cache.trees = get_trees()
    cache.skip_nodes = {}
+
    local skip_node = get_skip_node(line, col)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string

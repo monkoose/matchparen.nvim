@@ -29,8 +29,9 @@ local function update_matchpairs()
    cached_matchpairs = buf_matchpairs
    opts.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
-      opts.matchpairs[l] = { left = l, right = r, backward = false }
-      opts.matchpairs[r] = { left = l, right = r, backward = true }
+      local pattern = "([" .. r .. l .. "])"
+      opts.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
+      opts.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
    end
 end
 
@@ -50,11 +51,11 @@ local function create_autocmds()
    end
 
    autocmd("InsertEnter", {
-      callback = function()
+      callback = function(ev)
          -- only for actual insert mode
          if vim.v.insertmode == "i" then
             opts.in_insert = true
-            hl.update()
+            hl.update(ev.buf)
          end
       end,
       desc = "Highlight matching pairs",
@@ -67,22 +68,33 @@ local function create_autocmds()
       end,
    })
 
+   autocmd("BufWinEnter", {
+      callback = function()
+         api.nvim_create_autocmd("SafeState", {
+            once = true,
+            callback = function(ev)
+               hl.update(ev.buf)
+            end,
+         })
+      end,
+      desc = "Highlight matching pairs on SafeState",
+   })
+
    autocmd({
-      "WinEnter",
+      "TermLeave",
       "CursorMoved",
       "CursorMovedI",
       "TextChanged",
       -- "TextChangedI",
    }, {
-      callback = function()
-         hl.update()
+      callback = function(ev)
+         hl.update(ev.buf)
       end,
       desc = "Highlight matching pairs",
    })
 
-   autocmd({ "WinLeave", "BufLeave" }, {
+   autocmd({ "WinLeave", "BufLeave", "TermEnter" }, {
       callback = function()
-         hl.timer:stop()
          hl.remove()
       end,
       desc = "Hide matching pairs highlight",

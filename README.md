@@ -69,9 +69,6 @@ require('matchparen').setup({
     -- Change it to any other or adjust colors of "MathParen" highlight group
     -- in your colorscheme to your liking.
     hl_group = 'MatchParen',
-    -- Debounce time in milliseconds for rehighlighting brackets.
-    -- Set to 0 to disable debouncing.
-    debounce_time = 60,
     -- Determines whether to skip searching for the brackets inside the closed folds.
     -- Generally, it should be left as default, because it's much faster and
     -- usually folds contain only the matched brackets, but if you often use some
