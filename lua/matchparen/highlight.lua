@@ -309,8 +309,14 @@ end
 function M.update(bufnr)
    active_co = nil
 
-   if extmarks.current and not remove_timer:is_active() then
-      remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
+   -- To fix flickering of brackets in insert mode use debounced remove()
+   if opts.in_insert then
+      if extmarks.current and not remove_timer:is_active() then
+         remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
+      end
+   else
+      remove_timer:stop()
+      M.remove()
    end
 
    active_buf = bufnr or api.nvim_get_current_buf()
