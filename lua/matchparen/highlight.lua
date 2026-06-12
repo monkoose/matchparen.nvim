@@ -231,7 +231,7 @@ end
 ---@param col integer 0-based cursor bracket column
 ---@param skip_fn SkipFunction
 ---@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
-local function next_bracket(co, line, col, skip_fn, callback)
+local function searchpair(co, line, col, skip_fn, callback)
    if active_co ~= co then return end
 
    local co_ok, found_line, found_col, capture = coroutine.resume(co)
@@ -261,47 +261,7 @@ local function next_bracket(co, line, col, skip_fn, callback)
          callback()
          return
       end
-      next_bracket(co, line, col, skip_fn, callback)
-   end)
-end
-
----Starts an asynchronous search for the matching bracket at the cursor.
----@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
-local function searchpair(callback)
-   active_co = nil
-
-   local line, col = get_cursor_pos()
-   if is_inside_fold(line) then
-      callback()
-      return
-   end
-
-   local mp
-   mp, col = get_bracket(col)
-   if not mp then
-      callback()
-      return
-   end
-
-   ts.highlighter = ts.get_highlighter()
-
-   local max = api.nvim_win_get_height(0)
-   local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
-   local skip_region_fn = ts.highlighter and ts.skip_by_region(line, col, mp.backward)
-      or syntax.skip_by_region(line, col)
-
-   local skip_fn = function(l, c, bracket)
-      local skip, stop = skip_region_fn(l, c)
-      if skip or stop then return skip, stop end
-      return skip_bracket_fn(bracket)
-   end
-
-   local matches = mp.backward and backward_matches or forward_matches
-   local co = matches(mp.pattern, line, col, max)
-   active_co = co
-
-   vim.schedule(function()
-      next_bracket(co, line, col, skip_fn, callback)
+      searchpair(co, line, col, skip_fn, callback)
    end)
 end
 
@@ -347,18 +307,47 @@ end
 ---and then if there is matching brackets pair at the new cursor position highlight them
 ---@param bufnr? integer buffer number
 function M.update(bufnr)
+   active_co = nil
+
    if extmarks.current and not remove_timer:is_active() then
       remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
    end
 
    active_buf = bufnr or api.nvim_get_current_buf()
-   searchpair(function(line, col, matchline, matchcol)
-      remove_timer:stop()
-      if line then
-         hl_add(line, col, matchline, matchcol)
-      else
-         M.remove()
-      end
+
+   local line, col = get_cursor_pos()
+   if is_inside_fold(line) then return end
+
+   local mp
+   mp, col = get_bracket(col)
+   if not mp then return end
+
+   ts.highlighter = ts.get_highlighter()
+
+   local max_lines = api.nvim_win_get_height(0)
+   local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
+   local skip_region_fn = ts.highlighter and ts.skip_by_region(line, col, mp.backward)
+      or syntax.skip_by_region(line, col)
+
+   local skip_fn = function(l, c, bracket)
+      local skip, stop = skip_region_fn(l, c)
+      if skip or stop then return skip, stop end
+      return skip_bracket_fn(bracket)
+   end
+
+   local matches = mp.backward and backward_matches or forward_matches
+   local co = matches(mp.pattern, line, col, max_lines)
+   active_co = co
+
+   vim.schedule(function()
+      searchpair(co, line, col, skip_fn, function(l, c, match_l, match_c)
+         remove_timer:stop()
+         if l then
+            hl_add(l, c, match_l, match_c)
+         else
+            M.remove()
+         end
+      end)
    end)
 end
 
