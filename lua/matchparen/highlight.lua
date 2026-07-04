@@ -230,7 +230,7 @@ end
 ---@param line integer 0-based cursor bracket line
 ---@param col integer 0-based cursor bracket column
 ---@param skip_fn SkipFunction
----@param callback fun(line?: integer, col?: integer, matchline?: integer, matchcol?: integer)
+---@param callback fun(matchline?: integer, matchcol?: integer)
 local function searchpair(co, line, col, skip_fn, callback)
    if active_co ~= co then return end
 
@@ -248,7 +248,7 @@ local function searchpair(co, line, col, skip_fn, callback)
          return
       elseif not skip then
          if active_co == co then
-            callback(line, col, found_line, found_col)
+            callback(found_line, found_col)
          else
             callback()
          end
@@ -346,10 +346,12 @@ function M.update(bufnr)
    active_co = co
 
    vim.schedule(function()
-      searchpair(co, line, col, skip_fn, function(l, c, match_l, match_c)
+      searchpair(co, line, col, skip_fn, function(matchline, matchcol)
          remove_timer:stop()
-         if l then
-            hl_add(l, c, match_l, match_c)
+         if matchline then
+            -- pcall to fix race condition bugs if some lines were added/deleted
+            -- so line and col is incorrect https://github.com/monkoose/matchparen.nvim/issues/24
+            pcall(hl_add, line, col, matchline, matchcol)
          else
             M.remove()
          end
