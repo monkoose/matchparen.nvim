@@ -321,12 +321,10 @@ function M.update(bufnr)
 
    active_buf = bufnr or api.nvim_get_current_buf()
 
-   local line, col = get_cursor_pos()
-   if is_inside_fold(line) then return end
-
    local mp
+   local line, col = get_cursor_pos()
    mp, col = get_bracket(col)
-   if not mp then return end
+   if not mp or is_inside_fold(line) then return end
 
    ts.highlighter = ts.get_highlighter()
 
