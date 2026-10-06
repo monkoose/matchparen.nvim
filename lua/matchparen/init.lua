@@ -29,7 +29,7 @@ local function update_matchpairs()
    cached_matchpairs = buf_matchpairs
    opts.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
-      local pattern = "([" .. r .. l .. "])"
+      local pattern = "([" .. vim.pesc(l .. r) .. "])"
       opts.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
       opts.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
    end
