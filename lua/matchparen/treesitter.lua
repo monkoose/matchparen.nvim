@@ -9,8 +9,8 @@ local M = {}
 ---@type { trees: matchparen.TSTree[], skip_nodes: TSNode[][] }
 local cache = { trees = {}, skip_nodes = {} }
 local treesitter_skip = {
-   "string",
-   "comment",
+   string = true,
+   comment = true,
 }
 
 ---@type vim.treesitter.highlighter|nil
@@ -23,7 +23,7 @@ local function cache_nodes(line)
    for _, tree in ipairs(cache.trees) do
       local iter = tree.query:iter_captures(tree.root, M.highlighter.bufnr, line, line + 1)
       for id, node in iter do
-         if vim.tbl_contains(treesitter_skip, tree.query.captures[id]) then
+         if treesitter_skip[tree.query.captures[id]] then
             table.insert(cache.skip_nodes[line], node)
          end
       end
