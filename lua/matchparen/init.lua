@@ -32,9 +32,12 @@ local function update_matchpairs()
    cached_matchpairs = buf_matchpairs
    state.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
-      local pattern = "([" .. vim.pesc(l .. r) .. "])"
-      state.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
-      state.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
+      -- Allow only single characters for pairs
+      if #l == 1 and #r == 1 then
+         local pattern = "([" .. vim.pesc(l .. r) .. "])"
+         state.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
+         state.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
+      end
    end
 end
 
