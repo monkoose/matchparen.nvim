@@ -1,7 +1,7 @@
 local ts = require("matchparen.treesitter")
 
 describe("get_highlighter", function()
-   it("should return nil if buffer hasn't treesitter hihglighter", function()
+   it("should return nil if buffer hasn't treesitter highlighter", function()
       assert.is_nil(ts.get_highlighter())
    end)
 

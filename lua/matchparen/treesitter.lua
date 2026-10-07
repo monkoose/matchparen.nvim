@@ -62,7 +62,7 @@ local function get_trees()
    return trees
 end
 
----Returns true if `str` constains `pattern`, false otherwise
+---Returns true if `str` contains `pattern`, false otherwise
 ---@param str string
 ---@param pattern string
 ---@return boolean
