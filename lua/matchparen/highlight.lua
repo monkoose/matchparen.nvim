@@ -227,11 +227,9 @@ end
 
 ---Schedules the search for the matching bracket
 ---@param co thread
----@param line integer 0-based cursor bracket line
----@param col integer 0-based cursor bracket column
 ---@param skip_fn SkipFunction
 ---@param callback fun(matchline?: integer, matchcol?: integer)
-local function searchpair(co, line, col, skip_fn, callback)
+local function searchpair(co, skip_fn, callback)
    if active_co ~= co then return end
 
    local co_ok, found_line, found_col, capture = coroutine.resume(co)
@@ -261,7 +259,7 @@ local function searchpair(co, line, col, skip_fn, callback)
          callback()
          return
       end
-      searchpair(co, line, col, skip_fn, callback)
+      searchpair(co, skip_fn, callback)
    end)
 end
 
@@ -342,14 +340,15 @@ function M.update(bufnr)
    local matches = mp.backward and backward_matches or forward_matches
    local co = matches(mp.pattern, line, col, max_lines)
    active_co = co
+   local changedtick = api.nvim_buf_get_changedtick(active_buf)
 
    vim.schedule(function()
-      searchpair(co, line, col, skip_fn, function(matchline, matchcol)
+      searchpair(co, skip_fn, function(matchline, matchcol)
+         if changedtick ~= api.nvim_buf_get_changedtick(active_buf) then return end
+
          remove_timer:stop()
          if matchline then
-            -- pcall to fix race condition bugs if some lines were added/deleted
-            -- so line and col is incorrect https://github.com/monkoose/matchparen.nvim/issues/24
-            pcall(hl_add, line, col, matchline, matchcol)
+            hl_add(line, col, matchline, matchcol)
          else
             M.remove()
          end
