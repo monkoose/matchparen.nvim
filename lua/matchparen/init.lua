@@ -66,11 +66,12 @@ local function create_autocmds()
       callback = function()
          opts.in_insert = false
       end,
+      desc = "Update in_insert option",
    })
 
    autocmd("BufWinEnter", {
       callback = function()
-         api.nvim_create_autocmd("SafeState", {
+         autocmd("SafeState", {
             once = true,
             callback = function(ev)
                hl.update(ev.buf)
