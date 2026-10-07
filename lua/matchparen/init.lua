@@ -139,8 +139,8 @@ end
 
 ---Enables the plugin
 local function enable()
-   create_autocmds()
    update_matchpairs()
+   create_autocmds()
    require("matchparen.highlight").update()
 end
 
@@ -151,9 +151,16 @@ local function disable()
 end
 
 ---Creates plugin's custom commands
+---@param name string
+---@param cmd fun(args: vim.api.keyset.create_user_command.command_args)
+local function user_command(name, cmd)
+   api.nvim_create_user_command(name, cmd, { force = true })
+end
+
+---Creates plugin's custom commands
 local function create_commands()
-   api.nvim_create_user_command("MatchParenEnable", enable, {})
-   api.nvim_create_user_command("MatchParenDisable", disable, {})
+   user_command("MatchParenEnable", enable)
+   user_command("MatchParenDisable", disable)
 end
 
 ---Initializes the plugin
@@ -161,13 +168,9 @@ end
 function mp.setup(config)
    disable_builtin()
    options:update(config)
-   update_matchpairs()
    create_commands()
 
-   if opts.enabled then
-      create_autocmds()
-      require("matchparen.highlight").update()
-   end
+   if opts.enabled then enable() end
 end
 
 return mp
