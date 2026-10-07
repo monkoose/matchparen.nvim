@@ -14,8 +14,7 @@ local syntax_skip = {
 ---Returns true when buffer has no syntax highlighting
 ---@return boolean
 local function is_syntax_off()
-   -- use vim._getvar for faster access
-   return vim._getvar("b", 0, "current_syntax") == nil
+   return vim.b.current_syntax == nil
 end
 
 ---Returns name of the syntax id group
