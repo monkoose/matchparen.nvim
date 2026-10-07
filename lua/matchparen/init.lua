@@ -1,11 +1,14 @@
+local state = require("matchparen.state")
 local options = require("matchparen.options")
+local opts = options.opts
 
 local api = vim.api
 local fn = vim.fn
-local opts = options.opts
-local mp = {}
+
 local augroup
 local cached_matchpairs
+
+local M = {}
 
 ---Returns table created by splitting vim `matchpairs` option
 ---with opening brackets as keys and closing brackets as values
@@ -27,11 +30,11 @@ local function update_matchpairs()
    if cached_matchpairs == buf_matchpairs then return end
 
    cached_matchpairs = buf_matchpairs
-   opts.matchpairs = {}
+   state.matchpairs = {}
    for l, r in pairs(split_matchpairs()) do
       local pattern = "([" .. vim.pesc(l .. r) .. "])"
-      opts.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
-      opts.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
+      state.matchpairs[l] = { left = l, right = r, pattern = pattern, backward = false }
+      state.matchpairs[r] = { left = l, right = r, pattern = pattern, backward = true }
    end
 end
 
@@ -54,7 +57,7 @@ local function create_autocmds()
       callback = function(ev)
          -- only for actual insert mode
          if vim.v.insertmode == "i" then
-            opts.in_insert = true
+            state.in_insert = true
             hl.update(ev.buf)
          end
       end,
@@ -64,7 +67,7 @@ local function create_autocmds()
    autocmd("ModeChanged", {
       pattern = "i*:[^i]*",
       callback = function()
-         opts.in_insert = false
+         state.in_insert = false
       end,
       desc = "Update in_insert option",
    })
@@ -165,12 +168,12 @@ end
 
 ---Initializes the plugin
 ---@param config MatchParenOptions
-function mp.setup(config)
+function M.setup(config)
    disable_builtin()
-   options:update(config)
+   options.set(config)
    create_commands()
 
    if opts.enabled then enable() end
 end
 
-return mp
+return M

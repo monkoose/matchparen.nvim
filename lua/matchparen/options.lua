@@ -1,4 +1,4 @@
----@class MatchParenDefaultOptions
+---@class MatchParenOptions
 ---@field enabled boolean # Determines whether the plugin should be enabled at neovim startup
 ---@field hl_group string
 ---@field skip_folds boolean # Determines whether the plugin should skip closed folds
@@ -8,28 +8,21 @@ local defaults = {
    skip_folds = true,
 }
 
----@class MatchParenOptions : MatchParenDefaultOptions
----@field in_insert boolean # `true` when in insert mode
----@field matchpairs table # Cached `matchpairs` option
+local M = {}
+---@type MatchParenOptions
+M.opts = vim.tbl_deep_extend("force", {}, defaults)
 
----@class OptionsTable
----@field opts MatchParenOptions|MatchParenDefaultOptions
----@field update fun(self: OptionsTable, new?: MatchParenDefaultOptions)
-local options = { opts = defaults }
-
----Updates `options.opts` table with values from `new`
----@param new? table
-function options:update(new)
+---@param new? MatchParenOptions
+function M.set(new)
    if not new then return end
 
-   local defaults_keys = vim.tbl_keys(defaults)
    for option, value in pairs(new) do
-      if vim.tbl_contains(defaults_keys, option) then
-         self.opts[option] = value
+      if defaults[option] ~= nil then
+         M.opts[option] = value
       else
          vim.notify("matchparen.nvim: Invalid option `" .. option .. "`.", vim.log.levels.WARN)
       end
    end
 end
 
-return options
+return M

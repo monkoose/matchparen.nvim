@@ -1,4 +1,5 @@
 local opts = require("matchparen.options").opts
+local state = require("matchparen.state")
 local syntax = require("matchparen.syntax")
 local ts = require("matchparen.treesitter")
 
@@ -215,14 +216,14 @@ end
 local function get_bracket(col)
    local text = api.nvim_get_current_line()
 
-   if col > 0 and opts.in_insert then
+   if col > 0 and state.in_insert then
       local before_char = text:sub(col, col)
-      if opts.matchpairs[before_char] then return opts.matchpairs[before_char], col - 1 end
+      if state.matchpairs[before_char] then return state.matchpairs[before_char], col - 1 end
    end
 
    local inc_col = col + 1
    local cursor_char = text:sub(inc_col, inc_col)
-   return opts.matchpairs[cursor_char], col
+   return state.matchpairs[cursor_char], col
 end
 
 ---Schedules the search for the matching bracket
@@ -308,7 +309,7 @@ function M.update(bufnr)
    active_co = nil
 
    -- To fix flickering of brackets in insert mode use debounced remove()
-   if opts.in_insert then
+   if state.in_insert then
       if extmarks.current and not remove_timer:is_active() then
          remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
       end
@@ -324,11 +325,11 @@ function M.update(bufnr)
    mp, col = get_bracket(col)
    if not mp or is_inside_fold(line) then return end
 
-   ts.highlighter = ts.get_highlighter()
+   state.highlighter = ts.get_highlighter()
 
    local max_lines = api.nvim_win_get_height(0)
    local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
-   local skip_region_fn = ts.highlighter and ts.skip_by_region(line, col, mp.backward)
+   local skip_region_fn = state.highlighter and ts.skip_by_region(line, col, mp.backward)
       or syntax.skip_by_region(line, col)
 
    local skip_fn = function(l, c, bracket)

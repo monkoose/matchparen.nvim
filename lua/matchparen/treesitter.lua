@@ -1,4 +1,4 @@
-local opts = require("matchparen.options").opts
+local state = require("matchparen.state")
 
 local ts = vim.treesitter
 local api = vim.api
@@ -13,15 +13,12 @@ local treesitter_skip = {
    comment = true,
 }
 
----@type vim.treesitter.highlighter|nil
-M.highlighter = nil
-
 ---Caches `line` skip nodes
 ---@param line integer 0-based line number
 local function cache_nodes(line)
    cache.skip_nodes[line] = {}
    for _, tree in ipairs(cache.trees) do
-      local iter = tree.query:iter_captures(tree.root, M.highlighter.bufnr, line, line + 1)
+      local iter = tree.query:iter_captures(tree.root, state.highlighter.bufnr, line, line + 1)
       for id, node in iter do
          if treesitter_skip[tree.query.captures[id]] then
             table.insert(cache.skip_nodes[line], node)
@@ -49,11 +46,11 @@ end
 ---@return matchparen.TSTree[]
 local function get_trees()
    local trees = {}
-   M.highlighter.tree:for_each_tree(function(tree, langtree)
+   state.highlighter.tree:for_each_tree(function(tree, langtree)
       if not tree then return end
 
       local root = tree:root()
-      local query = M.highlighter:get_query(langtree:lang()):query()
+      local query = state.highlighter:get_query(langtree:lang()):query()
 
       -- Some injected languages may not have highlight queries.
       if query then table.insert(trees, { root = root, query = query }) end
@@ -106,7 +103,7 @@ local function stop_by_node(node, backward)
    end
 end
 
----Returns treesitter highlighter for current buffer or nil
+---Returns treesitter highlighter for the current buffer or nil
 ---@return vim.treesitter.highlighter|nil
 function M.get_highlighter()
    local bufnr = api.nvim_get_current_buf()
@@ -126,7 +123,7 @@ function M.skip_by_region(line, col, backward)
    local skip_node = get_skip_node(line, col)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string
-   if skip_node and is_node_string(skip_node) and opts.in_insert then
+   if skip_node and is_node_string(skip_node) and state.in_insert then
       if not ts.is_in_node_range(skip_node, line, col + 1) then skip_node = nil end
    end
 
