@@ -140,17 +140,35 @@ local function disable_builtin()
    end
 end
 
+local function close_remove_timer()
+   if state.remove_timer and not state.remove_timer:is_closing() then
+      state.remove_timer:stop()
+      state.remove_timer:close()
+   end
+   require("matchparen.highlight").remove()
+end
+
 ---Enables the plugin
 local function enable()
    update_matchpairs()
-   create_autocmds()
-   require("matchparen.highlight").update()
+   close_remove_timer()
+   state.remove_timer = assert(vim.uv.new_timer())
+   if state.remove_timer then
+      create_autocmds()
+      require("matchparen.highlight").update()
+   else
+      vim.notify(
+         "matchparen.nvim: Failed to create uv_timer. Try to run :MatchParenEnable again.",
+         vim.log.levels.WARN
+      )
+   end
 end
 
 ---Disables the plugin
 local function disable()
    delete_autocmds()
-   require("matchparen.highlight").remove()
+   close_remove_timer()
+   state.remove_timer = nil
 end
 
 ---Creates plugin's custom commands

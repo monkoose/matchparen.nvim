@@ -17,7 +17,6 @@ local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks = {}
 local active_buf = 0
 local active_co ---@type thread?
-local remove_timer = assert(vim.uv.new_timer())
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
@@ -310,11 +309,11 @@ function M.update(bufnr)
 
    -- To fix flickering of brackets in insert mode use debounced remove()
    if state.in_insert then
-      if extmarks.current and not remove_timer:is_active() then
-         remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
+      if extmarks.current and not state.remove_timer:is_active() then
+         state.remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
       end
    else
-      remove_timer:stop()
+      state.remove_timer:stop()
       M.remove()
    end
 
@@ -347,7 +346,7 @@ function M.update(bufnr)
       searchpair(co, skip_fn, function(matchline, matchcol)
          if changedtick ~= api.nvim_buf_get_changedtick(active_buf) then return end
 
-         remove_timer:stop()
+         state.remove_timer:stop()
          if matchline then
             hl_add(line, col, matchline, matchcol)
          else
