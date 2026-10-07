@@ -1,4 +1,5 @@
 local ts = require("matchparen.treesitter")
+local state = require("matchparen.state")
 
 describe("get_highlighter", function()
    it("should return nil if buffer hasn't treesitter highlighter", function()
@@ -25,7 +26,7 @@ describe("skip_by_region", function()
    vim.treesitter.start()
    vim.treesitter.get_parser():parse()
 
-   ts.highlighter = ts.get_highlighter()
+   state.highlighter = ts.get_highlighter()
    local skip_fn, skip, stop
 
    it("should return correct function if cursor is in a skip node", function()
