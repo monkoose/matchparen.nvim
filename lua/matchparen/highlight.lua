@@ -29,7 +29,9 @@ end
 local function find_backward(reversed_text, pattern, init)
    local length = #reversed_text + 1
    local index, _, bracket = reversed_text:find(pattern, init and length - init + 1)
-   if index then return length - index, bracket end
+   if index then
+      return length - index, bracket
+   end
 end
 
 ---Returns table of `count` lines starting from `start`
@@ -147,7 +149,9 @@ local function backward_matches(pattern, line, col, count)
                end
             end
 
-            if curr_line < 0 then return end
+            if curr_line < 0 then
+               return
+            end
 
             reversed_text = reverse_line(lines, idx)
             if not reversed_text and visible_count < count then
@@ -209,7 +213,9 @@ local function get_bracket(col)
 
    if col > 0 and state.in_insert then
       local before_char = text:sub(col, col)
-      if state.matchpairs[before_char] then return state.matchpairs[before_char], col - 1 end
+      if state.matchpairs[before_char] then
+         return state.matchpairs[before_char], col - 1
+      end
    end
 
    local inc_col = col + 1
@@ -223,7 +229,9 @@ end
 ---@param skip_fn SkipFunction
 ---@param callback fun(matchline?: integer, matchcol?: integer)
 local function searchpair(id, co, skip_fn, callback)
-   if id ~= state.id then return end
+   if id ~= state.id then
+      return
+   end
 
    local co_ok, found_line, found_col, capture = coroutine.resume(co)
    if not co_ok then
@@ -308,7 +316,9 @@ function M.update()
 
    local skip_fn = function(l, c, bracket)
       local skip, stop = skip_region_fn(l, c)
-      if skip or stop then return skip, stop end
+      if skip or stop then
+         return skip, stop
+      end
       return skip_bracket_fn(bracket)
    end
 
@@ -318,10 +328,14 @@ function M.update()
 
    vim.schedule(function()
       searchpair(id, co, skip_fn, function(matchline, matchcol)
-         if id ~= state.id or changedtick ~= api.nvim_buf_get_changedtick(0) then return end
+         if id ~= state.id or changedtick ~= api.nvim_buf_get_changedtick(0) then
+            return
+         end
 
          M.remove()
-         if matchline then hl_add(line, col, matchline, matchcol) end
+         if matchline then
+            hl_add(line, col, matchline, matchcol)
+         end
       end)
    end)
 end

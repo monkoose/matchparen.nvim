@@ -49,7 +49,9 @@ end
 ---@return boolean
 local function str_contains_any(str, tbl)
    for _, pattern in ipairs(tbl) do
-      if str:find(pattern, 1, true) then return true end
+      if str:find(pattern, 1, true) then
+         return true
+      end
    end
    return false
 end
@@ -61,7 +63,9 @@ end
 local function is_syntax_skip_region(line, col)
    for _, synid in ipairs(last3_synids(line, col)) do
       local synname = get_synname(synid)
-      if str_contains_any(synname, syntax_skip) then return true end
+      if str_contains_any(synname, syntax_skip) then
+         return true
+      end
    end
    return false
 end

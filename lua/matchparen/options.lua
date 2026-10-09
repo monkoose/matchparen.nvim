@@ -14,7 +14,9 @@ M.opts = vim.tbl_extend("force", {}, defaults)
 
 ---@param new? MatchParenOptions
 function M.set(new)
-   if not new then return end
+   if not new then
+      return
+   end
 
    for option, value in pairs(new) do
       if defaults[option] ~= nil then

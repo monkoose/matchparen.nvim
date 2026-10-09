@@ -27,7 +27,9 @@ end
 ---can be changed by buffer local option
 local function update_matchpairs()
    local buf_matchpairs = api.nvim_get_option_value("matchpairs", { scope = "local" })
-   if cached_matchpairs == buf_matchpairs then return end
+   if cached_matchpairs == buf_matchpairs then
+      return
+   end
 
    cached_matchpairs = buf_matchpairs
    state.matchpairs = {}
@@ -44,7 +46,9 @@ end
 ---Creates augroup and contained autocmds which are
 ---required for the plugin to work
 local function create_autocmds()
-   if augroup then return end
+   if augroup then
+      return
+   end
 
    augroup = api.nvim_create_augroup("matchparen.nvim", {})
    local hl = require("matchparen.highlight")
@@ -80,7 +84,9 @@ local function create_autocmds()
          autocmd("SafeState", {
             once = true,
             callback = function(ev)
-               if ev.buf == api.nvim_get_current_buf() then hl.update() end
+               if ev.buf == api.nvim_get_current_buf() then
+                  hl.update()
+               end
             end,
          })
       end,
@@ -126,7 +132,9 @@ end
 
 ---Deletes plugin's augroup and clears all it's autocmds
 local function delete_autocmds()
-   if augroup then api.nvim_del_augroup_by_id(augroup) end
+   if augroup then
+      api.nvim_del_augroup_by_id(augroup)
+   end
    augroup = nil
 end
 
@@ -177,7 +185,9 @@ function M.setup(config)
    options.set(config)
    create_commands()
 
-   if opts.enabled then enable() end
+   if opts.enabled then
+      enable()
+   end
 end
 
 return M

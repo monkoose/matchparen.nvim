@@ -38,7 +38,9 @@ local function get_skip_node(line, col)
    end
 
    for _, node in ipairs(cache.skip_nodes[line]) do
-      if ts.is_in_node_range(node, line, col) then return node end
+      if ts.is_in_node_range(node, line, col) then
+         return node
+      end
    end
 end
 
@@ -47,13 +49,17 @@ end
 local function get_trees()
    local trees = {}
    state.highlighter.tree:for_each_tree(function(tree, langtree)
-      if not tree then return end
+      if not tree then
+         return
+      end
 
       local root = tree:root()
       local query = state.highlighter:get_query(langtree:lang()):query()
 
       -- Some injected languages may not have highlight queries.
-      if query then table.insert(trees, { root = root, query = query }) end
+      if query then
+         table.insert(trees, { root = root, query = query })
+      end
    end)
 
    return trees
@@ -90,13 +96,19 @@ local function stop_by_node(node, backward)
 
    return function(l, c)
       while node do
-         if ts.is_in_node_range(node, l, c) then return false, false end
+         if ts.is_in_node_range(node, l, c) then
+            return false, false
+         end
 
          -- limit the search to the current node only
-         if not is_node_comment(node) then return false, true end
+         if not is_node_comment(node) then
+            return false, true
+         end
          -- increase the search limit for connected comments
          node = node[get_sibling](node)
-         if not (node and is_node_comment(node)) then return false, true end
+         if not (node and is_node_comment(node)) then
+            return false, true
+         end
       end
 
       return false, false
@@ -124,7 +136,9 @@ function M.skip_by_region(line, col, backward)
    -- FiXME: requires only to fix annoying bug for treesitter strings
    -- that still shows that char after the string belongs to this string
    if skip_node and is_node_string(skip_node) and state.in_insert then
-      if not ts.is_in_node_range(skip_node, line, col + 1) then skip_node = nil end
+      if not ts.is_in_node_range(skip_node, line, col + 1) then
+         skip_node = nil
+      end
    end
 
    if skip_node then -- inside string or comment
