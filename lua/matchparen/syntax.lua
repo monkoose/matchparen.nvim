@@ -78,7 +78,7 @@ function M.skip_by_region(line, col)
    end
 
    -- Fixes a bug when synstack() returns incorrect results on first invocation
-   -- So we are callint it twice - here and inside is_syntax_skip_region()
+   -- So we are calling it twice - here and inside is_syntax_skip_region()
    fn.synstack(line + 1, col + 1)
    -- Skip brackets whose membership in a skip syntax group
    -- differs from the cursor's initial position syntax group

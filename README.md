@@ -53,7 +53,7 @@ require("lazy").setup({
 If you are using another plugin manager, you can disable the built-in
 matchparen plugin with `vim.g.loaded_matchparen = 1` somewhere in your neovim
 config. The plugin will set this variable and disable built-in matchparen plugin after setup too,
-but to save some startup time it's beteer to disable it manually,
+but to save some startup time it's better to disable it manually,
 because loading of the user plugins happens after built-in plugins.
 
 ---
@@ -62,7 +62,7 @@ because loading of the user plugins happens after built-in plugins.
 
 ```lua
 require('matchparen').setup({
-    -- Set to `false` to disable at matchpren at startup.
+    -- Set to `false` to disable matchparen at startup.
     -- Enable matchparen manually with `:MatchParenEnable`.
     enabled = true,
     -- Highlight group of the matched brackets.
