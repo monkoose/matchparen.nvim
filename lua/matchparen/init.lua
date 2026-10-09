@@ -155,7 +155,7 @@ end
 local function enable()
    update_matchpairs()
    close_remove_timer()
-   state.remove_timer = assert(vim.uv.new_timer())
+   state.remove_timer = vim.uv.new_timer()
    if state.remove_timer then
       create_autocmds()
       require("matchparen.highlight").update()
