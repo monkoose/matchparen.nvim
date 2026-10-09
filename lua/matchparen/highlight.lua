@@ -208,21 +208,23 @@ local function is_inside_fold(line)
 end
 
 ---Returns matched bracket option and its column or nil
----@param col integer 0-based column number
----@return table|nil, integer
-local function get_bracket(col)
+---@return MatchPairTable|nil # Searching bracket table
+---@return integer # Line number
+---@return integer # Column number
+local function get_bracket()
+   local line, col = get_cursor_pos()
    local text = api.nvim_get_current_line()
 
    if col > 0 and state.in_insert then
       local before_char = text:sub(col, col)
       if state.matchpairs[before_char] then
-         return state.matchpairs[before_char], col - 1
+         return state.matchpairs[before_char], line, col - 1
       end
    end
 
    local inc_col = col + 1
    local cursor_char = text:sub(inc_col, inc_col)
-   return state.matchpairs[cursor_char], col
+   return state.matchpairs[cursor_char], line, col
 end
 
 ---Schedules the search for the matching bracket
@@ -310,9 +312,7 @@ function M.update()
    state.id = state.id + 1
    local id = state.id
 
-   local mp
-   local line, col = get_cursor_pos()
-   mp, col = get_bracket(col)
+   local mp, line, col = get_bracket()
    if not mp or is_inside_fold(line) then
       M.remove()
       return
