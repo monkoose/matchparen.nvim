@@ -6,3 +6,13 @@
 ---@alias SkipFunction fun(line: integer, col: integer): boolean, boolean|nil
 
 ---@alias MatchPairTable { left: string, right: string, pattern: string, backward: boolean }
+
+---@class MatchParenOptions
+---@field enabled boolean # Determines whether the plugin should be enabled at neovim startup
+---@field hl_group string
+---@field skip_folds boolean # Determines whether the plugin should skip closed folds
+
+---@class MatchParenConfig
+---@field enabled? boolean # Determines whether the plugin should be enabled at neovim startup
+---@field hl_group? string
+---@field skip_folds? boolean # Determines whether the plugin should skip closed folds

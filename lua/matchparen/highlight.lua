@@ -1,4 +1,4 @@
-local opts = require("matchparen.options").opts
+local opts = require("matchparen.options")
 local state = require("matchparen.state")
 local syntax = require("matchparen.syntax")
 local ts = require("matchparen.treesitter")

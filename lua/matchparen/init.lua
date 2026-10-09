@@ -1,6 +1,4 @@
 local state = require("matchparen.state")
-local options = require("matchparen.options")
-local opts = options.opts
 
 local api = vim.api
 local fn = vim.fn
@@ -9,6 +7,22 @@ local augroup
 local cached_matchpairs
 
 local M = {}
+
+---@param config? MatchParenConfig
+local function set_options(config)
+   if not config then
+      return
+   end
+
+   local opts = require("matchparen.options")
+   for option, value in pairs(config) do
+      if opts[option] ~= nil then
+         opts[option] = value
+      else
+         vim.notify("matchparen.nvim: Invalid option `" .. option .. "`.", vim.log.levels.WARN)
+      end
+   end
+end
 
 ---Returns table created by splitting vim `matchpairs` option
 ---with opening brackets as keys and closing brackets as values
@@ -179,12 +193,13 @@ local function create_commands()
 end
 
 ---Initializes the plugin
----@param config MatchParenOptions
+---@param config MatchParenConfig
 function M.setup(config)
    disable_builtin()
-   options.set(config)
+   set_options(config)
    create_commands()
 
+   local opts = require("matchparen.options")
    if opts.enabled then
       enable()
    end
