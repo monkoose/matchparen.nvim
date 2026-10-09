@@ -10,7 +10,7 @@ local defaults = {
 
 local M = {}
 ---@type MatchParenOptions
-M.opts = vim.tbl_deep_extend("force", {}, defaults)
+M.opts = vim.tbl_extend("force", {}, defaults)
 
 ---@param new? MatchParenOptions
 function M.set(new)
