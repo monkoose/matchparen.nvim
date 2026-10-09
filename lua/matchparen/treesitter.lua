@@ -53,12 +53,11 @@ local function get_trees()
          return
       end
 
-      local root = tree:root()
       local query = state.highlighter:get_query(langtree:lang()):query()
 
       -- Some injected languages may not have highlight queries.
       if query then
-         table.insert(trees, { root = root, query = query })
+         table.insert(trees, { root = tree:root(), query = query })
       end
    end)
 
