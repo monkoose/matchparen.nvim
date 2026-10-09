@@ -59,15 +59,18 @@ end
 ---Returns true when the cursor is inside any of `syntax_skip` groups
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return boolean
+---@return boolean, boolean
 local function is_syntax_skip_region(line, col)
    for _, synid in ipairs(last3_synids(line, col)) do
-      local synname = get_synname(synid)
+      local ok, synname = pcall(get_synname, synid)
+      if not ok then
+         return false, true
+      end
       if str_contains_any(synname, syntax_skip) then
-         return true
+         return true, false
       end
    end
-   return false
+   return false, false
 end
 
 ---Returns skip function for `search.match_pos()`
@@ -77,7 +80,7 @@ end
 function M.skip_by_region(line, col)
    if is_syntax_off() then
       return function()
-         return false
+         return false, false
       end
    end
 
@@ -86,9 +89,16 @@ function M.skip_by_region(line, col)
    fn.synstack(line + 1, col + 1)
    -- Skip brackets whose membership in a skip syntax group
    -- differs from the cursor's initial position syntax group
-   local cursor_in_region = is_syntax_skip_region(line, col)
+   local cursor_in_region, err = is_syntax_skip_region(line, col)
+   if err then
+      return function()
+         return false, true
+      end
+   end
+
    return function(l, c)
-      return is_syntax_skip_region(l, c) ~= cursor_in_region
+      local skip, stop = is_syntax_skip_region(l, c)
+      return skip ~= cursor_in_region, stop
    end
 end
 

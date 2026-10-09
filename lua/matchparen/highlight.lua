@@ -240,9 +240,8 @@ local function searchpair(id, co, skip_fn, callback)
    end
 
    if found_line then
-      -- pcall to catch errors in skip_fn (can be the case for vim.fn.synstack() used for syntax highlighting)
-      local ok, skip, stop = pcall(skip_fn, found_line, found_col, capture)
-      if not ok or stop then
+      local skip, stop = skip_fn(found_line, found_col, capture)
+      if stop then
          callback()
          return
       elseif not skip then
@@ -328,7 +327,7 @@ function M.update()
       if skip or stop then
          return skip, stop
       end
-      return skip_bracket_fn(bracket)
+      return skip_bracket_fn(bracket), false
    end
 
    local matches = mp.backward and backward_matches or forward_matches
