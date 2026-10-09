@@ -9,6 +9,8 @@ local fn = vim.fn
 local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks_bufnr = nil
+local batch_counter = 0
+local MAX_BATCH = 20
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
@@ -229,10 +231,6 @@ end
 ---@param skip_fn SkipFunction
 ---@param callback fun(matchline?: integer, matchcol?: integer)
 local function searchpair(id, co, skip_fn, callback)
-   if id ~= state.id then
-      return
-   end
-
    local co_ok, found_line, found_col, capture = coroutine.resume(co)
    if not co_ok then
       callback()
@@ -251,13 +249,26 @@ local function searchpair(id, co, skip_fn, callback)
       end
    end
 
-   vim.schedule(function()
-      if coroutine.status(co) == "dead" then
-         callback()
-         return
-      end
+   if id ~= state.id then
+      callback()
+      return
+   end
+
+   if batch_counter < MAX_BATCH then
+      batch_counter = batch_counter + 1
       searchpair(id, co, skip_fn, callback)
-   end)
+   else
+      batch_counter = 0
+
+      M.remove()
+      vim.schedule(function()
+         if coroutine.status(co) == "dead" then
+            callback()
+            return
+         end
+         searchpair(id, co, skip_fn, callback)
+      end)
+   end
 end
 
 ---Wrapper for nvim_buf_set_extmark()
@@ -328,6 +339,7 @@ function M.update()
 
    vim.schedule(function()
       searchpair(id, co, skip_fn, function(matchline, matchcol)
+         batch_counter = 0
          if id ~= state.id or changedtick ~= api.nvim_buf_get_changedtick(0) then
             return
          end
