@@ -35,7 +35,7 @@ end
 ---@return TSNode|nil
 local function get_skip_node(line, col)
    if not cache.skip_nodes[line] then
-      -- pcall for https://github.com/monkoose/matchparen.nvim/issues/14
+      -- FIXME: pcall for https://github.com/monkoose/matchparen.nvim/issues/14
       pcall(cache_nodes, line)
    end
 
@@ -128,6 +128,7 @@ function M.skip_by_region(line, col, backward)
       return
    end
 
+   --- TODO: should we clear the cache only when the buffer changes?
    cache.trees = get_trees()
    cache.skip_nodes = {}
 
