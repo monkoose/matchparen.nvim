@@ -57,11 +57,11 @@ local function create_autocmds()
    end
 
    autocmd("InsertEnter", {
-      callback = function(ev)
+      callback = function()
          -- only for actual insert mode
          if vim.v.insertmode == "i" then
             state.in_insert = true
-            hl.update(ev.buf)
+            hl.update()
          end
       end,
       desc = "Highlight matching pairs",
@@ -80,7 +80,7 @@ local function create_autocmds()
          autocmd("SafeState", {
             once = true,
             callback = function(ev)
-               hl.update(ev.buf)
+               if ev.buf == api.nvim_get_current_buf() then hl.update() end
             end,
          })
       end,
@@ -94,8 +94,8 @@ local function create_autocmds()
       "TextChanged",
       -- "TextChangedI",
    }, {
-      callback = function(ev)
-         hl.update(ev.buf)
+      callback = function()
+         hl.update()
       end,
       desc = "Highlight matching pairs",
    })
@@ -103,7 +103,7 @@ local function create_autocmds()
    autocmd({ "WinLeave", "BufLeave", "TermEnter" }, {
       callback = function()
          hl.remove()
-         state.current_buf = -1
+         state.id = state.id + 1
       end,
       desc = "Hide matching pairs highlight",
    })
@@ -144,35 +144,17 @@ local function disable_builtin()
    end
 end
 
-local function close_remove_timer()
-   require("matchparen.highlight").remove()
-   if state.remove_timer then
-      if not state.remove_timer:is_closing() then state.remove_timer:close() end
-      state.remove_timer = nil
-   end
-end
-
 ---Enables the plugin
 local function enable()
    update_matchpairs()
-   close_remove_timer()
-   state.remove_timer = vim.uv.new_timer()
-   if state.remove_timer then
-      create_autocmds()
-      require("matchparen.highlight").update()
-   else
-      vim.notify(
-         "matchparen.nvim: Failed to create uv_timer. Try to run :MatchParenEnable again.",
-         vim.log.levels.WARN
-      )
-   end
+   create_autocmds()
+   require("matchparen.highlight").update()
 end
 
 ---Disables the plugin
 local function disable()
    delete_autocmds()
-   close_remove_timer()
-   state.remove_timer = nil
+   require("matchparen.highlight").remove()
 end
 
 ---Creates plugin's custom commands
