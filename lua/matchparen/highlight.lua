@@ -318,11 +318,9 @@ function M.update()
       return
    end
 
-   state.highlighter = ts.get_highlighter()
-
    local max_lines = api.nvim_win_get_height(0)
    local skip_bracket_fn = skip_same_bracket(mp.left, mp.right, mp.backward)
-   local skip_region_fn = state.highlighter and ts.skip_by_region(line, col, mp.backward)
+   local skip_region_fn = ts.skip_by_region(line, col, mp.backward)
       or syntax.skip_by_region(line, col)
 
    local skip_fn = function(l, c, bracket)

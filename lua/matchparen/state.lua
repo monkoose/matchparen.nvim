@@ -7,5 +7,4 @@ return {
    id = 0,
    in_insert = false,
    matchpairs = {},
-   highlighter = nil,
 }

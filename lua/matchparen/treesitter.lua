@@ -8,6 +8,8 @@ local api = vim.api
 local M = {}
 ---@type { trees: matchparen.TSTree[], skip_nodes: TSNode[][] }
 local cache = { trees = {}, skip_nodes = {} }
+---@type vim.treesitter.highlighter # Current treesitter highlighter
+local highlighter = nil
 local treesitter_skip = {
    string = true,
    comment = true,
@@ -18,7 +20,7 @@ local treesitter_skip = {
 local function cache_nodes(line)
    cache.skip_nodes[line] = {}
    for _, tree in ipairs(cache.trees) do
-      local iter = tree.query:iter_captures(tree.root, state.highlighter.bufnr, line, line + 1)
+      local iter = tree.query:iter_captures(tree.root, highlighter.bufnr, line, line + 1)
       for id, node in iter do
          if treesitter_skip[tree.query.captures[id]] then
             table.insert(cache.skip_nodes[line], node)
@@ -48,12 +50,12 @@ end
 ---@return matchparen.TSTree[]
 local function get_trees()
    local trees = {}
-   state.highlighter.tree:for_each_tree(function(tree, langtree)
+   highlighter.tree:for_each_tree(function(tree, langtree)
       if not tree then
          return
       end
 
-      local query = state.highlighter:get_query(langtree:lang()):query()
+      local query = highlighter:get_query(langtree:lang()):query()
 
       -- Some injected languages may not have highlight queries.
       if query then
@@ -114,20 +116,18 @@ local function stop_by_node(node, backward)
    end
 end
 
----Returns treesitter highlighter for the current buffer or nil
----@return vim.treesitter.highlighter|nil
-function M.get_highlighter()
-   local bufnr = api.nvim_get_current_buf()
-   return ts.highlighter.active[bufnr]
-end
-
 ---Returns `skip` function for `match_pos`
 ---based on treesitter node under the `line` and `col`.
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
 ---@param backward? boolean direction of the search
----@return SkipFunction
+---@return SkipFunction|nil
 function M.skip_by_region(line, col, backward)
+   highlighter = ts.highlighter.active[api.nvim_get_current_buf()]
+   if not highlighter then
+      return
+   end
+
    cache.trees = get_trees()
    cache.skip_nodes = {}
 
