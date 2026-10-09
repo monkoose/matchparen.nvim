@@ -103,6 +103,7 @@ local function create_autocmds()
    autocmd({ "WinLeave", "BufLeave", "TermEnter" }, {
       callback = function()
          hl.remove()
+         state.current_buf = -1
       end,
       desc = "Hide matching pairs highlight",
    })
@@ -144,11 +145,11 @@ local function disable_builtin()
 end
 
 local function close_remove_timer()
-   if state.remove_timer and not state.remove_timer:is_closing() then
-      state.remove_timer:stop()
-      state.remove_timer:close()
-   end
    require("matchparen.highlight").remove()
+   if state.remove_timer then
+      if not state.remove_timer:is_closing() then state.remove_timer:close() end
+      state.remove_timer = nil
+   end
 end
 
 ---Enables the plugin

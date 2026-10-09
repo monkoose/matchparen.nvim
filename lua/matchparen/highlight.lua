@@ -15,7 +15,6 @@ local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
 ---@type { current?: integer, match?: integer }
 local extmarks = {}
-local active_buf = 0
 local active_co ---@type thread?
 
 ---Returns first found index and full match substring (if pattern
@@ -282,18 +281,16 @@ end
 ---@param matchline integer 0-based line number
 ---@param matchcol integer 0-based column number
 local function hl_add(line, col, matchline, matchcol)
-   if active_buf == api.nvim_get_current_buf() then
-      M.remove()
-      extmarks.current = set_extmark(line, col)
-      extmarks.match = set_extmark(matchline, matchcol)
-   end
+   M.remove()
+   extmarks.current = set_extmark(line, col)
+   extmarks.match = set_extmark(matchline, matchcol)
 end
 
 ---Removes brackets highlight by deleting buffer extmarks
 function M.remove()
-   if
-      extmarks.current and api.nvim_buf_get_extmark_by_id(0, namespace, extmarks.current, {})[1]
-   then
+   if state.remove_timer then state.remove_timer:stop() end
+
+   if extmarks.current then
       api.nvim_buf_del_extmark(0, namespace, extmarks.current)
       api.nvim_buf_del_extmark(0, namespace, extmarks.match)
       extmarks.match = nil
@@ -307,17 +304,24 @@ end
 function M.update(bufnr)
    active_co = nil
 
+   -- Invalidates with autocommands on closing or switching buffers
+   state.current_buf = bufnr or api.nvim_get_current_buf()
+   local buf = state.current_buf
+
    -- To fix flickering of brackets in insert mode use debounced remove()
    if state.in_insert then
       if extmarks.current and not state.remove_timer:is_active() then
-         state.remove_timer:start(200, 0, vim.schedule_wrap(M.remove))
+         state.remove_timer:start(
+            200,
+            0,
+            vim.schedule_wrap(function()
+               if state.current_buf == buf then M.remove() end
+            end)
+         )
       end
    else
-      state.remove_timer:stop()
       M.remove()
    end
-
-   active_buf = bufnr or api.nvim_get_current_buf()
 
    local mp
    local line, col = get_cursor_pos()
@@ -340,13 +344,14 @@ function M.update(bufnr)
    local matches = mp.backward and backward_matches or forward_matches
    local co = matches(mp.pattern, line, col, max_lines)
    active_co = co
-   local changedtick = api.nvim_buf_get_changedtick(active_buf)
+   local changedtick = api.nvim_buf_get_changedtick(buf)
 
    vim.schedule(function()
       searchpair(co, skip_fn, function(matchline, matchcol)
-         if changedtick ~= api.nvim_buf_get_changedtick(active_buf) then return end
+         if buf ~= state.current_buf or changedtick ~= api.nvim_buf_get_changedtick(buf) then
+            return
+         end
 
-         state.remove_timer:stop()
          if matchline then
             hl_add(line, col, matchline, matchcol)
          else
