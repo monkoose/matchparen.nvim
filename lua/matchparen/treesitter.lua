@@ -56,9 +56,8 @@ local function get_trees()
          return
       end
 
-      local query = highlighter:get_query(langtree:lang()):query()
-
       -- Some injected languages may not have highlight queries.
+      local query = highlighter:get_query(langtree:lang()):query()
       if query then
          table.insert(trees, { root = tree:root(), query = query })
       end
@@ -94,26 +93,24 @@ end
 ---@param backward? boolean direction of the search
 ---@return SkipFunction
 local function stop_by_node(node, backward)
-   local get_sibling = backward and "prev_sibling" or "next_sibling"
-
-   return function(l, c)
-      while node do
-         if ts.is_in_node_range(node, l, c) then
-            return STATUS.ok
-         end
-
-         -- limit the search to the current node only
-         if not is_node_comment(node) then
-            return STATUS.abort
-         end
-         -- increase the search limit for connected comments
-         node = node[get_sibling](node)
-         if not (node and is_node_comment(node)) then
-            return STATUS.abort
+   -- Respect adjacent comments
+   if is_node_comment(node) then
+      local get_sibling = backward and "prev_sibling" or "next_sibling"
+      return function(l, c)
+         while true do
+            if ts.is_in_node_range(node, l, c) then
+               return STATUS.ok
+            end
+            node = node[get_sibling](node)
+            if not (node and is_node_comment(node)) then
+               return STATUS.abort
+            end
          end
       end
+   end
 
-      return STATUS.ok
+   return function(l, c)
+      return ts.is_in_node_range(node, l, c) and STATUS.ok or STATUS.abort
    end
 end
 
