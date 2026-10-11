@@ -2,6 +2,7 @@ local opts = require("matchparen.options")
 local state = require("matchparen.state")
 local syntax = require("matchparen.syntax")
 local ts = require("matchparen.treesitter")
+local STATUS = require("matchparen.enum").STATUS
 
 local api = vim.api
 local fn = vim.fn
@@ -174,7 +175,7 @@ end
 ---@param left string opening bracket
 ---@param right string closing bracket
 ---@param backward boolean direction of the search
----@return fun(bracket: string): boolean
+---@return fun(bracket: string): SearchStatus
 local function skip_same_bracket(left, right, backward)
    local count = 0
    local same_bracket = backward and right or left
@@ -184,12 +185,12 @@ local function skip_same_bracket(left, right, backward)
          count = count + 1
       else
          if count == 0 then
-            return false
+            return STATUS.ok
          else
             count = count - 1
          end
       end
-      return true
+      return STATUS.skip
    end
 end
 
@@ -240,11 +241,13 @@ local function searchpair(id, co, skip_fn, callback)
    end
 
    if found_line then
-      local skip, stop = skip_fn(found_line, found_col, capture)
-      if stop then
+      local res = skip_fn(found_line, found_col, capture)
+      if res == STATUS.abort then
          callback()
          return
-      elseif not skip then
+      end
+
+      if res == STATUS.ok then
          callback(found_line, found_col)
          return
       end
@@ -323,11 +326,12 @@ function M.update()
       or syntax.skip_by_region(line, col)
 
    local skip_fn = function(l, c, bracket)
-      local skip, stop = skip_region_fn(l, c)
-      if skip or stop then
-         return skip, stop
+      local res = skip_region_fn(l, c)
+      if res == STATUS.ok then
+         return skip_bracket_fn(bracket)
+      else
+         return res
       end
-      return skip_bracket_fn(bracket), false
    end
 
    local matches = mp.backward and backward_matches or forward_matches

@@ -1,3 +1,5 @@
+local STATUS = require("matchparen.enum").STATUS
+
 local fn = vim.fn
 
 local M = {}
@@ -59,18 +61,18 @@ end
 ---Returns true when the cursor is inside any of `syntax_skip` groups
 ---@param line integer 0-based line number
 ---@param col integer 0-based column number
----@return boolean, boolean
+---@return SearchStatus
 local function is_syntax_skip_region(line, col)
    for _, synid in ipairs(last3_synids(line, col)) do
       local ok, synname = pcall(get_synname, synid)
       if not ok then
-         return false, true
+         return STATUS.abort
       end
       if str_contains_any(synname, syntax_skip) then
-         return true, false
+         return STATUS.skip
       end
    end
-   return false, false
+   return STATUS.ok
 end
 
 ---Returns skip function for `search.match_pos()`
@@ -80,7 +82,7 @@ end
 function M.skip_by_region(line, col)
    if is_syntax_off() then
       return function()
-         return false, false
+         return STATUS.ok
       end
    end
 
@@ -89,16 +91,21 @@ function M.skip_by_region(line, col)
    fn.synstack(line + 1, col + 1)
    -- Skip brackets whose membership in a skip syntax group
    -- differs from the cursor's initial position syntax group
-   local cursor_in_region, err = is_syntax_skip_region(line, col)
-   if err then
+   local res = is_syntax_skip_region(line, col)
+   if res == STATUS.abort then
       return function()
-         return false, true
+         return STATUS.abort
       end
    end
 
    return function(l, c)
-      local skip, stop = is_syntax_skip_region(l, c)
-      return skip ~= cursor_in_region, stop
+      local match_res = is_syntax_skip_region(l, c)
+      if match_res == STATUS.abort then
+         return STATUS.abort
+      end
+
+      -- Already checked that both aren't STATUS.abort
+      return res == match_res and STATUS.ok or STATUS.skip
    end
 end
 

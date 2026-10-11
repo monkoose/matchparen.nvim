@@ -1,4 +1,5 @@
 local state = require("matchparen.state")
+local STATUS = require("matchparen.enum").STATUS
 
 local ts = vim.treesitter
 local api = vim.api
@@ -98,21 +99,21 @@ local function stop_by_node(node, backward)
    return function(l, c)
       while node do
          if ts.is_in_node_range(node, l, c) then
-            return false, false
+            return STATUS.ok
          end
 
          -- limit the search to the current node only
          if not is_node_comment(node) then
-            return false, true
+            return STATUS.abort
          end
          -- increase the search limit for connected comments
          node = node[get_sibling](node)
          if not (node and is_node_comment(node)) then
-            return false, true
+            return STATUS.abort
          end
       end
 
-      return false, false
+      return STATUS.ok
    end
 end
 
@@ -146,9 +147,9 @@ function M.skip_by_region(line, col, backward)
    else
       return function(l, c)
          if get_skip_node(l, c) ~= nil then
-            return true, false
+            return STATUS.skip
          else
-            return false, false
+            return STATUS.ok
          end
       end
    end
