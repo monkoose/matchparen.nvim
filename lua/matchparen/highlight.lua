@@ -339,16 +339,18 @@ function M.update()
    local changedtick = api.nvim_buf_get_changedtick(0)
    local co = matches(mp.pattern, line, col, max_lines)
 
-   searchpair(id, co, skip_fn, function(matchline, matchcol)
-      batch_counter = 0
-      if id ~= state.id or changedtick ~= api.nvim_buf_get_changedtick(0) then
-         return
-      end
+   vim.schedule(function()
+      searchpair(id, co, skip_fn, function(matchline, matchcol)
+         batch_counter = 0
+         if id ~= state.id or changedtick ~= api.nvim_buf_get_changedtick(0) then
+            return
+         end
 
-      M.remove()
-      if matchline then
-         hl_add(line, col, matchline, matchcol)
-      end
+         M.remove()
+         if matchline then
+            hl_add(line, col, matchline, matchcol)
+         end
+      end)
    end)
 end
 
