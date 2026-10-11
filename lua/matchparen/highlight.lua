@@ -11,7 +11,7 @@ local M = {}
 local namespace = api.nvim_create_namespace("matchparen.nvim")
 local extmarks_bufnr = nil
 local batch_counter = 0
-local MAX_BATCH = 20
+local MAX_BATCH = 10
 
 ---Returns first found index and full match substring (if pattern
 ---is in a capture) in the `text` or nil
