@@ -328,11 +328,7 @@ function M.update()
 
    local skip_fn = function(l, c, bracket)
       local res = skip_region_fn(l, c)
-      if res == STATUS.ok then
-         return skip_bracket_fn(bracket)
-      else
-         return res
-      end
+      return res == STATUS.ok and skip_bracket_fn(bracket) or res
    end
 
    local matches = mp.backward and backward_matches or forward_matches
