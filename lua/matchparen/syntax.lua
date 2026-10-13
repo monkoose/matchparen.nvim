@@ -64,10 +64,7 @@ end
 ---@return SearchStatus
 local function is_syntax_skip_region(line, col)
    for _, synid in ipairs(last3_synids(line, col)) do
-      local ok, synname = pcall(get_synname, synid)
-      if not ok then
-         return STATUS.abort
-      end
+      local synname = get_synname(synid)
       if str_contains_any(synname, syntax_skip) then
          return STATUS.skip
       end
@@ -89,22 +86,10 @@ function M.skip_by_region(line, col)
    -- Fixes a bug when synstack() returns incorrect results on first invocation
    -- So we are calling it twice - here and inside is_syntax_skip_region()
    fn.synstack(line + 1, col + 1)
-   -- Skip brackets whose membership in a skip syntax group
-   -- differs from the cursor's initial position syntax group
    local res = is_syntax_skip_region(line, col)
-   if res == STATUS.abort then
-      return function()
-         return STATUS.abort
-      end
-   end
 
    return function(l, c)
       local match_res = is_syntax_skip_region(l, c)
-      if match_res == STATUS.abort then
-         return STATUS.abort
-      end
-
-      -- Already checked that both aren't STATUS.abort
       return res == match_res and STATUS.ok or STATUS.skip
    end
 end
